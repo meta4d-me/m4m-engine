@@ -1,0 +1,13 @@
+{
+  "name": "@meta4d/engine",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {
+    "clean": "rimraf lib",
+    "build": "tsc"
+  },
+  "author": "MetaYoyo",
+  "license": "Apache-2.0",
+  "dependencies": {},
+  "devDependencies": {}
+}
