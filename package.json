@@ -4,10 +4,12 @@
   "description": "",
   "scripts": {
     "clean": "rimraf lib",
-    "build": "tsc"
+    "minify": "uglifyjs --compress --mangle --output lib/m4m.min.js -- lib/m4m.js",
+    "build": "tsc --declaration && pnpm run minify"
   },
   "author": "MetaYoyo",
   "license": "Apache-2.0",
-  "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "uglify-js": "^3.16.1"
+  }
 }
