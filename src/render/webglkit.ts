@@ -47,7 +47,13 @@ namespace m4m.render
     export class webglkit
     {
         private static _maxVertexAttribArray: number = 0;
-        static SetMaxVertexAttribArray(webgl: WebGLRenderingContext, count: number)
+        /**
+         * @deprecated [已弃用]
+         * 设置最大顶点Attrib数
+         * @param webgl 
+         * @param count 
+         */
+        static SetMaxVertexAttribArray(webgl: WebGL2RenderingContext, count: number)
         {
             for (var i = count; i < webglkit._maxVertexAttribArray; i++)
             {
@@ -57,6 +63,11 @@ namespace m4m.render
         }
         private static _texNumber: number[] = null;
 
+        /**
+         * 获取 webgl纹理槽 绑定ID
+         * @param index 索引
+         * @returns 绑定ID
+         */
         static GetTextureNumber(index: number): number
         {            
             return webglkit._texNumber[index];
@@ -81,7 +92,11 @@ namespace m4m.render
         static ALWAYS: number;
         static NEVER: number;
         static caps: caps = new caps();
-        static initConst(webgl: WebGLRenderingContext): void
+        /**
+         * 初始化
+         * @param webgl webgl上下文  
+         */
+        static initConst(webgl: WebGL2RenderingContext): void
         {
             if (webglkit._texNumber == null)
             {

@@ -27,7 +27,9 @@ namespace m4m.framework
     export class frustumculling implements INodeComponent
     {
         static readonly ClassName:string="frustumculling";
-
+        /**
+         * 锥剔除组件
+         */
         constructor()
         {
 

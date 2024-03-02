@@ -120,6 +120,7 @@ namespace m4m.framework
         //#endregion
 
         parse(assetMgr: assetMgr, bundle: assetBundle, name: string, data: ArrayBuffer)
+        //parse(assetMgr: assetMgr, bundle: assetBundle, name: string = "Meshes_nav_test.obj_Generic.cmesh.bin", data: ArrayBuffer)
         {
             
             // if (name.lastIndexOf("jellysh3") != -1)
@@ -137,7 +138,10 @@ namespace m4m.framework
                 // return new mesh(name);
                 throw new Error(`data not ArrayBuffer instance ,mesh name:${name},bundle:${bundle ? bundle.url : null} `);
             }
+
             return new mesh(name).Parse(data, assetMgr.webgl);
+            //return new mesh("Meshes_nav_test.obj_Generic.cmesh.bin").Parse(data, assetMgr.webgl);
+            
         }
     }
 }

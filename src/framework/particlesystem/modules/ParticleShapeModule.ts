@@ -291,7 +291,9 @@ namespace m4m.framework
         private _shapeBox = new ParticleSystemShapeBox(this);
         private _shapeCircle = new ParticleSystemShapeCircle(this);
         private _shapeEdge = new ParticleSystemShapeEdge(this);
-
+        /**
+         * 粒子形状模块
+         */
         constructor()
         {
             super();
@@ -395,7 +397,10 @@ namespace m4m.framework
                 particle.velocity.z = particle.velocity.z / len * length;
             }
         }
-
+        
+        /**
+         * 当形状类型改变
+         */
         private _onShapeTypeChanged()
         {
             var preValue = this.activeShape;
@@ -492,6 +497,9 @@ namespace m4m.framework
             serialization.setValue(this.activeShape, preValue);
         }
 
+        /**
+         * 当形状改变
+         */
         private _onShapeChanged()
         {
             switch (this.shape)

@@ -28,6 +28,11 @@ namespace m4m.framework
     export type LazyObject<T> = { [P in keyof T]: Lazy<T[P]>; };
 
     export var lazy = {
+        /**
+         * 获取值
+         * @param lazyItem 
+         * @returns 
+         */
         getvalue: function <T>(lazyItem: Lazy<T>): T
         {
             if (typeof lazyItem == "function")

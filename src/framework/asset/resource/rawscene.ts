@@ -46,6 +46,10 @@ namespace m4m.framework
          * @version m4m 1.0
          */
         fog: Fog;
+        /**
+         * raw 场景资源
+         * @param assetName 资源名 
+         */
         constructor(assetName: string = null)
         {
             if (!assetName)
@@ -119,6 +123,9 @@ namespace m4m.framework
             let total = 0;
             return total;
         }
+        /**
+         * 重置 LightMap
+         */
         resetLightMap(assetmgr: assetMgr, bundleName: string = null)
         {
             this.lightmaps.length = 0;

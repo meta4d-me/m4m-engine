@@ -14,8 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-namespace m4m.framework
-{
+namespace m4m.framework {
     /**
      * @public
      * @language zh_CN
@@ -23,8 +22,7 @@ namespace m4m.framework
      * 原生3d模型类型
      * @version m4m 1.0
      */
-    export enum PrimitiveType
-    {
+    export enum PrimitiveType {
         Sphere,
         Capsule,
         Cylinder,
@@ -41,8 +39,7 @@ namespace m4m.framework
      * 原生2d类型
      * @version m4m 1.0
      */
-    export enum Primitive2DType
-    {
+    export enum Primitive2DType {
         /** 原始图片渲染器 */
         RawImage2D,
         /** 多功能图片渲染器（sprite） */
@@ -52,15 +49,20 @@ namespace m4m.framework
         /** 按钮 */
         Button,
         /** 输入框 */
-        InputField
+        InputField,
+        /** 进度条 */
+        Progressbar,
+        /** Panel */
+        Panel,
+        /** ScrollView */
+        ScrollRect,
     }
 
     /**
      * 判断 函数对象代码实现内容是否是空的
-     * @param fun 
+     * @param fun 函数
      */
-    export function functionIsEmpty(fun: Function)
-    {
+    export function functionIsEmpty(fun: Function) {
         if (!fun) true;
         let funStr = fun.toString().replace(/\s/g, "");
         let idx = funStr.indexOf("{");
@@ -73,8 +75,7 @@ namespace m4m.framework
      * 获取实例对象的类名字符串
      * @param obj 对象实例
      */
-    export function getClassName(obj: Object)
-    {
+    export function getClassName(obj: Object) {
         if (!obj) return "";
         let constructor = Object.getPrototypeOf(obj).constructor;
         if (!constructor) return "";
@@ -88,8 +89,7 @@ namespace m4m.framework
      * Transform工具类
      * @version m4m 1.0
      */
-    export class TransformUtil
-    {
+    export class TransformUtil {
         /**
          * @public
          * @language zh_CN
@@ -99,10 +99,8 @@ namespace m4m.framework
          * @param app application的实例
          * @version m4m 1.0
          */
-        static CreatePrimitive(type: PrimitiveType, app: application = null): transform
-        {
-            if (!app)
-            {
+        static CreatePrimitive(type: PrimitiveType, app: application = null): transform {
+            if (!app) {
                 app = sceneMgr.app;
             }
             let objName = (PrimitiveType[type] as string);
@@ -128,10 +126,8 @@ namespace m4m.framework
          * @param app application的实例
          * @version m4m 1.0
          */
-        static Create2DPrimitive(type: Primitive2DType, app: application = null): transform2D
-        {
-            if (!app)
-            {
+        static Create2DPrimitive(type: Primitive2DType, app: application = null): transform2D {
+            if (!app) {
                 app = sceneMgr.app;
             }
             // let enumObj = EnumUtil.getEnumObjByType("m4m.framework.Primitive2DType");
@@ -141,8 +137,7 @@ namespace m4m.framework
             let t2d = this.make2DNode(objName);
             let i2dComp = t2d.addComponent(componentName);
 
-            switch (type)
-            {
+            switch (type) {
                 case Primitive2DType.RawImage2D:
                     TransformUtil.create2D_rawImage(i2dComp as rawImage2D, app);
                     break;
@@ -158,12 +153,28 @@ namespace m4m.framework
                 case Primitive2DType.InputField:
                     TransformUtil.create2D_InputField(i2dComp as inputField, app);
                     break;
+                case Primitive2DType.Progressbar:
+                    TransformUtil.create2D_progressbar(i2dComp as progressbar, app);
+                    break;
+                case Primitive2DType.ScrollRect:
+                    TransformUtil.create2D_scrollRect(i2dComp as scrollRect, app);
+                    break;
             }
             return t2d;
         }
 
-        private static make2DNode(name: string, parent: transform2D = null, lOpt: layoutOption = 0, w: number = 100, h: number = 100, px: number = 0, py: number = 0)
-        {
+        /**
+         * 创建一个2D 节点
+         * @param name 名字
+         * @param parent 父节点
+         * @param lOpt 布局选项
+         * @param w 宽
+         * @param h 高
+         * @param px 坐标x
+         * @param py 坐标y
+         * @returns 2D 节点
+         */
+        private static make2DNode(name: string, parent: transform2D = null, lOpt: layoutOption = layoutOption.NOTHING, w: number = 100, h: number = 100, px: number = 0, py: number = 0) {
             let node: transform2D = new transform2D();
             node.name = name;
             node.width = w;
@@ -176,22 +187,84 @@ namespace m4m.framework
             return node;
         }
 
-        private static create2D_rawImage(img: rawImage2D, app: application)
-        {
+        /**
+         * 构建一个 2D rawImage 节点
+         * @param img rawImage节点
+         * @param app 引擎app
+         */
+        private static create2D_rawImage(img: rawImage2D, app: application) {
             img.transform.width = 100;
             img.transform.height = 100;
             img.image = app.getAssetMgr().getDefaultTexture("white");
         }
 
-        private static create2D_image2D(img: image2D, app: application)
-        {
+        /**
+         * 构建一个 2D image2D 节点
+         * @param img image2D节点
+         * @param app 引擎app
+         */
+        private static create2D_image2D(img: image2D, app: application) {
             img.transform.width = 100;
             img.transform.height = 100;
             img.sprite = app.getAssetMgr().getDefaultSprite("white_sprite");
         }
 
-        private static create2D_label(label: label, app: application)
-        {
+        /**
+         * 构建一个 进度条
+         * @param progress 进度条节点
+         * @param app 引擎app
+         */
+        private static create2D_progressbar(progress: progressbar, app: application) {
+            progress.transform.width = 160;
+            progress.transform.height = 20;
+            let bgimg = progress.transform.addComponent("image2D") as m4m.framework.image2D;
+            bgimg.sprite = app.getAssetMgr().getDefaultSprite("white_sprite");
+            bgimg.color = new m4m.math.color(0.6, 0.6, 0.6, 1);
+            progress.barBg = bgimg;
+
+            let layout = m4m.framework.layoutOption;
+            let Opt = layout.TOP | layout.BOTTOM | layout.LEFT;
+            let cut = this.make2DNode("FillCut", progress.transform, Opt);
+            // cut.isMask = true;
+            progress.cutPanel = cut;
+
+            let fill = this.make2DNode("Fill", cut, Opt);
+            let fillimg = fill.addComponent("image2D") as m4m.framework.image2D;
+            fillimg.sprite = app.getAssetMgr().getDefaultSprite("white_sprite");
+            progress.barOverImg = fillimg;
+
+            // progress.transform.markDirty();
+        }
+
+        /**
+         * 构建一个 滑动矩形区
+         * @param scrollrect 滑动矩形区节点
+         * @param app 引擎app
+         */
+        private static create2D_scrollRect(scrollrect: scrollRect, app: application) {
+            scrollrect.transform.width = 200;
+            scrollrect.transform.height = 200;
+            let img = scrollrect.transform.addComponent("image2D") as m4m.framework.image2D;
+            img.sprite = app.getAssetMgr().getDefaultSprite("white_sprite");
+            img.color = new m4m.math.color(0.3, 0.3, 0.3, 1);
+
+            let cont = this.make2DNode("Content", scrollrect.transform);
+            cont.width = scrollrect.transform.width + 100;
+            cont.height = scrollrect.transform.height + 100;
+
+            scrollrect.content = cont;
+            scrollrect.horizontal = true;
+            scrollrect.vertical = true;
+            scrollrect.transform.isMask = true;
+            scrollrect.transform.markDirty();
+        }
+
+        /**
+         * 构建一个 文本标签
+         * @param label 文本标签节点
+         * @param app 引擎app
+         */
+        private static create2D_label(label: label, app: application) {
             label.transform.width = 150;
             label.transform.height = 50;
             label.text = "label";
@@ -219,8 +292,12 @@ namespace m4m.framework
             // }
         }
 
-        private static create2D_button(btn: button, app: application)
-        {
+        /**
+         * 构建一个 按钮
+         * @param btn 按钮节点
+         * @param app 引擎app
+         */
+        private static create2D_button(btn: button, app: application) {
             btn.transform.width = 150;
             btn.transform.height = 50;
             let img = btn.transform.addComponent("image2D") as m4m.framework.image2D;
@@ -260,8 +337,12 @@ namespace m4m.framework
             // }
         }
 
-        private static create2D_InputField(ipt: inputField, app: application)
-        {
+        /**
+         * 构建一个 输入框
+         * @param ipt 输入框
+         * @param app 引擎app
+         */
+        private static create2D_InputField(ipt: inputField, app: application) {
             let assetMgr = app.getAssetMgr();
             let opt = layoutOption;
             let tOpt = opt.TOP | opt.RIGHT | opt.BOTTOM | opt.LEFT;
@@ -275,6 +356,7 @@ namespace m4m.framework
             let bg_t = this.make2DNode("frameImage", node, tOpt);
             let bg_img = bg_t.addComponent("image2D") as image2D;
             bg_img.sprite = assetMgr.getDefaultSprite("white_sprite");
+            bg_img.color = new math.color(0.8, 0.8, 0.8, 1);
 
             let fSize = 24;
             //添加 Text lable

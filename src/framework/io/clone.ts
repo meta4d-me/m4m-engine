@@ -37,7 +37,9 @@ namespace m4m.io
         return clonedObj;
     }
     /**
-     * @private
+     * 填充克隆节点对象的引用
+     * @param instanceObj 被克隆实例
+     * @param clonedObj 克隆实例
      */
     export function fillCloneReference(instanceObj: any, clonedObj: any): any
     {
@@ -91,7 +93,10 @@ namespace m4m.io
     }
 
     /**
-     * @private
+     * 填充克隆节点对象的引用，类型或数组相关
+     * @param instanceObj 被克隆实例
+     * @param clonedObj 克隆实例
+     * @param key 类型或数组key
      */
     export function fillCloneReferenceTypeOrArray(instanceObj: any, clonedObj: any, key: string)
     {
@@ -133,7 +138,12 @@ namespace m4m.io
     }
 
     /**
-     * @private
+     * 填充克隆节点对象的引用，类型相关
+     * @param instanceObj 被克隆实例
+     * @param clonedObj 克隆实例
+     * @param key 类型或数组key
+     * @param instanceParent 被克隆实例的父节点
+     * @param clonedParent 克隆实例的父节点
      */
     export function fillCloneReferenceType(instanceObj: any, clonedObj: any, key: string, instanceParent: any = null, clonedParent: any = null, instanceKey: string = "")
     {
@@ -206,7 +216,10 @@ namespace m4m.io
     }
 
     /**
-     * @private
+     * 克隆节点
+     * @param instanceObj 被克隆实例
+     * @param clonedObj 克隆实例
+     * @returns 
      */
     export function _cloneObj(instanceObj: any, clonedObj: any = undefined): any
     {
@@ -279,7 +292,10 @@ namespace m4m.io
     }
 
     /**
-     * @private
+     * 克隆其他节点对象，类型或数组相关
+     * @param instanceObj 被克隆实例
+     * @param clonedObj 克隆实例
+     * @param key 类型或数组key
      */
     export function cloneOtherTypeOrArray(instanceObj: any, clonedObj: any, key: string)
     {
@@ -344,7 +360,13 @@ namespace m4m.io
     }
 
     /**
-     * @private
+     * 克隆其他节点对象
+     * @param instanceObj 被克隆实例
+     * @param clonedObj 克隆实例
+     * @param key 类型或数组key
+     * @param instanceParent 被克隆实例的父节点
+     * @param clonedParent 被克隆实例的父节点
+     * @param instanceKey 实例key
      */
     export function cloneOtherType(instanceObj: any, clonedObj: any, key: string, instanceParent: any = null, clonedParent: any = null, instanceKey: string = "")
     {

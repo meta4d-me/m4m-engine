@@ -77,13 +77,23 @@ limitations under the License.
         state_blendDestALpha: number = 0;
         //uniforms: { [id: string]: { change: boolean, location: WebGLUniformLocation, type: UniformTypeEnum, value: any } } = {};
         mapuniforms: { [id: string]: uniform };
-        //static mapUniformDic:{[type:number]:(webgl: WebGLRenderingContext, key: WebGLUniformLocation, value: any)=>void};
+        //static mapUniformDic:{[type:number]:(webgl: WebGL2RenderingContext, key: WebGLUniformLocation, value: any)=>void};
         //uniformallchange: boolean = false;
+        /**
+         * 设置 当前 引擎着色器 program
+         * @param program 引擎着色器 program
+         * @param uniformDefault 默认uniform？[已弃用]
+         */
         setProgram(program: glProgram, uniformDefault: boolean = false)
         {
             this.program = program;
             this.mapuniforms=program.mapUniform;
         }
+
+        /**
+         * 设置半透混合模式
+         * @param mode 半透混合模式
+         */
         setAlphaBlend(mode: BlendModeEnum)
         {
             this.state_blendMode=mode;
@@ -227,7 +237,12 @@ limitations under the License.
 
         private static lastPassID = -1;
 
-        use(webgl: WebGLRenderingContext)
+        /**
+         * 使用pass
+         * @param webgl webgl上下文
+         * @returns 
+         */
+        use(webgl: WebGL2RenderingContext)
         {
             let ID = this.id.getID(); 
             let lastSame = glDrawPass.lastPassID == ID;
@@ -359,7 +374,7 @@ limitations under the License.
             // }
         }
 
-        // applyUniformSaved(webgl: WebGLRenderingContext)
+        // applyUniformSaved(webgl: WebGL2RenderingContext)
         // {
 
         //     var texindex = 0;//自动统计使用的贴图
@@ -412,37 +427,37 @@ limitations under the License.
         //     }
         //     this.uniformallchange = false;
         // }
-        // applyUniform_Float(webgl: WebGLRenderingContext, key: string, value: number)
+        // applyUniform_Float(webgl: WebGL2RenderingContext, key: string, value: number)
         // {
         //     var u = this.uniforms[key];
         //     webgl.uniform1f(u.location, value);
         // }
-        // applyUniform_Floatv(webgl: WebGLRenderingContext, key: string, value: Float32Array)
+        // applyUniform_Floatv(webgl: WebGL2RenderingContext, key: string, value: Float32Array)
         // {
         //     var u = this.uniforms[key];
         //     webgl.uniform1fv(u.location, value);
         // }
-        // applyUniform_Float4(webgl: WebGLRenderingContext, key: string, value: math.vector4)
+        // applyUniform_Float4(webgl: WebGL2RenderingContext, key: string, value: math.vector4)
         // {
         //     var u = this.uniforms[key];
         //     webgl.uniform4f(u.location, value.x, value.y, value.z, value.w);
         // }
-        // applyUniform_Float4v(webgl: WebGLRenderingContext, key: string, values: Float32Array)
+        // applyUniform_Float4v(webgl: WebGL2RenderingContext, key: string, values: Float32Array)
         // {
         //     var u = this.uniforms[key];
         //     webgl.uniform4fv(u.location, values);
         // }
-        // applyUniform_Float4x4(webgl: WebGLRenderingContext, key: string, value: math.matrix)
+        // applyUniform_Float4x4(webgl: WebGL2RenderingContext, key: string, value: math.matrix)
         // {
         //     var u = this.uniforms[key];
         //     webgl.uniformMatrix4fv(u.location, false, value.rawData);
         // }
-        // applyUniform_Float4x4v(webgl: WebGLRenderingContext, key: string, values: Float32Array)
+        // applyUniform_Float4x4v(webgl: WebGL2RenderingContext, key: string, values: Float32Array)
         // {
         //     var u = this.uniforms[key];
         //     webgl.uniformMatrix4fv(u.location, false, values);
         // }
-        // applyUniform_FloatTexture(webgl: WebGLRenderingContext, texindex: number, key: string, value: ITexture)
+        // applyUniform_FloatTexture(webgl: WebGL2RenderingContext, texindex: number, key: string, value: ITexture)
         // {
         //     var u = this.uniforms[key];
         //     var tex = value != null ? (value as ITexture).texture : null;
@@ -451,73 +466,73 @@ limitations under the License.
         //     webgl.uniform1i(u.location, texindex);
         // }
 
-        draw(webgl: WebGLRenderingContext, mesh: glMesh, drawmode: DrawModeEnum = DrawModeEnum.EboTri,
-            drawindexindex: number = 0, drawbegin: number = 0, drawcount: number = -1)
-        {
-            this.use(webgl);
-            //bind attribute &vbo
+        // draw(webgl: WebGL2RenderingContext, mesh: glMesh, drawmode: DrawModeEnum = DrawModeEnum.EboTri,
+        //     drawindexindex: number = 0, drawbegin: number = 0, drawcount: number = -1)
+        // {
+        //     this.use(webgl);
+        //     //bind attribute &vbo
 
-            mesh.bind(webgl, this.program, drawindexindex);
-            if (drawmode == DrawModeEnum.VboTri)
-            {
-                mesh.drawArrayTris(webgl, drawbegin, drawcount);
-            }
-            else if (drawmode == DrawModeEnum.VboLine)
-            {
-                mesh.drawArrayLines(webgl, drawbegin, drawcount);
-            }
-            else if (drawmode == DrawModeEnum.EboTri)
-            {
-                mesh.drawElementTris(webgl, drawbegin, drawcount);
-            }
-            else if (drawmode == DrawModeEnum.EboLine)
-            {
-                mesh.drawElementLines(webgl, drawbegin, drawcount);
-            }
-        }
+        //     mesh.bind(webgl, this.program, drawindexindex);
+        //     if (drawmode == DrawModeEnum.VboTri)
+        //     {
+        //         mesh.drawArrayTris(webgl, drawbegin, drawcount);
+        //     }
+        //     else if (drawmode == DrawModeEnum.VboLine)
+        //     {
+        //         mesh.drawArrayLines(webgl, drawbegin, drawcount);
+        //     }
+        //     else if (drawmode == DrawModeEnum.EboTri)
+        //     {
+        //         mesh.drawElementTris(webgl, drawbegin, drawcount);
+        //     }
+        //     else if (drawmode == DrawModeEnum.EboLine)
+        //     {
+        //         mesh.drawElementLines(webgl, drawbegin, drawcount);
+        //     }
+        // }
 
-        private getCurDrawState(): string
-        {
-            let res: string = "";
-            res = this.formate(this.state_showface.toString(), res);
+        // private getCurDrawState(): string
+        // {
+        //     let res: string = "";
+        //     res = this.formate(this.state_showface.toString(), res);
 
-            res = this.formate(this.state_zwrite.toString(), res);
+        //     res = this.formate(this.state_zwrite.toString(), res);
 
-            res = this.formate(this.state_ztest.toString(), res);
-            if (this.state_ztest)
-            {
-                res = this.formate(this.state_ztest_method.toString(), res);
-            } else
-            {
-                res = this.formate("ztestnone", res);
-            }
+        //     res = this.formate(this.state_ztest.toString(), res);
+        //     if (this.state_ztest)
+        //     {
+        //         res = this.formate(this.state_ztest_method.toString(), res);
+        //     } else
+        //     {
+        //         res = this.formate("ztestnone", res);
+        //     }
 
-            res = this.formate(this.state_blend.toString(), res);
-            if (this.state_blend)
-            {
-                res = this.formate(this.state_blendEquation.toString(), res);
-            } else
-            {
-                res = this.formate("blendnone", res);
-            }
-            // console.log(res);
-            return res;
-        }
+        //     res = this.formate(this.state_blend.toString(), res);
+        //     if (this.state_blend)
+        //     {
+        //         res = this.formate(this.state_blendEquation.toString(), res);
+        //     } else
+        //     {
+        //         res = this.formate("blendnone", res);
+        //     }
+        //     // console.log(res);
+        //     return res;
+        // }
 
-        private getCurBlendVal(): string
-        {
-            let res: string = "";
-            res = this.formate(this.state_blendSrcRGB.toString(), res);
-            res = this.formate(this.state_blendDestRGB.toString(), res);
-            res = this.formate(this.state_blendSrcAlpha.toString(), res);
-            res = this.formate(this.state_blendDestALpha.toString(), res);
-            return res;
-        }
+        // private getCurBlendVal(): string
+        // {
+        //     let res: string = "";
+        //     res = this.formate(this.state_blendSrcRGB.toString(), res);
+        //     res = this.formate(this.state_blendDestRGB.toString(), res);
+        //     res = this.formate(this.state_blendSrcAlpha.toString(), res);
+        //     res = this.formate(this.state_blendDestALpha.toString(), res);
+        //     return res;
+        // }
 
-        private formate(str: string, out: string)
-        {
-            return out += str + "_";
-        }
+        // private formate(str: string, out: string)
+        // {
+        //     return out += str + "_";
+        // }
 
 
 

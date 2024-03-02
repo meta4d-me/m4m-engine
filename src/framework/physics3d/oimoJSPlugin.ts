@@ -125,6 +125,11 @@ namespace m4m.framework
             this.applyImpulse(impostor, force, contactPoint);
         }
 
+        /**
+         * 检查最小值
+         * @param value 值 
+         * @returns 结果值
+         */
         private checkWithEpsilon(value: number){
             return Math.max(value, PhysicsEngine.Epsilon);
         }

@@ -83,10 +83,20 @@ namespace m4m.framework
      */
     export class cullingmaskutil
     {
+        /**
+         * mask值转 层级ID
+         * @param mask mask值转（二进制位 标记层级的值）
+         * @returns 层级ID
+         */
         static maskTolayer(mask:number){
             return Math.log(mask) / Math.log(2);
         }
         
+        /**
+         * 层级ID 转 mask（二进制位 标记层级的值）
+         * @param layer 层级ID
+         * @returns mask值
+         */
         static layerToMask(layer:number){
             return 1 << layer;
         }

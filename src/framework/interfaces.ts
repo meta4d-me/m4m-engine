@@ -28,12 +28,20 @@ namespace m4m.framework {
      * @version m4m 1.0
      */
     export interface INodeComponent {
+        /** 初始化时调用  在start 之后*/
         onPlay();
+        /** 初始化时调用 */
         start();
+         /**
+         * 每帧调用一次
+         * @param delta 上一帧的消耗时间(单位s)
+         */
         update(delta: number);
+        /** 节点对象 */
         gameObject: gameObject;
+        /** 销毁时调用 */
         remove();
-        clone();
+        // clone();         //没有实际使用过 的接口
         // jsonToAttribute(json: any, assetmgr: assetMgr);
     }
 
@@ -45,10 +53,18 @@ namespace m4m.framework {
      * @version m4m 1.0
      */
     export interface I2DComponent {
+        /** 初始化时调用  在start 之后*/
         onPlay();
+        /** 初始化时调用 */
         start();
+        /**
+         * 每帧调用一次
+         * @param delta 上一帧的消耗时间(单位s)
+         */
         update(delta: number);
+        /** 节点变换对象 */
         transform: transform2D;
+        /** 销毁时调用 */
         remove();
     }
 
@@ -61,7 +77,12 @@ namespace m4m.framework {
      */
     export interface ICollider2d {
         transform: transform2D;
+        /** 获取包围边界 */
         getBound(): obb2d;
+        /**
+         * 交叉检测
+         * @param tran 检测的节点 
+         */
         intersectsTransform(tran: transform2D): boolean;
     }
 
@@ -73,12 +94,22 @@ namespace m4m.framework {
      * @version m4m 1.0
      */
     export interface IRectRenderer extends I2DComponent {
+        /**
+         * 执行渲染
+         * @param canvas 引擎 canvas 对象
+         */
         render(canvas: canvas);
-        //刷新顶点信息
+        /**
+         * 刷新顶点信息
+         */
         updateTran();
-        //获取渲染材质
+        /**
+         * 获取渲染材质
+         */
         getMaterial(): material;
-        //获取渲染边界(合并渲染深度排序会使用到)
+        /**
+         * 获取渲染边界(合并渲染深度排序会使用到)
+         */
         getDrawBounds(): m4m.math.rect;
     }
 
@@ -93,7 +124,12 @@ namespace m4m.framework {
         layer: RenderLayerEnum;
         renderLayer: number;  //后期发现 和 gameObject.layer 概念冲突 ，实现时 对接处理
         queue: number;
-
+        /**
+         * 执行渲染
+         * @param context 引擎渲染上下文对象
+         * @param assetmgr 引擎资源管理
+         * @param camera 相机对象
+         */
         render(context: renderContext, assetmgr: assetMgr, camera: camera);
     }
 

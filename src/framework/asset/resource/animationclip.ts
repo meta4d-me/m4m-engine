@@ -41,6 +41,10 @@ namespace m4m.framework
          * @version m4m 1.0
          */
         defaultAsset: boolean = false;
+        /**
+         * 动画片段
+         * @param assetName 资源名 
+         */
         constructor(assetName: string = null)
         {
             if (!assetName)
@@ -397,7 +401,7 @@ namespace m4m.framework
     }
 
     /**
-     * @private
+     * 姿势的 骨骼+矩阵
      */
     @reflect.SerializeType
     export class PoseBoneMatrix
@@ -410,11 +414,19 @@ namespace m4m.framework
         r: math.quaternion;
         @reflect.Field("scale")
         s: math.float;
+        /**
+         * 计算内存占用数据长度
+         * @returns 数据长度
+         */
         static caclByteLength(): number
         {
             let total = 12 + 16;
             return total;
         }
+        /**
+         * 拷贝一个实例
+         * @returns 骨骼+矩阵对象
+         */
         Clone(): PoseBoneMatrix
         {
             var p = new PoseBoneMatrix();
@@ -424,6 +436,13 @@ namespace m4m.framework
             math.quatClone(this.r, p.r);
             return p;
         }
+
+        /**
+         * 加载
+         * @param read 二进制读对象
+         * @param hasScaled 是否有缩放
+         * @param optimizeSize 优化尺寸
+         */
         load(read: io.binReader, hasScaled = false, optimizeSize: { minVals: number[], maxVals: number[] } = null)
         {
             if (!optimizeSize)
@@ -489,6 +508,9 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 创建一个默认的对象
+         */
         static createDefault(): PoseBoneMatrix
         {
             var pt = new PoseBoneMatrix();
@@ -496,6 +518,11 @@ namespace m4m.framework
             pt.t = new math.vector3(0, 0, 0);
             return pt;
         }
+
+        /**
+         * 从一个 （骨骼+矩阵）对象复制属性
+         * @param src 
+         */
         copyFrom(src: PoseBoneMatrix)
         {
             // this.r.rawData.set(src.r.rawData);
@@ -503,6 +530,12 @@ namespace m4m.framework
             math.quatClone(src.r, this.r);
             math.vec3Clone(src.t, this.t);
         }
+
+        /**
+         * 从一个 数据对象复制属性
+         * @param src 
+         * @param seek 
+         */
         copyFromData(src: Float32Array, seek: number)
         {
             this.r.x = src[seek + 0];
@@ -515,6 +548,10 @@ namespace m4m.framework
             // TODO:
             // this.s = src[seek + 7];
         }
+
+        /**
+         * 骨骼+矩阵 逆转置
+         */
         invert()
         {
             math.quatInverse(this.r, this.r)
@@ -523,6 +560,11 @@ namespace m4m.framework
             this.t.y *= -1;
             this.t.z *= -1;
         }
+
+        /**
+         * @deprecated [已弃用]
+         * 世界空间中差值运算
+         */
         lerpInWorld(_tpose: PoseBoneMatrix, from: PoseBoneMatrix, to: PoseBoneMatrix, v: number)
         {
             ////预乘之后，插值奇慢
@@ -546,6 +588,14 @@ namespace m4m.framework
 
             PoseBoneMatrix.sMultiply(outLerp, itpose, this);
         }
+        /**
+         * 用数据计算 在世界空间中差值
+         * @param _tpose tpose
+         * @param from 起始值
+         * @param todata 结束的数据
+         * @param toseek 
+         * @param v 差值进度百分比值
+         */
         lerpInWorldWithData(_tpose: PoseBoneMatrix, from: PoseBoneMatrix, todata: Float32Array, toseek: number, v: number)
         {
             ////预乘之后，插值奇慢
@@ -569,6 +619,14 @@ namespace m4m.framework
 
             PoseBoneMatrix.sMultiply(outLerp, itpose, this);
         }
+
+        /**
+         * 相乘计算
+         * @param left 左值
+         * @param right 右值
+         * @param target 结果承接对象
+         * @returns 结果对象
+         */
         static sMultiply(left: PoseBoneMatrix, right: PoseBoneMatrix, target: PoseBoneMatrix = null): PoseBoneMatrix
         {
             if (target == null)
@@ -587,6 +645,8 @@ namespace m4m.framework
             math.pool.delete_vector3(dirtran);
             return target;
         }
+
+        /** @deprecated [已弃用] */
         static sMultiplytpose(left: PoseBoneMatrix, right: tPoseInfo, target: PoseBoneMatrix = null): PoseBoneMatrix
         {
             if (target == null)
@@ -606,6 +666,14 @@ namespace m4m.framework
             return target;
         }
 
+        /**
+         * 用数据计算 相乘计算
+         * @param leftdata 左值
+         * @param leftseek 
+         * @param right 右值
+         * @param target 结果承接对象
+         * @returns 结果对象
+         */
         static sMultiplyDataAndMatrix(leftdata: Float32Array, leftseek: number, right: PoseBoneMatrix, target: PoseBoneMatrix = null): PoseBoneMatrix
         {
             if (target == null)
@@ -624,6 +692,15 @@ namespace m4m.framework
             math.pool.delete_vector3(dirtran);
             return target;
         }
+
+        /**
+         * 球形差值计算
+         * @param left 左值
+         * @param right 右值
+         * @param v 差值进度百分比值
+         * @param target 结果承接对象
+         * @returns 结果对象
+         */
         static sLerp(left: PoseBoneMatrix, right: PoseBoneMatrix, v: number, target: PoseBoneMatrix = null): PoseBoneMatrix
         {
             if (target == null)
@@ -637,10 +714,19 @@ namespace m4m.framework
         }
 
         private static poolmats: PoseBoneMatrix[] = [];
+        /**
+         * 对象回收到池
+         * @param mat 骨骼+矩阵对象
+         */
         static recycle(mat: PoseBoneMatrix)
         {
             this.poolmats.push(mat);
         }
+        
+        /**
+         * 从池里面获取一个对象
+         * @returns 骨骼+矩阵对象
+         */
         static create(): PoseBoneMatrix
         {
             let item = this.poolmats.pop();
@@ -664,6 +750,10 @@ namespace m4m.framework
         loop: boolean;
         startframe: number;
         endframe: number;
+        /**
+         * 计算内存数据长度
+         * @returns 
+         */
         static caclByteLength(): number
         {
             let total = 0;

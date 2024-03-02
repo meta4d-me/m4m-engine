@@ -24,7 +24,10 @@ namespace m4m.framework
     export class ParticleSystemShapeBase
     {
         protected _module: ParticleShapeModule;
-
+        /**
+         * 粒子系统形状
+         * @param module 粒子形状模块
+         */
         constructor(module: ParticleShapeModule)
         {
             this._module = module;

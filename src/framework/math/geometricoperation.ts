@@ -16,6 +16,7 @@ limitations under the License.
  */
 ﻿namespace m4m.math
 {
+    /** 计算 线与平面相交点*/
     export function calPlaneLineIntersectPoint(planeVector: vector3, planePoint: vector3, lineVector: vector3, linePoint: vector3, out: vector3)
     {
         var vp1 = planeVector.x;
@@ -43,20 +44,20 @@ limitations under the License.
             out.z = m3 + v3 * t;  
         }
     }
-    //判断点是否在矩形p1p2p3p4中
+    /** 判断点是否在矩形p1p2p3p4中 */
     export function isContain(p1: vector2, p2: vector2, p3: vector2, p4: vector2, mp: vector2)
     {
         if (Multiply(mp, p1, p2) * Multiply(mp, p4, p3) <= 0 && Multiply(mp, p4, p1) * Multiply(mp, p3, p2) <= 0)
             return true;
         return false; 
     }
-    // 计算叉乘 |P0P1| × |P0P2| 
+    /** 计算叉乘 |P0P1| × |P0P2|  */
     export function Multiply(p1: vector2, p2: vector2, p0: vector2): number
     {
         return ((p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y));
     }
 
-    //待测试
+    /** 待测试 */
     function getPointByTwoline(index: number, p2: vector3, dir2: vector3, outpoint: vector3)
     {
         var matrix = new m4m.math.matrix();

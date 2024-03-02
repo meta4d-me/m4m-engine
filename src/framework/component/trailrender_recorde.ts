@@ -106,13 +106,21 @@ namespace m4m.framework
             }
             return this._endColor;
         }
-
+        /**
+         * 设置宽度
+         * @param startWidth 开始的宽度
+         * @param endWidth 结束的宽度
+         */
         public setWidth(startWidth: number, endWidth: number = 0)
         {
             this._startWidth = startWidth;
             this._endWidth = endWidth;
         }
         private activeMaxpointlimit: boolean = false;
+        /**
+         * 设置最大点限制值
+         * @param value 最大点限制值
+         */
         setMaxpointcontroll(value: boolean = false)
         {
             this.activeMaxpointlimit = value;
@@ -135,12 +143,13 @@ namespace m4m.framework
             this.mesh.glMesh.initBuffer(this.webgl, vf, 128, render.MeshTypeEnum.Dynamic);
 
             this.mesh.glMesh.addIndex(this.webgl, this.dataForEbo.length);
+            this.mesh.glMesh.initVAO();
+
 
             this.mesh.submesh = [];
             {
                 var sm = new subMeshInfo();
                 sm.matIndex = 0;
-                sm.useVertexIndex = 0;
                 sm.start = 0;
                 sm.size = this.dataForEbo.length;
                 sm.line = false;
@@ -164,7 +173,7 @@ namespace m4m.framework
         }
 
         private app: application;
-        private webgl: WebGLRenderingContext;
+        private webgl: WebGL2RenderingContext;
         update(delta: number)
         {
             var _time = this.app.getTotalTime();
@@ -179,6 +188,10 @@ namespace m4m.framework
         {
 
         }
+        /**
+         * 刷新拖尾节点
+         * @param curTime 时间
+         */
         private refreshTrailNode(curTime: number)
         {
 
@@ -270,6 +283,11 @@ namespace m4m.framework
 
         private notRender: boolean = false;
 
+        /**
+         * 更新拖尾数据
+         * @param curTime 时间
+         * @returns 
+         */
         private updateTrailData(curTime: number)
         {
 
@@ -344,6 +362,9 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 检查缓冲区大小（小了扩容）
+         */
         private checkBufferSize()
         {
             var stickNumber = this.targetPath.length;
@@ -398,7 +419,12 @@ namespace m4m.framework
         handle: m4m.math.vector3;
 
         trailNodes: trailNode[];
-
+        /**
+         * 拖尾节点
+         * @param p 点
+         * @param updir 方向 
+         * @param t 值
+         */
         constructor(p: m4m.math.vector3, updir: m4m.math.vector3, t: number)
         {
             this.location = p;

@@ -16,10 +16,13 @@ limitations under the License.
  */
 ﻿
 "use strict";
-namespace m4m.math
-{
-    export function matrixGetTranslation(src: matrix, out: vector3)
-    {
+namespace m4m.math {
+    /**
+     * 获取矩阵的位移变换
+     * @param src 矩阵
+     * @param out 移变换向量
+     */
+    export function matrixGetTranslation(src: matrix, out: vector3) {
         out.x = src.rawData[12];
         out.y = src.rawData[13];
         out.z = src.rawData[14];
@@ -36,8 +39,7 @@ namespace m4m.math
     * @version m4m 1.0
     * @platform Web,Native
     */
-    export function matrixTranspose(src: matrix, out: matrix)
-    {
+    export function matrixTranspose(src: matrix, out: matrix) {
         let s1 = src.rawData[1];
         let s2 = src.rawData[2];
         let s3 = src.rawData[3];
@@ -51,23 +53,29 @@ namespace m4m.math
         let s13 = src.rawData[13];
         let s14 = src.rawData[14];
 
-        out.rawData[1]  = s4;
-        out.rawData[2]  = s8;
-        out.rawData[3]  = s12;
-        out.rawData[4]  = s1;
-        out.rawData[6]  = s9;
-        out.rawData[7]  = s13;
-        out.rawData[8]  = s2;
-        out.rawData[9]  = s6;
+        out.rawData[1] = s4;
+        out.rawData[2] = s8;
+        out.rawData[3] = s12;
+        out.rawData[4] = s1;
+        out.rawData[6] = s9;
+        out.rawData[7] = s13;
+        out.rawData[8] = s2;
+        out.rawData[9] = s6;
         out.rawData[11] = s14;
         out.rawData[12] = s3;
         out.rawData[13] = s7;
         out.rawData[14] = s11;
     }
 
-
-    export function matrixDecompose(src: matrix, scale: vector3, rotation: quaternion, translation: vector3): boolean
-    {
+    /**
+     * 矩阵分解 到 缩放、旋转、位移
+     * @param src 矩阵
+     * @param scale 缩放
+     * @param rotation 旋转
+     * @param translation 位移
+     * @returns 缩放不为0？
+     */
+    export function matrixDecompose(src: matrix, scale: vector3, rotation: quaternion, translation: vector3): boolean {
         translation.x = src.rawData[12];
         translation.y = src.rawData[13];
         translation.z = src.rawData[14];
@@ -81,8 +89,7 @@ namespace m4m.math
         scale.y = ys * Math.sqrt(src.rawData[4] * src.rawData[4] + src.rawData[5] * src.rawData[5] + src.rawData[6] * src.rawData[6]);
         scale.z = zs * Math.sqrt(src.rawData[8] * src.rawData[8] + src.rawData[9] * src.rawData[9] + src.rawData[10] * src.rawData[10]);
 
-        if (scale.x === 0 || scale.y === 0 || scale.z === 0)
-        {
+        if (scale.x === 0 || scale.y === 0 || scale.z === 0) {
             rotation.x = 0;
             rotation.y = 0;
             rotation.z = 0;
@@ -111,12 +118,18 @@ namespace m4m.math
         pool.delete_matrix(mat);
         return true;
     }
-    export class angelref
-    {
+    export class angelref {
         v: number;
     }
-    export function matrix3x2Decompose(src: matrix3x2, scale: vector2, rotation: angelref, translation: vector2): boolean
-    {
+    /**
+     * 矩阵3x2 解 到 缩放、旋转、位移
+     * @param src 矩阵3x2
+     * @param scale 缩放
+     * @param rotation 旋转
+     * @param translation 位移
+     * @returns 缩放不为0？
+     */
+    export function matrix3x2Decompose(src: matrix3x2, scale: vector2, rotation: angelref, translation: vector2): boolean {
         //trans
         translation.x = src.rawData[4];
         translation.y = src.rawData[5];
@@ -143,8 +156,7 @@ namespace m4m.math
         scale.x = Math.sqrt(src.rawData[0] * src.rawData[0] + src.rawData[1] * src.rawData[1]);
         scale.y = Math.sqrt(src.rawData[2] * src.rawData[2] + src.rawData[3] * src.rawData[3]);
 
-        if (scale.x === 0 || scale.y === 0)
-        {
+        if (scale.x === 0 || scale.y === 0) {
             rotation.v = 0;
             return false;
         }
@@ -153,8 +165,7 @@ namespace m4m.math
         var r1 = Math.acos(sx);
         var sxs = src.rawData[1] / scale.x;
         var r2 = Math.asin(sxs);
-        if (sxs < 0)
-        {
+        if (sxs < 0) {
             r1 = 2 * Math.PI - r1;
             //r1=r1+Math.PI;
         }
@@ -162,8 +173,13 @@ namespace m4m.math
         return true;
     }
 
-    export function matrixGetEuler(src: matrix, order: RotationOrder, rotation: vector3): void
-    {
+    /**
+     * 矩阵 中获取 Euler旋转
+     * @param src 矩阵
+     * @param order 旋转方向
+     * @param rotation Euler旋转（vector3）
+     */
+    export function matrixGetEuler(src: matrix, order: RotationOrder, rotation: vector3): void {
         var clamp = math.floatClamp;
         //
         var rawData = src.rawData;
@@ -184,86 +200,71 @@ namespace m4m.math
         m23 /= scaleZ;
         m33 /= scaleZ;
         //
-        if (order === RotationOrder.XYZ)
-        {
+        if (order === RotationOrder.XYZ) {
             rotation.y = Math.asin(clamp(m13, - 1, 1));
-            if (Math.abs(m13) < 0.9999999)
-            {
+            if (Math.abs(m13) < 0.9999999) {
                 rotation.x = Math.atan2(- m23, m33);
                 rotation.z = Math.atan2(- m12, m11);
-            } else
-            {
+            } else {
                 rotation.x = Math.atan2(m32, m22);
                 rotation.z = 0;
             }
-        } else if (order === RotationOrder.YXZ)
-        {
+        } else if (order === RotationOrder.YXZ) {
             rotation.x = Math.asin(- clamp(m23, - 1, 1));
-            if (Math.abs(m23) < 0.9999999)
-            {
+            if (Math.abs(m23) < 0.9999999) {
                 rotation.y = Math.atan2(m13, m33);
                 rotation.z = Math.atan2(m21, m22);
-            } else
-            {
+            } else {
                 rotation.y = Math.atan2(- m31, m11);
                 rotation.z = 0;
             }
-        } else if (order === RotationOrder.ZXY)
-        {
+        } else if (order === RotationOrder.ZXY) {
             rotation.x = Math.asin(clamp(m32, - 1, 1));
-            if (Math.abs(m32) < 0.9999999)
-            {
+            if (Math.abs(m32) < 0.9999999) {
                 rotation.y = Math.atan2(- m31, m33);
                 rotation.z = Math.atan2(- m12, m22);
-            } else
-            {
+            } else {
                 rotation.y = 0;
                 rotation.z = Math.atan2(m21, m11);
             }
-        } else if (order === RotationOrder.ZYX)
-        {
+        } else if (order === RotationOrder.ZYX) {
             rotation.y = Math.asin(- clamp(m31, - 1, 1));
-            if (Math.abs(m31) < 0.9999999)
-            {
+            if (Math.abs(m31) < 0.9999999) {
                 rotation.x = Math.atan2(m32, m33);
                 rotation.z = Math.atan2(m21, m11);
-            } else
-            {
+            } else {
                 rotation.x = 0;
                 rotation.z = Math.atan2(- m12, m22);
             }
-        } else if (order === RotationOrder.YZX)
-        {
+        } else if (order === RotationOrder.YZX) {
             rotation.z = Math.asin(clamp(m21, - 1, 1));
-            if (Math.abs(m21) < 0.9999999)
-            {
+            if (Math.abs(m21) < 0.9999999) {
                 rotation.x = Math.atan2(- m23, m22);
                 rotation.y = Math.atan2(- m31, m11);
-            } else
-            {
+            } else {
                 rotation.x = 0;
                 rotation.y = Math.atan2(m13, m33);
             }
-        } else if (order === RotationOrder.XZY)
-        {
+        } else if (order === RotationOrder.XZY) {
             rotation.z = Math.asin(- clamp(m12, - 1, 1));
-            if (Math.abs(m12) < 0.9999999)
-            {
+            if (Math.abs(m12) < 0.9999999) {
                 rotation.x = Math.atan2(m32, m22);
                 rotation.y = Math.atan2(m13, m11);
-            } else
-            {
+            } else {
                 rotation.x = Math.atan2(- m23, m33);
                 rotation.y = 0;
             }
-        } else
-        {
+        } else {
             console.error(`初始化矩阵时错误旋转顺序 ${order}`);
         }
     }
 
-    export function matrixGetRotation(src: matrix, result: quaternion): void
-    {
+    /**
+     * 矩阵 中获取 旋转
+     * @param src 矩阵
+     * @param result 旋转
+     */
+    export function matrixGetRotation(src: matrix, result: quaternion): void {
         let xs = sign(src.rawData[0] * src.rawData[1] * src.rawData[2] * src.rawData[3]) < 0 ? -1 : 1;
         let ys = sign(src.rawData[4] * src.rawData[5] * src.rawData[6] * src.rawData[7]) < 0 ? -1 : 1;
         let zs = sign(src.rawData[8] * src.rawData[9] * src.rawData[10] * src.rawData[11]) < 0 ? -1 : 1;
@@ -292,8 +293,12 @@ namespace m4m.math
         pool.delete_matrix(mat);
     }
 
-    export function matrix2Quaternion(matrix: matrix, result: quaternion): void 
-    {
+    /**
+     * 矩阵 中获取 旋转
+     * @param matrix 矩阵
+     * @param result 旋转
+     */
+    export function matrix2Quaternion(matrix: matrix, result: quaternion): void {
         var data = matrix.rawData;
         var m11 = data[0], m12 = data[4], m13 = data[8];
         var m21 = data[1], m22 = data[5], m23 = data[9];
@@ -301,8 +306,7 @@ namespace m4m.math
         var trace = m11 + m22 + m33;
         var s;
 
-        if (trace > 0)
-        {
+        if (trace > 0) {
 
             s = 0.5 / Math.sqrt(trace + 1.0);
 
@@ -310,8 +314,7 @@ namespace m4m.math
             result.x = (m32 - m23) * s;
             result.y = (m13 - m31) * s;
             result.z = (m21 - m12) * s;
-        } else if (m11 > m22 && m11 > m33)
-        {
+        } else if (m11 > m22 && m11 > m33) {
 
             s = 2.0 * Math.sqrt(1.0 + m11 - m22 - m33);
 
@@ -319,8 +322,7 @@ namespace m4m.math
             result.x = 0.25 * s;
             result.y = (m12 + m21) / s;
             result.z = (m13 + m31) / s;
-        } else if (m22 > m33)
-        {
+        } else if (m22 > m33) {
 
             s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33);
 
@@ -328,8 +330,7 @@ namespace m4m.math
             result.x = (m12 + m21) / s;
             result.y = 0.25 * s;
             result.z = (m23 + m32) / s;
-        } else
-        {
+        } else {
 
             s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22);
 
@@ -339,15 +340,21 @@ namespace m4m.math
             result.z = 0.25 * s;
         }
     }
-    export function unitxyzToRotation(xAxis: vector3, yAxis: vector3, zAxis: vector3, out: quaternion)
-    {
+
+    /**
+     * 通过xyz轴 获取 旋转
+     * @param xAxis x轴
+     * @param yAxis y轴
+     * @param zAxis z轴
+     * @param out 旋转
+     */
+    export function unitxyzToRotation(xAxis: vector3, yAxis: vector3, zAxis: vector3, out: quaternion) {
         var m11 = xAxis.x, m12 = yAxis.x, m13 = zAxis.x;
         var m21 = xAxis.y, m22 = yAxis.y, m23 = zAxis.y;
         var m31 = xAxis.z, m32 = yAxis.z, m33 = zAxis.z;
         var trace = m11 + m22 + m33;
         var s;
-        if (trace > 0)
-        {
+        if (trace > 0) {
 
             s = 0.5 / Math.sqrt(trace + 1.0);
 
@@ -355,8 +362,7 @@ namespace m4m.math
             out.x = (m32 - m23) * s;
             out.y = (m13 - m31) * s;
             out.z = (m21 - m12) * s;
-        } else if (m11 > m22 && m11 > m33)
-        {
+        } else if (m11 > m22 && m11 > m33) {
 
             s = 2.0 * Math.sqrt(1.0 + m11 - m22 - m33);
 
@@ -364,8 +370,7 @@ namespace m4m.math
             out.x = 0.25 * s;
             out.y = (m12 + m21) / s;
             out.z = (m13 + m31) / s;
-        } else if (m22 > m33)
-        {
+        } else if (m22 > m33) {
 
             s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33);
 
@@ -373,8 +378,7 @@ namespace m4m.math
             out.x = (m12 + m21) / s;
             out.y = 0.25 * s;
             out.z = (m23 + m32) / s;
-        } else
-        {
+        } else {
 
             s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22);
 
@@ -385,24 +389,33 @@ namespace m4m.math
         }
     }
 
-    export function matrixClone(src: matrix, out: matrix)
-    {
-        for (var i = 0; i < 16; i++)
-        {
+    /**
+     * 克隆一个矩阵
+     * @param src 源矩阵
+     * @param out 克隆输出矩阵
+     */
+    export function matrixClone(src: matrix, out: matrix) {
+        for (var i = 0; i < 16; i++) {
             out.rawData[i] = src.rawData[i];
         }
         // out.rawData.set(src.rawData);
     }
-    export function matrix3x2Clone(src: matrix3x2, out: matrix3x2)
-    {
-        for (var i = 0; i < 6; i++)
-        {
+    /**
+     * 克隆一个矩阵3x2
+     * @param src 源矩阵3x2
+     * @param out 克隆输出矩阵
+     */
+    export function matrix3x2Clone(src: matrix3x2, out: matrix3x2) {
+        for (var i = 0; i < 6; i++) {
             out.rawData[i] = src.rawData[i];
         }
         // out.rawData.set(src.rawData);
     }
-    export function matrixMakeIdentity(out: matrix)
-    {
+    /**
+     * 矩阵单位化
+     * @param out 被单位化的矩阵
+     */
+    export function matrixMakeIdentity(out: matrix) {
         out.rawData[0] = 1;
         out.rawData[1] = 0;
         out.rawData[2] = 0;
@@ -423,8 +436,11 @@ namespace m4m.math
         out.rawData[14] = 0;
         out.rawData[15] = 1;
     }
-    export function matrix3x2MakeIdentity(out: matrix3x2)
-    {
+    /**
+     * 矩阵3x2单位化
+     * @param out 被单位化的矩阵3x2
+     */
+    export function matrix3x2MakeIdentity(out: matrix3x2) {
         out.rawData[0] = 1;
         out.rawData[1] = 0;
 
@@ -434,8 +450,12 @@ namespace m4m.math
         out.rawData[4] = 0;
         out.rawData[5] = 0;
     }
-    export function matrixInverse(src: matrix, out: matrix)
-    {
+    /**
+     * 转为逆矩阵
+     * @param src 源矩阵
+     * @param out 输出的逆矩阵
+     */
+    export function matrixInverse(src: matrix, out: matrix) {
 
         var l1 = src.rawData[0];
         var l2 = src.rawData[1];
@@ -497,8 +517,13 @@ namespace m4m.math
 
 
     }
-    export function matrix3x2Inverse(src: matrix3x2, out: matrix3x2)
-    {
+
+    /**
+     * 转为逆矩阵3x2
+     * @param src 源矩阵3x2
+     * @param out 输出的逆矩阵3x2
+     */
+    export function matrix3x2Inverse(src: matrix3x2, out: matrix3x2) {
         var l1 = src.rawData[0];
         var l2 = src.rawData[1];
         var l5 = src.rawData[2];
@@ -536,8 +561,14 @@ namespace m4m.math
 
     }
 
-    export function matrixMakeTransformRTS(pos: vector3, scale: vector3, rot: quaternion, out: matrix)
-    {
+    /**
+     * 通过 缩放、旋转、位移 来构建矩阵
+     * @param pos 位移
+     * @param scale 缩放
+     * @param rot 旋转
+     * @param out 构建输出的矩阵
+     */
+    export function matrixMakeTransformRTS(pos: vector3, scale: vector3, rot: quaternion, out: matrix) {
         var matS = m4m.math.pool.new_matrix();
         matrixMakeScale(scale.x, scale.y, scale.z, matS);
         var matR = m4m.math.pool.new_matrix();
@@ -552,8 +583,15 @@ namespace m4m.math
         m4m.math.pool.delete_matrix(matS);
         m4m.math.pool.delete_matrix(matR);
     }
-    export function matrix3x2MakeTransformRTS(pos: vector2, scale: vector2, rot: number, out: matrix3x2)
-    {
+
+    /**
+     * 通过 缩放、旋转、位移 来构建矩阵3x2
+     * @param pos 位移
+     * @param scale 缩放
+     * @param rot 旋转
+     * @param out 构建输出的矩阵3x2
+     */
+    export function matrix3x2MakeTransformRTS(pos: vector2, scale: vector2, rot: number, out: matrix3x2) {
         var matS = m4m.math.pool.new_matrix3x2();
         matrix3x2MakeScale(scale.x, scale.y, matS);
         var matR = m4m.math.pool.new_matrix3x2();
@@ -566,21 +604,36 @@ namespace m4m.math
         m4m.math.pool.delete_matrix3x2(matS);
         m4m.math.pool.delete_matrix3x2(matR);
     }
-    export function matrixMakeTranslate(x: number, y: number, z: number, out: matrix): void
-    {
+    /**
+     * 通过 位移 来构建矩阵
+     * @param x 位移x
+     * @param y 位移y
+     * @param z 位移z
+     * @param out 构建输出的矩阵
+     */
+    export function matrixMakeTranslate(x: number, y: number, z: number, out: matrix): void {
         out.rawData[0] = 1.0; out.rawData[1] = 0.0; out.rawData[2] = 0.0; out.rawData[3] = 0;
         out.rawData[4] = 0.0; out.rawData[5] = 1.0; out.rawData[6] = 0.0; out.rawData[7] = 0.0;
         out.rawData[8] = 0.0; out.rawData[9] = 0.0; out.rawData[10] = 1.0; out.rawData[11] = 0.0;
         out.rawData[12] = x; out.rawData[13] = y; out.rawData[14] = z; out.rawData[15] = 1.0;
     }
-    export function matrix3x2MakeTranslate(x: number, y: number, out: matrix3x2): void
-    {
+    /**
+     * 通过 位移 来构建矩阵3x2
+     * @param x 位移x
+     * @param y 位移y
+     * @param out 构建输出的矩阵3x2
+     */
+    export function matrix3x2MakeTranslate(x: number, y: number, out: matrix3x2): void {
         out.rawData[0] = 1.0; out.rawData[1] = 0.0;
         out.rawData[2] = 0.0; out.rawData[3] = 1.0;
         out.rawData[4] = x; out.rawData[5] = y;
     }
-    export function matrixGetScale(src: matrix, scale: vector3): void
-    {
+    /**
+     * 从矩阵中获取缩放
+     * @param src 矩阵
+     * @param scale 缩放
+     */
+    export function matrixGetScale(src: matrix, scale: vector3): void {
         let xs = sign(src.rawData[0] * src.rawData[1] * src.rawData[2] * src.rawData[3]) < 0 ? -1 : 1;
         let ys = sign(src.rawData[4] * src.rawData[5] * src.rawData[6] * src.rawData[7]) < 0 ? -1 : 1;
         let zs = sign(src.rawData[8] * src.rawData[9] * src.rawData[10] * src.rawData[11]) < 0 ? -1 : 1;
@@ -594,30 +647,51 @@ namespace m4m.math
         // scale.rawData[2] = zs * Math.sqrt(src.rawData[8] * src.rawData[8] + src.rawData[9] * src.rawData[9] + src.rawData[10] * src.rawData[10]);
 
     }
-    export function matrixMakeScale(xScale: number, yScale: number, zScale: number, out: matrix): void
-    {
+    /**
+     * 通过 缩放 来构建矩阵
+     * @param xScale 缩放x
+     * @param yScale 缩放y
+     * @param zScale 缩放z
+     * @param out 构建输出的矩阵
+     */
+    export function matrixMakeScale(xScale: number, yScale: number, zScale: number, out: matrix): void {
 
         out.rawData[0] = xScale; out.rawData[1] = 0.0; out.rawData[2] = 0.0; out.rawData[3] = 0.0;
         out.rawData[4] = 0.0; out.rawData[5] = yScale; out.rawData[6] = 0.0; out.rawData[7] = 0.0;
         out.rawData[8] = 0.0; out.rawData[9] = 0.0; out.rawData[10] = zScale; out.rawData[11] = 0.0;
         out.rawData[12] = 0.0; out.rawData[13] = 0.0; out.rawData[14] = 0.0; out.rawData[15] = 1.0;
     }
-    export function matrix3x2TransformVector2(mat: matrix, inp: vector2, out: vector2): void
-    {
+    /**
+     * 矩阵3x2 变换 输入向量
+     * @param mat 矩阵3x2
+     * @param inp 输入向量
+     * @param out 输出向量
+     */
+    export function matrix3x2TransformVector2(mat: matrix, inp: vector2, out: vector2): void {
         let x = inp.x * mat.rawData[0] + inp.y * mat.rawData[2] + mat.rawData[4];
         let y = inp.x * mat.rawData[1] + inp.y * mat.rawData[3] + mat.rawData[5];
         out.x = x; out.y = y;
     }
 
-    export function matrix3x2TransformNormal(mat: matrix, inp: vector2, out: vector2): void
-    {
+    /**
+     * 矩阵3x2 变换 输入法向量
+     * @param mat 矩阵3x2
+     * @param inp 输入法向量
+     * @param out 输出法向量
+     */
+    export function matrix3x2TransformNormal(mat: matrix, inp: vector2, out: vector2): void {
         let x = inp.x * mat.rawData[0] + inp.y * mat.rawData[2];
         let y = inp.x * mat.rawData[1] + inp.y * mat.rawData[3];
         out.x = x; out.y = y;
     }
 
-    export function matrix3x2MakeScale(xScale: number, yScale: number, out: matrix3x2): void
-    {
+    /**
+     * 通过 缩放 来构建矩阵3x2
+     * @param xScale 缩放x
+     * @param yScale 缩放y
+     * @param out 构建输出的矩阵3x2
+     */
+    export function matrix3x2MakeScale(xScale: number, yScale: number, out: matrix3x2): void {
         out.rawData[0] = xScale; out.rawData[1] = 0.0;
         out.rawData[2] = 0.0; out.rawData[3] = yScale;
         out.rawData[4] = 0.0; out.rawData[5] = 0.0;
@@ -625,13 +699,11 @@ namespace m4m.math
 
     /**
      * 从欧拉旋转初始化矩阵
-     * 
      * @param rotation 旋转弧度值
      * @param order 旋转顺序
      * @param out 输出矩阵
      */
-    export function matrixMakeEuler(rotation: vector3, order: RotationOrder, out: matrix)
-    {
+    export function matrixMakeEuler(rotation: vector3, order: RotationOrder, out: matrix) {
         var te = out.rawData;
         //
         var rx = rotation.x;
@@ -642,8 +714,7 @@ namespace m4m.math
         var cosY = Math.cos(ry), sinY = Math.sin(ry);
         var cosZ = Math.cos(rz), sinZ = Math.sin(rz);
 
-        if (order === RotationOrder.XYZ)
-        {
+        if (order === RotationOrder.XYZ) {
             var ae = cosX * cosZ, af = cosX * sinZ, be = sinX * cosZ, bf = sinX * sinZ;
 
             te[0] = cosY * cosZ;
@@ -658,8 +729,7 @@ namespace m4m.math
             te[6] = be + af * sinY;
             te[10] = cosX * cosY;
 
-        } else if (order === RotationOrder.YXZ)
-        {
+        } else if (order === RotationOrder.YXZ) {
             var ce = cosY * cosZ, cf = cosY * sinZ, de = sinY * cosZ, df = sinY * sinZ;
 
             te[0] = ce + df * sinX;
@@ -674,8 +744,7 @@ namespace m4m.math
             te[6] = df + ce * sinX;
             te[10] = cosX * cosY;
 
-        } else if (order === RotationOrder.ZXY)
-        {
+        } else if (order === RotationOrder.ZXY) {
             var ce = cosY * cosZ, cf = cosY * sinZ, de = sinY * cosZ, df = sinY * sinZ;
 
             te[0] = ce - df * sinX;
@@ -690,8 +759,7 @@ namespace m4m.math
             te[6] = sinX;
             te[10] = cosX * cosY;
 
-        } else if (order === RotationOrder.ZYX)
-        {
+        } else if (order === RotationOrder.ZYX) {
             var ae = cosX * cosZ, af = cosX * sinZ, be = sinX * cosZ, bf = sinX * sinZ;
 
             te[0] = cosY * cosZ;
@@ -706,8 +774,7 @@ namespace m4m.math
             te[6] = sinX * cosY;
             te[10] = cosX * cosY;
 
-        } else if (order === RotationOrder.YZX)
-        {
+        } else if (order === RotationOrder.YZX) {
             var ac = cosX * cosY, ad = cosX * sinY, bc = sinX * cosY, bd = sinX * sinY;
 
             te[0] = cosY * cosZ;
@@ -722,8 +789,7 @@ namespace m4m.math
             te[6] = ad * sinZ + bc;
             te[10] = ac - bd * sinZ;
 
-        } else if (order === RotationOrder.XZY)
-        {
+        } else if (order === RotationOrder.XZY) {
             var ac = cosX * cosY, ad = cosX * sinY, bc = sinX * cosY, bd = sinX * sinY;
 
             te[0] = cosY * cosZ;
@@ -738,13 +804,18 @@ namespace m4m.math
             te[6] = sinX * cosZ;
             te[10] = bd * sinZ + ac;
 
-        } else
-        {
+        } else {
             console.error(`初始化矩阵时错误旋转顺序 ${order}`);
         }
     }
-    export function matrixMakeRotateAxisAngle(axis: vector3, angle: number, out: matrix)
-    {
+
+    /**
+     * 通过 一个轴 和围绕的旋转度 来构建矩阵
+     * @param axis 旋转围绕轴
+     * @param angle 旋转度
+     * @param out 输出矩阵
+     */
+    export function matrixMakeRotateAxisAngle(axis: vector3, angle: number, out: matrix) {
         var x = axis.x,
             y = axis.y,
             z = axis.z;
@@ -754,8 +825,7 @@ namespace m4m.math
         if (!length)
             return;
 
-        if (length !== 1)
-        {
+        if (length !== 1) {
             length = 1 / length;
             x *= length;
             y *= length;
@@ -793,9 +863,12 @@ namespace m4m.math
 
     }
 
-
-    export function matrix3x2MakeRotate(angle: number, out: matrix3x2)
-    {
+    /**
+     * 通过 旋转度 来构建矩阵3x2
+     * @param angle 旋转度
+     * @param out 构建输出的矩阵3x2
+     */
+    export function matrix3x2MakeRotate(angle: number, out: matrix3x2) {
         var x = 0,
             y = 0,
             z = 1;
@@ -813,8 +886,14 @@ namespace m4m.math
         out.rawData[4] = 0;
         out.rawData[5] = 0;
     }
-    export function matrixMultiply(lhs: matrix, rhs: matrix, out: matrix): void
-    {
+
+    /**
+     * 计算 两个矩阵 相乘
+     * @param lhs 左矩阵
+     * @param rhs 右矩阵
+     * @param out 输出结果的矩阵
+     */
+    export function matrixMultiply(lhs: matrix, rhs: matrix, out: matrix): void {
         var a00 = lhs.rawData[0], a01 = lhs.rawData[1], a02 = lhs.rawData[2], a03 = lhs.rawData[3];
         var a10 = lhs.rawData[4], a11 = lhs.rawData[5], a12 = lhs.rawData[6], a13 = lhs.rawData[7];
         var a20 = lhs.rawData[8], a21 = lhs.rawData[9], a22 = lhs.rawData[10], a23 = lhs.rawData[11];
@@ -891,9 +970,13 @@ namespace m4m.math
         //out.rawData[15] = m141 * m214 + m142 * m224 + m143 * m234 + m144 * m244;
     }
 
-
-    export function matrix3x2Multiply(lhs: matrix3x2, rhs: matrix3x2, out: matrix3x2): void
-    {
+    /**
+     * 计算 两个矩阵3x2 相乘
+     * @param lhs 左矩阵3x2
+     * @param rhs 右矩阵3x2
+     * @param out 输出结果的矩阵3x2
+     */
+    export function matrix3x2Multiply(lhs: matrix3x2, rhs: matrix3x2, out: matrix3x2): void {
         var a00 = lhs.rawData[0], a01 = lhs.rawData[1], a02 = 0;
         var a10 = lhs.rawData[2], a11 = lhs.rawData[3], a12 = 0;
         var a30 = lhs.rawData[4], a31 = lhs.rawData[5], a32 = 1;
@@ -929,19 +1012,31 @@ namespace m4m.math
         out.rawData[5] = temp_5;
     }
 
-    export function matrix3x2Equal(mtx1: matrix3x2, mtx2: matrix3x2, threshold = 0.00001): boolean
-    {
-        for (let i = 0; i < 6; i++)
-        {
-            if (Math.abs(mtx1.rawData[i] - mtx2.rawData[i]) > threshold)
-            {
+    /**
+     * 判断两个 矩阵3x2 是否相等
+     * @param mtx1 矩阵a
+     * @param mtx2 矩阵b
+     * @param threshold 误差范围
+     * @returns 是相等？
+     */
+    export function matrix3x2Equal(mtx1: matrix3x2, mtx2: matrix3x2, threshold = 0.00001): boolean {
+        for (let i = 0; i < 6; i++) {
+            if (Math.abs(mtx1.rawData[i] - mtx2.rawData[i]) > threshold) {
                 return false;
             }
         }
         return true;
     }
-    export function matrixProject_PerspectiveLH(fov: number, aspect: number, znear: number, zfar: number, out: matrix)
-    {
+
+    /**
+     * 通过 左手坐标系的透视相机参数 来构建矩阵
+     * @param fov 视场度
+     * @param aspect 视窗宽高比
+     * @param znear 近平面值
+     * @param zfar 远平面值
+     * @param out 输出构建的矩阵
+     */
+    export function matrixProject_PerspectiveLH(fov: number, aspect: number, znear: number, zfar: number, out: matrix) {
         var tan = 1.0 / (Math.tan(fov * 0.5));
         out.rawData[0] = tan / aspect;
         out.rawData[1] = out.rawData[2] = out.rawData[3] = 0.0;
@@ -960,8 +1055,16 @@ namespace m4m.math
         //out.rawData[14] = 2*zfar*znear/(znear-zfar);
         //out.rawData[14] =znear/(znear-zfar);
     }
-    export function matrixProject_OrthoLH(width: number, height: number, znear: number, zfar: number, out: matrix)
-    {
+
+    /**
+     * 通过 左手坐标系的正交相机参数 来构建矩阵
+     * @param width 视窗宽
+     * @param height 视窗高
+     * @param znear 近平面值
+     * @param zfar 远平面值
+     * @param out 输出构建的矩阵
+     */
+    export function matrixProject_OrthoLH(width: number, height: number, znear: number, zfar: number, out: matrix) {
         var hw = 2.0 / width;
         var hh = 2.0 / height;
         var id = 2.0 / (zfar - znear);//-2.0 / (zfar - znear); 为毛是反的 ヽ(●-`Д´-)ノ
@@ -991,36 +1094,33 @@ namespace m4m.math
 
     /**
      * 看向目标位置
-     * 
      * @param position  所在位置
      * @param target    目标位置
      * @param upAxis    向上朝向
      */
-    export function matrixLookat(position:vector3, target: vector3, upAxis: vector3, out: matrix)
-    {
+    export function matrixLookat(position: vector3, target: vector3, upAxis: vector3, out: matrix) {
         //
         var xAxis = new vector3();
         var yAxis = new vector3();
         var zAxis = new vector3();
 
-        upAxis = upAxis || new vector3(0,1,0);
+        upAxis = upAxis || new vector3(0, 1, 0);
 
         zAxis.x = target.x - position.x;
         zAxis.y = target.y - position.y;
         zAxis.z = target.z - position.z;
-        math.vec3Normalize(zAxis,zAxis);
+        math.vec3Normalize(zAxis, zAxis);
 
         xAxis.x = upAxis.y * zAxis.z - upAxis.z * zAxis.y;
         xAxis.y = upAxis.z * zAxis.x - upAxis.x * zAxis.z;
         xAxis.z = upAxis.x * zAxis.y - upAxis.y * zAxis.x;
-        math.vec3Normalize(xAxis,xAxis);
+        math.vec3Normalize(xAxis, xAxis);
 
-        if (math.vec3SqrLength(xAxis) < .005)
-        {
+        if (math.vec3SqrLength(xAxis) < .005) {
             xAxis.x = upAxis.y;
             xAxis.y = upAxis.x;
             xAxis.z = 0;
-            math.vec3Normalize(xAxis,xAxis);
+            math.vec3Normalize(xAxis, xAxis);
         }
 
         yAxis.x = zAxis.y * xAxis.z - zAxis.z * xAxis.y;
@@ -1049,8 +1149,13 @@ namespace m4m.math
     }
 
     //lights fix
-    export function matrixLookatLH(forward: vector3, up: vector3, out: matrix)
-    {
+    /**
+     * 构建 矩阵 看向 一个位置
+     * @param forward 前方向
+     * @param up 上方向
+     * @param out 输出构建的矩阵
+     */
+    export function matrixLookatLH(forward: vector3, up: vector3, out: matrix) {
         // Z axis
         let z = pool.new_vector3(-forward.x, -forward.y, -forward.z);
         vec3Normalize(z, z);
@@ -1064,12 +1169,10 @@ namespace m4m.math
         let x = pool.new_vector3();
         vec3Cross(y, z, x);
         vec3SqrLength(x)
-        if (vec3SqrLength(x) == 0)
-        {
+        if (vec3SqrLength(x) == 0) {
             x.x = 1;
         }
-        else
-        {
+        else {
             vec3Normalize(x, x);
         }
         // Y axis
@@ -1101,8 +1204,15 @@ namespace m4m.math
         pool.delete_vector3(y);
         pool.delete_vector3(z);
     }
-    export function matrixViewLookatLH(eye: vector3, forward: vector3, up: vector3, out: matrix)
-    {
+
+    /**
+     * 构建 矩阵 视窗看向 一个位置
+     * @param eye 视窗位置
+     * @param forward 前方向
+     * @param up 上方向
+     * @param out 输出构建的矩阵
+     */
+    export function matrixViewLookatLH(eye: vector3, forward: vector3, up: vector3, out: matrix) {
         // Z axis
         let z = pool.new_vector3(forward.x, forward.y, forward.z);
         vec3Normalize(z, z);
@@ -1114,12 +1224,10 @@ namespace m4m.math
         let x = pool.new_vector3();
         vec3Cross(y, z, x);
         vec3SqrLength(x)
-        if (vec3SqrLength(x) == 0)
-        {
+        if (vec3SqrLength(x) == 0) {
             x.x = 1;
         }
-        else
-        {
+        else {
             vec3Normalize(x, x);
         }
         // Y axis
@@ -1155,16 +1263,27 @@ namespace m4m.math
         pool.delete_vector3(y);
         pool.delete_vector3(z);
     }
-    export function matrixLerp(left: matrix, right: matrix, v: number, out: matrix)
-    {
-        for (var i = 0; i < 16; i++)
-        {
+
+    /**
+     * 差值两个矩阵
+     * @param left 左矩阵
+     * @param right 右矩阵
+     * @param v 差值
+     * @param out 输出差值过的矩阵
+     */
+    export function matrixLerp(left: matrix, right: matrix, v: number, out: matrix) {
+        for (var i = 0; i < 16; i++) {
             out.rawData[i] = left.rawData[i] * (1 - v) + right.rawData[i] * v;
         }
     }
 
-    export function matrixTransformVector3(vector: vector3, transformation: matrix, result: vector3): void
-    {
+    /**
+     * 矩阵 变换 向量
+     * @param vector 向量
+     * @param transformation 矩阵
+     * @param result 输出变换过的向量
+     */
+    export function matrixTransformVector3(vector: vector3, transformation: matrix, result: vector3): void {
         let x = (vector.x * transformation.rawData[0]) + (vector.y * transformation.rawData[4]) + (vector.z * transformation.rawData[8]) + transformation.rawData[12];
         let y = (vector.x * transformation.rawData[1]) + (vector.y * transformation.rawData[5]) + (vector.z * transformation.rawData[9]) + transformation.rawData[13];
         let z = (vector.x * transformation.rawData[2]) + (vector.y * transformation.rawData[6]) + (vector.z * transformation.rawData[10]) + transformation.rawData[14];
@@ -1179,8 +1298,13 @@ namespace m4m.math
         // result.rawData[2] = z / w;
     }
 
-    export function matrixTransformVector4(src: m4m.math.vector4, mtx: m4m.math.matrix, out: m4m.math.vector4)
-    {
+    /**
+     * 矩阵 变换 向量
+     * @param src 向量
+     * @param mtx 矩阵
+     * @param out 输出变换过的向量
+     */
+    export function matrixTransformVector4(src: m4m.math.vector4, mtx: m4m.math.matrix, out: m4m.math.vector4) {
         out.x = (src.x * mtx.rawData[0]) + (src.y * mtx.rawData[4]) + (src.z * mtx.rawData[8]) + (src.w * mtx.rawData[12]);
         out.y = (src.x * mtx.rawData[1]) + (src.y * mtx.rawData[5]) + (src.z * mtx.rawData[9]) + (src.w * mtx.rawData[13]);
         out.z = (src.x * mtx.rawData[2]) + (src.y * mtx.rawData[6]) + (src.z * mtx.rawData[10]) + (src.w * mtx.rawData[14]);
@@ -1195,8 +1319,13 @@ namespace m4m.math
     }
 
     //变换向量
-    export function matrixTransformNormal(vector: vector3, transformation: matrix, result: vector3): void
-    {
+    /**
+     * 矩阵 变换 法向量
+     * @param vector 法向量
+     * @param transformation 矩阵
+     * @param result 输出变换过的向量
+     */
+    export function matrixTransformNormal(vector: vector3, transformation: matrix, result: vector3): void {
         let x = (vector.x * transformation.rawData[0]) + (vector.y * transformation.rawData[4]) + (vector.z * transformation.rawData[8]);
         let y = (vector.x * transformation.rawData[1]) + (vector.y * transformation.rawData[5]) + (vector.z * transformation.rawData[9]);
         let z = (vector.x * transformation.rawData[2]) + (vector.y * transformation.rawData[6]) + (vector.z * transformation.rawData[10]);
@@ -1209,8 +1338,14 @@ namespace m4m.math
         // result.rawData[1] = y;
         // result.rawData[2] = z;
     }
-    export function matrixGetVector3ByOffset(src: matrix, offset: number, result: vector3): void
-    {
+
+    /**
+     * 读取矩阵的值到v3向量 通过 索引偏移
+     * @param src 矩阵
+     * @param offset 索引
+     * @param result v3向量
+     */
+    export function matrixGetVector3ByOffset(src: matrix, offset: number, result: vector3): void {
         result.x = src.rawData[offset];
         result.y = src.rawData[offset + 1];
         result.z = src.rawData[offset + 2];
@@ -1219,8 +1354,11 @@ namespace m4m.math
         // result.rawData[1] = src.rawData[offset + 1];
         // result.rawData[2] = src.rawData[offset + 2]
     }
-    export function matrixReset(mat: matrix)
-    {
+    /**
+     * 单位化矩阵
+     * @param mat 矩阵
+     */
+    export function matrixReset(mat: matrix) {
         mat.rawData[0] = 1;
         mat.rawData[1] = 0;
         mat.rawData[2] = 0;
@@ -1242,8 +1380,11 @@ namespace m4m.math
         mat.rawData[15] = 1;
     }
 
-    export function matrixZero(mat: matrix)
-    {
+    /**
+     * 归零化矩阵
+     * @param mat 矩阵
+     */
+    export function matrixZero(mat: matrix) {
         mat.rawData[0] = 0;
         mat.rawData[1] = 0;
         mat.rawData[2] = 0;
@@ -1265,8 +1406,12 @@ namespace m4m.math
         mat.rawData[15] = 1;
     }
 
-    export function matrixScaleByNum(value: number, mat: matrix)
-    {
+    /**
+     * 缩放矩阵
+     * @param value 缩放值
+     * @param mat 矩阵
+     */
+    export function matrixScaleByNum(value: number, mat: matrix) {
         mat.rawData[0] *= value;
         mat.rawData[1] *= value;
         mat.rawData[2] *= value;
@@ -1288,8 +1433,13 @@ namespace m4m.math
         mat.rawData[15] *= value;
     }
 
-    export function matrixAdd(left: matrix, right: matrix, out: matrix)
-    {
+    /**
+     * 两个矩阵相加
+     * @param left 左矩阵
+     * @param right 右矩阵
+     * @param out 输出相加的矩阵
+     */
+    export function matrixAdd(left: matrix, right: matrix, out: matrix) {
         out.rawData[0] = left.rawData[0] + right.rawData[0];
         out.rawData[1] = left.rawData[1] + right.rawData[1];
         out.rawData[2] = left.rawData[2] + right.rawData[2];
@@ -1311,20 +1461,28 @@ namespace m4m.math
         out.rawData[15] = left.rawData[15] + right.rawData[15];
     }
 
-    export function matrixEqual(mtx1: matrix, mtx2: matrix, threshold = 0.00001): boolean
-    {
-        for (let i = 0; i < 16; i++)
-        {
-            if (Math.abs(mtx1.rawData[i] - mtx2.rawData[i]) > threshold)
-            {
+    /**
+     * 判断矩阵是否相等
+     * @param mtx1 左矩阵
+     * @param mtx2 右矩阵
+     * @param threshold 误差范围
+     * @returns 是相等？
+     */
+    export function matrixEqual(mtx1: matrix, mtx2: matrix, threshold = 0.00001): boolean {
+        for (let i = 0; i < 16; i++) {
+            if (Math.abs(mtx1.rawData[i] - mtx2.rawData[i]) > threshold) {
                 return false;
             }
         }
         return true;
     }
 
-    export function matrixIsIdentity(mtx: matrix)
-    {
+    /**
+     * 判断 是否为单位矩阵
+     * @param mtx 矩阵
+     * @returns 是矩阵？
+     */
+    export function matrixIsIdentity(mtx: matrix) {
         let m = mtx.rawData;
         let _isIdentity = (
             m[0] === 1.0 && m[1] === 0.0 && m[2] === 0.0 && m[3] === 0.0 &&

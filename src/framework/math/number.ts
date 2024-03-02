@@ -20,6 +20,13 @@ namespace m4m.math
 {
 
     //临时写在这里
+    /**
+     * float 值裁减
+     * @param v 值
+     * @param min 最大值
+     * @param max 最小值
+     * @returns 输出值
+     */
     export function floatClamp(v: number, min: number = 0, max: number = 1): number
     {
         if (v < min)
@@ -29,6 +36,11 @@ namespace m4m.math
         else
             return v;
     }
+    /**
+     * 符号化
+     * @param value 值
+     * @returns 符号值（1 或 -1）
+     */
     export function sign(value: number): number
     {
         value = +value; // convert to a number
@@ -39,6 +51,11 @@ namespace m4m.math
         return value > 0 ? 1 : -1;
     }
 
+    /**
+     * 获取键盘code 的Ascii
+     * @param ev 按键事件
+     * @returns Ascii
+     */
     export function getKeyCodeByAscii(ev: KeyboardEvent)
     {
         if (ev.shiftKey)
@@ -87,19 +104,41 @@ namespace m4m.math
         return b1 + (x - a1) * (b2 - b1) / (a2 - a1);
     }
 
+    /**
+     * 差值计算
+     * @param fromV 开始值
+     * @param toV 结束值
+     * @param v 差值度
+     * @returns 结果值
+     */
     export function numberLerp(fromV: number, toV: number, v: number)
     {
         return fromV * (1 - v) + toV * v;
     }
 
+    /**
+     * @deprecated [已弃用]
+     * 标准x轴
+     * @returns 
+     */
     export function x_AXIS()
     {
         return commonStatic.x_axis;
     }
+    /**
+     * @deprecated [已弃用]
+     * 标准y轴
+     * @returns 
+     */
     export function y_AXIS()
     {
         return commonStatic.y_axis;
     }
+    /**
+     * @deprecated [已弃用]
+     * 标准z轴
+     * @returns 
+     */
     export function z_AXIS()
     {
         return commonStatic.z_axis;

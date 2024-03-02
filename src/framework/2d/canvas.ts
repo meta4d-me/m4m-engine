@@ -36,9 +36,10 @@ namespace m4m.framework {
         private dataForEbo: Uint16Array;
 
         /**
+         * 初始化 2D batcher 的mesh buffer
          * @private
          */
-        initBuffer(webgl: WebGLRenderingContext, vf: render.VertexFormatMask, drawMode: render.DrawModeEnum) {
+        initBuffer(webgl: WebGL2RenderingContext, vf: render.VertexFormatMask, drawMode: render.DrawModeEnum) {
             this.mesh = new render.glMesh();
             this.mesh.initBuffer(webgl, vf, 128, render.MeshTypeEnum.Dynamic);
             this.dataForVbo = new Float32Array(128);
@@ -47,12 +48,14 @@ namespace m4m.framework {
                 this.mesh.addIndex(webgl, 128);
                 this.dataForEbo = new Uint16Array(128);
             }
+            this.mesh.initVAO();
         }
 
         /**
+         * batcher 且换到开始状态
          * @private
          */
-        begin(webgl: WebGLRenderingContext, pass: render.glDrawPass) {
+        begin(webgl: WebGL2RenderingContext, pass: render.glDrawPass) {
             // if (mat == this.curmaterial) return;
             //这明显是个bug,pass即使一样，也可能要重绘
             if (this.vboCount > 0)
@@ -65,9 +68,10 @@ namespace m4m.framework {
         //buffer 最大限制
         private static limitCount = 2048 * 64;
         /**
+         * batcher 填入增加部分mesh数据
          * @private
          */
-        push(webgl: WebGLRenderingContext, vbodata: number[], ebodata: number[]) {
+        push(webgl: WebGL2RenderingContext, vbodata: number[], ebodata: number[]) {
             if (this.vboCount + vbodata.length > batcher2D.limitCount
                 ||
                 (ebodata != null && this.eboCount + ebodata.length > batcher2D.limitCount)) {
@@ -111,9 +115,10 @@ namespace m4m.framework {
         }
 
         /**
+         * batcher 且换到结束状态，停止填入mesh
          * @private
          */
-        end(webgl: WebGLRenderingContext) {
+        end(webgl: WebGL2RenderingContext) {
             if (this.vboCount == 0) return;
             this.mesh.uploadVertexData(webgl, this.dataForVbo);
             if (this.eboCount > 0) {
@@ -122,7 +127,10 @@ namespace m4m.framework {
 
             var vertexcount = (this.vboCount / (this.mesh.vertexByteSize / 4)) | 0;
             this.curPass.use(webgl);
-            this.mesh.bind(webgl, this.curPass.program, (this.drawMode == render.DrawModeEnum.EboLine || this.drawMode == render.DrawModeEnum.EboTri) ? 0 : -1);
+            //顶点状态绑定
+            // this.mesh.bind(webgl, this.curPass.program, (this.drawMode == render.DrawModeEnum.EboLine || this.drawMode == render.DrawModeEnum.EboTri) ? 0 : -1);
+            this.mesh.onVAO();
+            //绘制call
             DrawCallInfo.inc.add();
             if (this.drawMode == render.DrawModeEnum.EboLine) {
                 this.mesh.drawElementLines(webgl, 0, this.eboCount);
@@ -136,8 +144,12 @@ namespace m4m.framework {
             else if (this.drawMode == render.DrawModeEnum.VboTri) {
                 this.mesh.drawArrayTris(webgl, 0, vertexcount);
             }
+
             this.vboCount = 0;
             this.eboCount = 0;
+
+            //顶点状态解绑
+            this.mesh.offVAO();
         }
     }
 
@@ -160,7 +172,7 @@ namespace m4m.framework {
          * @public
          * @language zh_CN
          * @classdesc
-         * 构造函数
+         * 2d节点的容器类 构造函数
          * @version m4m 1.0
          */
         constructor() {
@@ -233,7 +245,7 @@ namespace m4m.framework {
          * webgl实例
          * @version m4m 1.0
          */
-        webgl: WebGLRenderingContext;
+        webgl: WebGL2RenderingContext;
 
         /**
          * @public
@@ -398,10 +410,16 @@ namespace m4m.framework {
             this.clipPosToCanvasPos(tv2, tv2);
             this.pointEvent.c_x = tv2.x;
             this.pointEvent.c_y = tv2.y;
+            this.pointEvent.multiTouch = multiTouch;
             var skip = false;
             if (!this.pointDown && !touch && !multiTouch && !this.lastMultiTouch)//nothing
             {
-                skip = true;
+                if (this.pointX != this.pointEvent.x || this.pointY != this.pointEvent.y) {
+                    //on move
+                    this.pointEvent.type = event.PointEventEnum.PointMove;
+                } else {
+                    skip = true;
+                }
             }
             else if (this.pointDown == false && touch == true)//pointdown
             {
@@ -420,6 +438,7 @@ namespace m4m.framework {
             {
                 this.pointEvent.type = event.PointEventEnum.PointUp;
             }
+
             //事件走的是flash U型圈
             if (!skip) {
                 if (this.scene.app.bePlay) {
@@ -439,7 +458,9 @@ namespace m4m.framework {
             this.lastMultiTouch = multiTouch;
         }
 
-        //捕获阶段流
+        /**
+         * 捕获阶段流
+         */
         private capturePointFlow() {
             //event 捕捉阶段，自上而下
             var list = this._pointEventCareList;
@@ -466,7 +487,9 @@ namespace m4m.framework {
             }
         }
 
-        //冒泡阶段流
+        /**
+         * 冒泡阶段流
+         */
         private popPointFlow() {
             var list = this._pointEventCareList;
             var buoy = this._peCareListBuoy;
@@ -493,6 +516,12 @@ namespace m4m.framework {
 
         private _insIdFrameMap: { [insID: number]: number } = {};
 
+        /**
+         * 场景节点树更新
+         * @param node 
+         * @param delta 
+         * @returns 
+         */
         private objupdate(node: transform2D, delta) {
             if (!node || !node.visible) return;
             let app = this.scene.app;
@@ -722,6 +751,10 @@ namespace m4m.framework {
             return !isInside;
         }
 
+        /**
+         * 渲染强制 Top模式的文本
+         * @returns 
+         */
         private renderTopLabels() {
             let len = canvas.helpLabelArr.length
             if (len < 1) return;
@@ -927,7 +960,7 @@ namespace m4m.framework {
             if (this.rootNode == null) {
                 this.rootNode = new transform2D();
                 this.rootNode.canvas = this;
-                this.scene.app.markNotify(this.rootNode, NotifyType.AddChild);
+                // this.scene.app.markNotify(this.rootNode, NotifyType.AddChild);
             }
             return this.rootNode;
         }

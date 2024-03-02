@@ -352,7 +352,11 @@ namespace m4m.framework
     }
 
     var createGradCache: { [n: number]: number[][] } = {};
-
+    /**
+     * 创建 GradBase
+     * @param n 值
+     * @returns GradBase数据
+     */
     function createGradBase(n: number): number[][]
     {
         if (n < 2) return [
@@ -369,6 +373,11 @@ namespace m4m.framework
         return grad;
     }
 
+    /**
+     * 获取 数据数组
+     * @param n 输入值
+     * @returns 数据数组
+     */
     export function getBits(n: number): number[][]
     {
         if (getBitsChace[n]) return getBitsChace[n];
@@ -416,23 +425,27 @@ namespace m4m.framework
         49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
         138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
     ];
-
+    /** 向量点乘v3 */
     function dot(g: number[], x: number, y: number, z: number)
     {
         return g[0] * x + g[1] * y + g[2] * z;
     }
+    /** 向量点乘v2 */
     function dot2(g: number[], x: number, y: number)
     {
         return g[0] * x + g[1] * y;
     }
+    /** 标量相乘 */
     function dot1(g: number[], x: number)
     {
         return g[0] * x;
     }
+    /** 差值计算 */
     function mix(a: number, b: number, t: number)
     {
         return (1 - t) * a + t * b;
     }
+    /** 消褪计算 */
     function fade(t: number)
     {
         return t * t * t * (t * (t * 6 - 15) + 10);

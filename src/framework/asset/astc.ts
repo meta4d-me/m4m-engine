@@ -34,15 +34,16 @@ namespace m4m.framework
         private static pixelHeight: number;
 
         /**
-         * 
-         * @param gl WebGLRenderingContext
+         * 解析
+         * @param gl WebGL2RenderingContext
          * @param arrayBuffer contents of the ASTC container file
          */
-        static parse(gl: WebGLRenderingContext, arrayBuffer: ArrayBuffer): render.glTexture2D
+        static parse(gl: WebGL2RenderingContext, arrayBuffer: ArrayBuffer): render.glTexture2D
         {
             let result: render.glTexture2D;
 
-            let ext = gl.getExtension('WEBGL_compressed_texture_astc');
+            // let ext = gl.getExtension('WEBGL_compressed_texture_astc');
+            let ext = gl.extensions.WEBGL_compressed_texture_astc;
             if (!ext)
             {
                 console.error(`当前环境 不支持 ASTC 压缩纹理`);
@@ -74,7 +75,11 @@ namespace m4m.framework
             return result;
         }
 
-        //解码 
+        /**
+         * 解码
+         * @param ext webgl astc 拓展
+         * @param _buf 二进制buffer数据
+         */ 
         private static decodeBuffer(ext: WEBGL_compressed_texture_astc, _buf: ArrayBuffer)
         {
             const header = new Uint8Array(_buf, 0, this.HEADER_MAX);

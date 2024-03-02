@@ -69,7 +69,10 @@ namespace m4m.framework
             TrailRendererData._datas[v] = this;
         }
         private _value: string;
-
+        /**
+         * 拖尾渲染数据
+         * @param assetName 资源名 
+         */
         constructor(assetName: string = null)
         {
             if (!assetName)
@@ -153,6 +156,10 @@ namespace m4m.framework
             return total;
         }
 
+        /**
+         * 设置数据
+         * @param v 字符串数据
+         */
         setData(v: string)
         {
             this.objectData = JSON.parse(v);

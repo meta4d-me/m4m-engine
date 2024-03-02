@@ -53,7 +53,11 @@ namespace m4m.framework {
         uvArr: math.vector2[];
 
         private frameGap: number;
-
+        /**
+         * F14 发射器
+         * @param effect F14特效系统 
+         * @param layer F14 层
+         */
         constructor(effect: f14EffectSystem, layer: F14Layer) {
             this.type = F14TypeEnum.particlesType;
             this.effect = effect;
@@ -65,11 +69,11 @@ namespace m4m.framework {
 
             this.initBycurrentdata();
             if (this.currentData.mesh.data) {
-                this.vertexCount = this.currentData.mesh.data.pos.length;
+                this.vertexCount = this.currentData.mesh.data.getVertexCount();
                 this.posArr = this.currentData.mesh.data.pos;
                 this.colorArr = this.currentData.mesh.data.color;
                 this.uvArr = this.currentData.mesh.data.uv;
-                this.dataforebo = this.currentData.mesh.data.genIndexDataArray();
+                this.dataforebo = this.currentData.mesh.data.genIndexDataArray() as Uint16Array;
                 this.vertexLength = m4m.render.meshData.calcByteSize(this.effect.VF) / 4;
                 this.dataforvboLen = this.vertexCount * this.vertexLength;
             } else {
@@ -82,6 +86,12 @@ namespace m4m.framework {
         }
 
         private lastFrame: number = 0;
+        /**
+         * 执行更新
+         * @param deltaTime 上一帧时间 
+         * @param frame 
+         * @param fps 帧率
+         */
         public update(deltaTime: number, frame: number, fps: number) {
             // if(!this.effect.gameObject.transform.inCameraVisible)
             //     return;
@@ -97,6 +107,11 @@ namespace m4m.framework {
                 this.particlelist[i].update(deltaTime);
             }
         }
+
+        /**
+         * 刷新
+         * @param fps 帧率
+         */
         private refreshByFrameData(fps: number) {
             this.frameLife = Math.floor(this.baseddata.duration * fps);
             if (this.frameLife == 0) this.frameLife = 1;
@@ -113,6 +128,10 @@ namespace m4m.framework {
             this.lastFrame = frame;
         }
 
+        /**
+         * 改变当前的基础数据
+         * @param data 数据
+         */
         public changeCurrentBaseData(data: F14EmissionBaseData) {
             this.currentData = data;
             this.newStartDataTime = this.TotalTime;
@@ -120,22 +139,38 @@ namespace m4m.framework {
             this.initBycurrentdata();
         }
 
+        /**
+         * 初始化当前数据
+         */
         private initBycurrentdata() {
             math.quatFromEulerAngles(this.currentData.rotEuler.x, this.currentData.rotEuler.y, this.currentData.rotEuler.z, this.localrot);
             math.matrixMakeTransformRTS(this.currentData.rotPosition, this.currentData.rotScale, this.localrot, this.localMatrix);
         }
 
+        /**
+         * 获取世界变换矩阵
+         * @returns 世界变换矩阵
+         */
         getWorldMatrix(): math.matrix {
             let mat = this.effect.root.getWorldMatrix();
             math.matrixMultiply(mat, this.localMatrix, this._worldMatrix);
             return this._worldMatrix;
         }
+
+        /**
+         * 获取世界旋转
+         * @returns 世界旋转四元数
+         */
         getWorldRotation(): math.quaternion {
             let rot = this.effect.root.getWorldRotate();
             m4m.math.quatMultiply(rot, this.localrot, this.worldRot);
             return this.worldRot;
         }
-
+        
+        /**
+         * 更新生存时间
+         * @returns 
+         */
         private updateLife() {
             if (this.beover) return;
             this.curTime = this.TotalTime - this.baseddata.delayTime;
@@ -159,6 +194,10 @@ namespace m4m.framework {
                 }
             }
         }
+
+        /**
+         * 再次初始化
+         */
         private reInit() {
             this.currentData = this.baseddata;
             this.newStartDataTime = this.baseddata.delayTime;
@@ -179,6 +218,10 @@ namespace m4m.framework {
         }
 
         private bursts: number[] = [];
+        
+        /**
+         * 更新粒子发射
+         */
         private updateEmission() {
             let maxLifeTime = this.baseddata.lifeTime.isRandom
                 ? this.baseddata.lifeTime._valueLimitMax
@@ -212,6 +255,10 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 添加 粒子
+         * @param count 粒子数量
+         */
         private addParticle(count: number = 1) {
             if (count > 150)
                 count = 150;
@@ -227,7 +274,10 @@ namespace m4m.framework {
                 }
             }
         }
-        //重置，例子啥的消失
+        
+        /**
+         * 重置，例子啥的消失
+         */
         reset() {
             this.reInit();
             //----------------
@@ -239,21 +289,35 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 改变颜色
+         * @param value 颜色
+         */
         changeColor(value: math.color) {
             this.currentData.startColor = new Vector3Data(value.r, value.g, value.b);
             this.currentData.startAlpha = new NumberData(value.a);
         }
 
         private settedAlpha: number;
+        /**
+         * 改变透明度
+         * @param value 透明度
+         */
         changeAlpha(value: number) {
             this.currentData.startAlpha = new NumberData(this.baseddata.startAlpha._value * value);
             this.settedAlpha = value;
         }
 
+        /***
+         * 当结束一次循环后执行函数
+         */
         OnEndOnceLoop() {
 
         }
 
+        /**
+         * 销毁
+         */
         dispose() {
             this.effect = null;
             this.baseddata = null;

@@ -17,6 +17,12 @@ limitations under the License.
 namespace m4m.framework {
     class nodePool {
         private static nodelist: qtNode[] = [];
+        /**
+         * 新创一个节点
+         * @param bounds 边界矩形 
+         * @param level 层级
+         * @returns 节点
+         */
         static new_node(bounds: math.rect, level: number = 0) {
             let n = this.nodelist.pop();
             if(n){
@@ -27,6 +33,10 @@ namespace m4m.framework {
             
             return n;
         }
+        /**
+         * 删除一个节点
+         * @param n 节点
+         */
         static delete_node(n: qtNode) {
             if (!n) return;
             n.level = 0;
@@ -44,6 +54,11 @@ namespace m4m.framework {
         nodes: qtNode[] = []; //四个象限对应的子节点
         level: number; //该节点的深度 ， 根节点为0
         bounds: math.rect; //该节点的范围
+        /**
+         * 四叉树节点
+         * @param bounds 边界矩形
+         * @param level 深度
+         */
         constructor(bounds: math.rect, level: number = 0) {
             this.level = isNaN(level) || level < 0 ? 0 : level;
             this.bounds = bounds;
@@ -158,6 +173,11 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 连接到数组
+         * @param targetArr 目标数组
+         * @param addArr 添加的数组
+         */
         private concatToArr(targetArr: math.rect[], addArr: math.rect[]) {
             if (!targetArr || !addArr) return;
             addArr.forEach(sub => {
@@ -165,6 +185,11 @@ namespace m4m.framework {
             });
         }
 
+        /**
+         * 检索结果
+         * @param rect 检测矩形
+         * @param outRects 返回结果矩形数组
+         */
         retrieve(rect: math.rect, outRects: math.rect[]) {
             let arr;
             let index;
@@ -196,9 +221,9 @@ namespace m4m.framework {
 
         /**
          * 分割矩形
-         * @param src 
-         * @param cx 
-         * @param cy 
+         * @param src 源矩形
+         * @param cx x
+         * @param cy y
          */
         private rectCarve(src: math.rect, cx: number, cy: number): math.rect[] {
             let result : math.rect [] = [];

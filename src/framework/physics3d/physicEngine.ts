@@ -237,39 +237,186 @@ namespace m4m.framework
     export interface IPhysicsEnginePlugin {
         world: any;
         name: string;
+        /**
+         * 设置重力值
+         * @param gravity  重力值
+         */
         setGravity(gravity: math.vector3): void;
+        /**
+         * 设置固定的 一步执行的时间周期
+         * @param timeStep 时间周期
+         */
         setTimeStep(timeStep: number): void;
         getTimeStep(): number;
+        /**
+         * 执行一步计算
+         * @param delta 上一帧的时间间隔值
+         * @param impostors 物理代理列表
+         */
         executeStep(delta: number, impostors: Array<PhysicsImpostor>): void; //not forgetting pre and post events
+        /**
+         * 应用一个冲量
+         * @param impostor 物理代理
+         * @param force 力向量
+         * @param contactPoint 作用点坐标
+         */
         applyImpulse(impostor: PhysicsImpostor, force: math.vector3, contactPoint: math.vector3): void;
+        /**
+         * 应用一个力
+         * @param impostor 物理代理
+         * @param force 力向量
+         * @param contactPoint 作用点坐标
+         */
         applyForce(impostor: PhysicsImpostor, force: math.vector3, contactPoint: math.vector3): void;
+        /**
+         * 生成物理体
+         * @param impostor 物理代理
+         */
         generatePhysicsBody(impostor: PhysicsImpostor): void;
+        /**
+         * 移除物理体
+         * @param impostor 物理代理
+         */
         removePhysicsBody(impostor: PhysicsImpostor): void;
+        /**
+         * 生成物理连关节
+         * @param joint 物理连关节
+         */
         generateJoint(joint: PhysicsImpostorJoint): void;
+        /**
+         * 移除物理连关节
+         * @param joint 物理连关节
+         */
         removeJoint(joint: PhysicsImpostorJoint): void;
+        /**
+         * 是否支持
+         */
         isSupported(): boolean;
+        /**
+         * 设置同步节点的变换信息 到 物理体
+         * @param impostor 物理体
+         */
         setTransformationFromPhysicsBody(impostor: PhysicsImpostor): void;
+        /**
+         * 设置物理体的变换
+         * @param impostor 物理体
+         * @param newPosition 位置
+         * @param newRotation 旋转
+         */
         setPhysicsBodyTransformation(impostor: PhysicsImpostor, newPosition: math.vector3, newRotation: math.quaternion): void;
+        /**
+         * 设置线性速度
+         * @param impostor 物理体
+         * @param velocity 速度向量
+         */
         setLinearVelocity(impostor: PhysicsImpostor, velocity: math.vector3): void;
+        /**
+         * 设置角速度
+         * @param impostor 物理体
+         * @param velocity 速度向量
+         */
         setAngularVelocity(impostor: PhysicsImpostor, velocity: math.vector3): void;
+        /**
+         * 获取线性速度
+         * @param impostor 物理体
+         * @returns 输出的速度向量
+         */
         getLinearVelocity(impostor: PhysicsImpostor): math.vector3;
+        /**
+         * 获取角速度
+         * @param impostor 物理体
+         * @returns 输出的速度向量
+         */
         getAngularVelocity(impostor: PhysicsImpostor): math.vector3;
+        /**
+         * 设置物理体的质量
+         * @param impostor 物理体
+         * @param mass 质量
+         */
         setBodyMass(impostor: PhysicsImpostor, mass: number): void;
+        /**
+         * 获取物理体的质量
+         * @param impostor 物理体
+         * @returns 质量
+         */
         getBodyMass(impostor: PhysicsImpostor): number;
+        /**
+         * 获取物理体的摩擦力
+         * @param impostor 物理体
+         * @returns 摩擦力
+         */
         getBodyFriction(impostor: PhysicsImpostor): number;
+        /**
+         * 设置物理体的摩擦力
+         * @param impostor 物理体
+         * @param friction 摩擦力
+         */
         setBodyFriction(impostor: PhysicsImpostor, friction: number): void;
+        /**
+         * 获取物理体的恢复系数
+         * @param impostor 物理体
+         * @returns 恢复系数
+         */
         getBodyRestitution(impostor: PhysicsImpostor): number;
+        /**
+         * 设置物理体的恢复系数
+         * @param impostor 物理体
+         * @param restitution 恢复系数
+         */
         setBodyRestitution(impostor: PhysicsImpostor, restitution: number): void;
+        /**
+         * 睡眠物理体
+         * @param impostor 物理体
+         */
         sleepBody(impostor: PhysicsImpostor): void;
+        /**
+         * 是睡眠状态？
+         * @param impostor  物理体
+         * @returns 是睡眠状态？
+         */
         isSleeping(impostor: PhysicsImpostor) : boolean;
+        /**
+         * 叫醒物理体
+         * @param impostor 物理体
+         */
         wakeUpBody(impostor: PhysicsImpostor): void;
         //Joint Update
+        /**
+         * 更新距离关节
+         * @param joint 关节
+         * @param maxDistance 最大距离
+         * @param minDistance 最小距离
+         */
         updateDistanceJoint(joint: PhysicsJoint, maxDistance:number, minDistance?: number): void;
+        /**
+         * 设置 马达转子
+         * @param joint 马达关节
+         * @param speed 速度
+         * @param maxForce 最大力值
+         * @param motorIndex 马达索引
+         */
         setMotor(joint: IMotorEnabledJoint, speed: number, maxForce?: number, motorIndex?: number): void;
+        /**
+         * 设置限制马达关节
+         * @param joint 马达关节
+         * @param upperLimit 上限
+         * @param lowerLimit 下限
+         * @param motorIndex 马达索引
+         */
         setLimit(joint: IMotorEnabledJoint, upperLimit: number, lowerLimit?: number, motorIndex?: number): void;
+        /**
+         * 获取半径
+         * @param impostor  物理体
+         */
         getRadius(impostor: PhysicsImpostor):number;
+        /**
+         * 获取 物理体的 包围盒尺寸
+         * @param impostor 物理体
+         * @param result 包围盒尺寸
+         */
         getBoxSizeToRef(impostor: PhysicsImpostor, result:math.vector3): void;
         //syncMeshWithImpostor(mesh:AbstractMesh, impostor:PhysicsImpostor): void;
+        /** 销毁 */
         dispose(): void;
     }
     

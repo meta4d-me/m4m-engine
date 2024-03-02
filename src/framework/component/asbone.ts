@@ -27,7 +27,9 @@ namespace m4m.framework
     export class asbone implements INodeComponent
     {
         static readonly ClassName:string="asbone";
-
+        /**
+         * 是骨骼
+         */
         constructor()
         {
 
@@ -55,16 +57,12 @@ namespace m4m.framework
         {
 
         }
-        /**
-         * @private
-         */
+ 
         remove()
         {
 
         }
-        /**
-         * @private
-         */
+       
         clone()
         {
 

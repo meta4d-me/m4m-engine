@@ -21,15 +21,16 @@ limitations under the License.
      * @private
      */
     export enum TextureFormatEnum {
-        RGBA = 1,// WebGLRenderingContext.RGBA,
-        RGB = 2,//WebGLRenderingContext.RGB,
-        Gray = 3,//WebGLRenderingContext.LUMINANCE,
+        RGBA = 1,// WebGL2RenderingContext.RGBA,
+        RGB = 2,//WebGL2RenderingContext.RGB,
+        Gray = 3,//WebGL2RenderingContext.LUMINANCE,
         PVRTC4_RGB = 4,
         PVRTC4_RGBA = 4,
         PVRTC2_RGB = 4,
         PVRTC2_RGBA = 4,
         KTX = 5,
-        FLOAT16 = 6,
+        FLOAT16,
+        FLOAT32,
         ASTC_RGBA_4x4,
         ASTC_RGBA_5x4,
         ASTC_RGBA_5x5,
@@ -49,7 +50,15 @@ limitations under the License.
      * @private
      */
     export class textureReader {
-        constructor(webgl: WebGLRenderingContext, texRGBA: WebGLTexture, width: number, height: number, gray: boolean = false) {
+        /**
+         *  纹理像素阅读器
+         * @param webgl webgl上下文
+         * @param texRGBA webgl 纹理
+         * @param width 宽
+         * @param height 高
+         * @param gray 是灰模式
+         */
+        constructor(webgl: WebGL2RenderingContext, texRGBA: WebGLTexture, width: number, height: number, gray: boolean = false) {
             this._gray = gray;
             this._width = width;
             this._height = height;
@@ -62,7 +71,7 @@ limitations under the License.
         }
 
         private _isDispose = false;
-        private webgl: WebGLRenderingContext;
+        private webgl: WebGL2RenderingContext;
         private _width: number;
         get width() { return this._width; }
         private _height: number;
@@ -79,6 +88,12 @@ limitations under the License.
         private _gray: boolean;
         get gray() { return this._gray; }
         get isDispose() { return this._isDispose; }
+        /**
+         * 获取纹理上的像素
+         * @param u 纹理坐标u
+         * @param v 纹理坐标v
+         * @returns 输出像素数据（rgba颜色 | 灰度值）
+         */
         getPixel(u: number, v: number): any {
             var x = (u * this._width) | 0;
             var y = (v * this._height) | 0;
@@ -92,7 +107,10 @@ limitations under the License.
             }
         }
 
-        /** 刷新data数据 */
+        /**
+         * 刷新data数据
+         * @param texRGBA 需要读取的源纹理
+         */
         refresh(texRGBA: WebGLTexture) {
             if (!texRGBA) {
                 console.warn(`texRGBA is null `);
@@ -117,7 +135,10 @@ limitations under the License.
                 }
             }
         }
-
+        
+        /**
+         * 销毁
+         */
         dispose() {
             this.webgl = null;
             this._data = null;
@@ -131,20 +152,40 @@ limitations under the License.
         texture: WebGLTexture;
         width: number;
         height: number;
+        /**
+         * 判断是 FBO
+         * @returns 是FBO
+         */
         isFrameBuffer(): boolean;
-        dispose(webgl: WebGLRenderingContext);
+        /**
+         * 销毁
+         * @param webgl webgl上下文 
+         */
+        dispose(webgl: WebGL2RenderingContext);
+        /**
+         * 计算字节长度
+         */
         caclByteLength(): number;
     }
     /**
-     * @private
+     * 渲染输出目标纹理
      */
     export class glRenderTarget implements ITexture {
         width: number;
         height: number;
-        constructor(webgl: WebGLRenderingContext, width: number, height: number, depth: boolean = false, stencil: boolean = false) {
+        /**
+         * 渲染目标
+         * @param webgl webgl上下文 
+         * @param width 宽
+         * @param height 高
+         * @param depth 使用深度？
+         * @param stencil 使用模板？
+         * @param fbo webgl fbo
+         */
+        constructor(webgl: WebGL2RenderingContext, width: number, height: number, depth: boolean = false, stencil: boolean = false, fbo: WebGLFramebuffer = null) {
             this.width = width;
             this.height = height;
-            this.fbo = webgl.createFramebuffer();
+            this.fbo = fbo ? fbo : webgl.createFramebuffer();
             webgl.bindFramebuffer(webgl.FRAMEBUFFER, this.fbo);
             if (depth || stencil) {
                 this.renderbuffer = webgl.createRenderbuffer();
@@ -182,19 +223,28 @@ limitations under the License.
         fbo: WebGLFramebuffer;
         renderbuffer: WebGLRenderbuffer;
         texture: WebGLTexture;
-        use(webgl: WebGLRenderingContext) {
+        /**
+         * 使用
+         * @param webgl webgl上下文
+         */
+        use(webgl: WebGL2RenderingContext) {
             webgl.bindFramebuffer(webgl.FRAMEBUFFER, this.fbo);
             webgl.bindRenderbuffer(webgl.RENDERBUFFER, this.renderbuffer);
             webgl.bindTexture(webgl.TEXTURE_2D, this.texture);
             //webgl.framebufferTexture2D(webgl.FRAMEBUFFER, webgl.COLOR_ATTACHMENT0, webgl.TEXTURE_2D, this.texture, 0);
 
         }
-        static useNull(webgl: WebGLRenderingContext) {
+        /**
+         * 渲染输出目使用状态设置为空
+         * @param webgl webgl上下文
+         */
+        static useNull(webgl: WebGL2RenderingContext) {
             webgl.bindFramebuffer(webgl.FRAMEBUFFER, null);
             webgl.bindRenderbuffer(webgl.RENDERBUFFER, null);
 
         }
-        dispose(webgl: WebGLRenderingContext) {
+   
+        dispose(webgl: WebGL2RenderingContext) {
             //if (this.texture == null && this.img != null)
             //    this.disposeit = true;
 
@@ -205,10 +255,12 @@ limitations under the License.
                 this.texture = null;
             }
         }
+     
         caclByteLength(): number {
             //RGBA & no mipmap
             return this.width * this.height * 4;
         }
+     
         isFrameBuffer(): boolean {
             return true;
         }
@@ -217,14 +269,20 @@ limitations under the License.
      * @private
      */
     export class glTexture2D implements ITexture {
-        public ext: any;
         private linear: boolean = true;
         private premultiply: boolean = true;
         private repeat: boolean = true;
         private mirroredU: boolean = true;
         private mirroredV: boolean = true;
 
-        constructor(webgl: WebGLRenderingContext, format: TextureFormatEnum = TextureFormatEnum.RGBA, mipmap: boolean = false, linear: boolean = true) {
+        /**
+         * 2D纹理
+         * @param webgl webgl上下文
+         * @param format 纹理格式
+         * @param mipmap 开启mipmap？
+         * @param linear 线性纹理采样？
+         */
+        constructor(webgl: WebGL2RenderingContext, format: TextureFormatEnum = TextureFormatEnum.RGBA, mipmap: boolean = false, linear: boolean = true) {
             this.webgl = webgl;
             this.format = format;
             this.linear = linear;
@@ -236,30 +294,17 @@ limitations under the License.
             //if (url == null)//不给定url 则 texture 不加载
             //    return;
             this.texture = webgl.createTexture();
-            // let extname = "WEBGL_compressed_texture_pvrtc";
-            // this.ext = this.webgl.getExtension(extname) || this.webgl.getExtension('WEBKIT_' + extname);
-            this.ext = this.getExt("WEBGL_compressed_texture_pvrtc");
         }
-        private getExt(name: string)//WEBGL_compressed_texture_pvrtc
-        {
-            // var browserPrefixes = [
-            //     "",
-            //     "MOZ_",
-            //     "OP_",
-            //     "WEBKIT_"
-            // ];
-            // for (var ii = 0; ii < browserPrefixes.length; ++ii)
-            // {
-            //     var prefixedName = browserPrefixes[ii] + name;
-            //     let ext = this.webgl.getExtension(prefixedName);
-            //     if (ext)
-            //     {
-            //         return ext;
-            //     }
-            // }
-            return this.webgl.getExtension(name) || this.webgl.getExtension(`MOZ_${name}`) ||
-                this.webgl.getExtension(`OP_${name}`) || this.webgl.getExtension(`WEBKIT_${name}`) || null;
-        }
+        /**
+         * 上载 纹理像素数据 到webgl API
+         * @param img HTMLImageElement 的纹理像素数据
+         * @param mipmap 开mipmap？
+         * @param linear 开线性纹理采样？
+         * @param premultiply 开alpha 预乘？
+         * @param repeat uv 采样超出重复？
+         * @param mirroredU uv 采样超出 U 镜像翻转
+         * @param mirroredV uv 采样超出 V 镜像翻转
+         */
         uploadImage(img: HTMLImageElement, mipmap: boolean, linear: boolean, premultiply: boolean = true, repeat: boolean = false, mirroredU: boolean = false, mirroredV: boolean = false): void {
             this.width = img.width;
             this.height = img.height;
@@ -277,16 +322,17 @@ limitations under the License.
             this.webgl.pixelStorei(this.webgl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premultiply ? 1 : 0);
             this.webgl.pixelStorei(this.webgl.UNPACK_FLIP_Y_WEBGL, 1);
 
+            let texF = this.getGLFormat();
 
-            var formatGL = this.webgl.RGBA;
-            if (this.format == TextureFormatEnum.RGB)
-                formatGL = this.webgl.RGB;
-            else if (this.format == TextureFormatEnum.Gray)
-                formatGL = this.webgl.LUMINANCE;
+            // var formatGL = this.webgl.RGBA;
+            // if (this.format == TextureFormatEnum.RGB)
+            //     formatGL = this.webgl.RGB;
+            // else if (this.format == TextureFormatEnum.Gray)
+            //     formatGL = this.webgl.LUMINANCE;
             this.webgl.texImage2D(this.webgl.TEXTURE_2D,
                 0,
-                formatGL,
-                formatGL,
+                texF.internalformatGL,
+                texF.formatGL,
                 //最后这个type，可以管格式
                 this.webgl.UNSIGNED_BYTE
                 , img);
@@ -341,6 +387,20 @@ limitations under the License.
             //this.img = null;
             this.webgl.bindTexture(this.webgl.TEXTURE_2D, null);
         }
+        /**
+         * 上载 纹理像素数据 到webgl API
+         * @param mipmap 开mipmap？
+         * @param linear 开线性纹理采样？
+         * @param width 纹理像素宽度
+         * @param height 纹理像素高度
+         * @param data 二进制数据
+         * @param premultiply 开alpha 预乘？
+         * @param repeat uv 采样超出重复？
+         * @param mirroredU uv 采样超出 U 镜像翻转
+         * @param mirroredV uv 采样超出 V 镜像翻转
+         * @param flipY Y 翻转
+         * @param dataType 像素类型
+         */
         uploadByteArray(mipmap: boolean, linear: boolean, width: number, height: number, data: Uint8Array | Uint16Array | Float32Array, repeat: boolean = false, mirroredU: boolean = false, mirroredV: boolean = false, premultiplyAlpha = true, flipY = true, dataType: number = this.webgl.UNSIGNED_BYTE): void {
             this.width = width;
             this.height = height;
@@ -362,24 +422,15 @@ limitations under the License.
             if (flipY) {
                 // this.webgl.pixelStorei(this.webgl.UNPACK_FLIP_Y_WEBGL, 1);
             }
-            var formatGL = this.webgl.RGBA;
-            if (this.format == TextureFormatEnum.RGB)
-                formatGL = this.webgl.RGB;
-            else if (this.format == TextureFormatEnum.FLOAT16) {
-                formatGL = this.webgl.RGBA;
-                var ext = this.webgl.getExtension('OES_texture_half_float');
-                if (ext == null) throw "nit support oes";
-                dataType = ext.HALF_FLOAT_OES;
-            }
-            else if (this.format == TextureFormatEnum.Gray)
-                formatGL = this.webgl.LUMINANCE;
+            let texF = this.getGLFormat();
+
             this.webgl.texImage2D(this.webgl.TEXTURE_2D,
                 0,
-                formatGL,
+                texF.internalformatGL,
                 width,
                 height,
                 0,
-                formatGL,
+                texF.formatGL,
                 //最后这个type，可以管格式
                 dataType,
                 data);
@@ -436,7 +487,7 @@ limitations under the License.
             this.webgl.bindTexture(this.webgl.TEXTURE_2D, null);
         }
 
-        webgl: WebGLRenderingContext;
+        webgl: WebGL2RenderingContext;
         //img: HTMLImageElement = null;
         loaded: boolean = false;
         texture: WebGLTexture;
@@ -444,6 +495,10 @@ limitations under the License.
         width: number = 0;
         height: number = 0;
         mipmap: boolean = false;
+        /**
+         * 计算内存占用长度
+         * @returns 内存占用长度
+         */
         caclByteLength(): number {
             let pixellen = 1;
             if (this.format == TextureFormatEnum.RGBA) {
@@ -461,6 +516,11 @@ limitations under the License.
 
         //创建读取器，有可能失败
         reader: textureReader;
+        /**
+         * 获取一个纹理阅读器
+         * @param redOnly 灰色模式（）
+         * @returns 纹理阅读器
+         */
         getReader(redOnly: boolean = false): textureReader {
             if (this.reader != null) {
                 if (this.reader.gray != redOnly)
@@ -476,7 +536,7 @@ limitations under the License.
             return this.reader;
         }
         //disposeit: boolean = false;
-        dispose(webgl: WebGLRenderingContext) {
+        dispose(webgl: WebGL2RenderingContext) {
             //if (this.texture == null && this.img != null)
             //    this.disposeit = true;
 
@@ -488,8 +548,47 @@ limitations under the License.
         isFrameBuffer(): boolean {
             return false;
         }
+        /**
+         * 获取 纹理 GL 格式
+         * @returns 
+         */
+        private getGLFormat(): { internalformatGL: number, formatGL: number } {
+            let formatGL: number = this.webgl.RGBA;
+            let internalformatGL = formatGL;
+            switch (this.format) {
+                case TextureFormatEnum.RGB:
+                    formatGL = this.webgl.RGB;
+                    internalformatGL = formatGL;
+                    break;
+                case TextureFormatEnum.FLOAT16:
+                    formatGL = this.webgl.RGBA;
+                    internalformatGL = this.webgl.RGBA16F;
+                    // formatGL = this.webgl.RGBA;
+                    // var ext = this.webgl.getExtension('OES_texture_half_float');
+                    // if (ext == null) throw "nit support oes";
+                    // dataType = ext.HALF_FLOAT_OES;
+                    break;
+                case TextureFormatEnum.FLOAT32:
+                    formatGL = this.webgl.RGBA;
+                    internalformatGL = this.webgl.RGBA32F;
+                    break;
+                case TextureFormatEnum.Gray:
+                    formatGL = this.webgl.LUMINANCE;
+                    internalformatGL = formatGL;
+                    break;
+            }
+            return { internalformatGL, formatGL };
+        }
         private static mapTexture: { [id: string]: glTexture2D } = {};
-        static formGrayArray(webgl: WebGLRenderingContext, array: number[] | Float32Array | Float64Array, width: number, height: number) {
+        /**
+         * 通过 二进制数据 生成一个灰图
+         * @param webgl webgl上下文
+         * @param array 二进制数据
+         * @param width 纹理宽
+         * @param height 纹理高
+         * @returns 灰图纹理
+         */
+        static formGrayArray(webgl: WebGL2RenderingContext, array: number[] | Float32Array | Float64Array, width: number, height: number) {
             var mipmap = false;
             var linear = true;
             var t = new glTexture2D(webgl, TextureFormatEnum.RGBA, mipmap, linear);
@@ -510,56 +609,29 @@ limitations under the License.
             return t;
         }
 
-        static staticTexture(webgl: WebGLRenderingContext, name: string) {
-            var t = glTexture2D.mapTexture[name];
-            if (t != undefined)
-                return t;
-
-
-            var mipmap = false;
-            var linear = true;
+        /**
+         * 生成 一个 引擎内建样式纹理
+         * @param webgl webgl上下文
+         * @param name 样式名字
+         * @returns 纹理
+         */
+        static staticTexture(webgl: WebGL2RenderingContext, name: "grid" | "gray" | "white" | "black" | "normal") {
+            let t = glTexture2D.mapTexture[name];
+            if (t != undefined) return t;
+            const mipmap = false;
+            const linear = true;
             t = new glTexture2D(webgl, TextureFormatEnum.RGBA, mipmap, linear);
 
-            var data = new Uint8Array(4);
-            var width = 1;
-            var height = 1;
-            data[0] = 128;
-            data[1] = 0;
-            data[2] = 128;
-            data[3] = 255;
-            if (name == "gray") {
-                data[0] = 128;
-                data[1] = 128;
-                data[2] = 128;
-                data[3] = 255;
-            }
-            else if (name == "white") {
-                data[0] = 255;
-                data[1] = 255;
-                data[2] = 255;
-                data[3] = 255;
-            }
-            else if (name == "black") {
-                data[0] = 0;
-                data[1] = 0;
-                data[2] = 0;
-                data[3] = 255;
-            }
-            else if (name == "normal") {
-                data[0] = 128;
-                data[1] = 128;
-                data[2] = 255;
-                data[3] = 255;
-            }
-            else if (name == "grid") {
-                width = 256;
-                height = 256;
-                data = new Uint8Array(width * width * 4);
-                for (var y = 0; y < height; y++) {
-                    for (var x = 0; x < width; x++) {
-                        var seek = (y * width + x) * 4;
+            let size = 1;
+            let data: Uint8Array;
+            if (name == "grid") {
+                size = 256
+                data = new Uint8Array(size * size * 4);
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        let seek = (y * size + x) * 4;
 
-                        if (((x - width * 0.5) * (y - height * 0.5)) > 0) {
+                        if (((x - size * 0.5) * (y - size * 0.5)) > 0) {
                             data[seek] = 0;
                             data[seek + 1] = 0;
                             data[seek + 2] = 0;
@@ -573,16 +645,40 @@ limitations under the License.
                         }
                     }
                 }
+            } else {
+                let rg = 0, b = 0;
+                switch (name) {
+                    case "gray": rg = b = 128; break;
+                    case "white": rg = b = 255; break;
+                    case "black": rg = b = 0; break;
+                    case "normal": rg = 128, b = 255; break;
+                }
 
+                size = 16;
+                data = new Uint8Array(size * size * 4);
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        let seek = (y * size + x) * 4;
+                        data[seek] = rg;
+                        data[seek + 1] = rg;
+                        data[seek + 2] = b;
+                        data[seek + 3] = 255;
+                    }
+                }
             }
 
-            t.uploadByteArray(mipmap, linear, width, height, data);
+            t.uploadByteArray(mipmap, linear, size, size, data);
 
             glTexture2D.mapTexture[name] = t;
             return t;
         }
-
-        static particleTexture(webgl: WebGLRenderingContext, name = framework.defTexture.particle) {
+        /**
+         * 生成 一个 引擎内建粒子系统使用样式纹理
+         * @param webgl webgl上下文
+         * @param name 样式名字
+         * @returns 纹理
+         */
+        static particleTexture(webgl: WebGL2RenderingContext, name = framework.defTexture.particle) {
             var t = glTexture2D.mapTexture[name];
             if (t != undefined)
                 return t;
@@ -620,7 +716,14 @@ limitations under the License.
     }
 
     export class glTextureCube implements ITexture {
-        constructor(webgl: WebGLRenderingContext, format: TextureFormatEnum = TextureFormatEnum.RGBA, mipmap: boolean = false, linear: boolean = true) {
+        /**
+         * cube 纹理
+         * @param webgl webgl上下文
+         * @param format 纹理格式
+         * @param mipmap 开启mipmap？
+         * @param linear 线性纹理采样？
+         */
+        constructor(webgl: WebGL2RenderingContext, format: TextureFormatEnum = TextureFormatEnum.RGBA, mipmap: boolean = false, linear: boolean = true) {
             this.webgl = webgl;
             this.format = format;
             this.mipmap = mipmap;
@@ -631,6 +734,18 @@ limitations under the License.
 
             this.texture = webgl.createTexture();
         }
+        /**
+         * 上载 纹理像素数据 到webgl API
+         * @param Texture_NEGATIVE_X 反面纹理X
+         * @param Texture_NEGATIVE_Y 反面纹理Y
+         * @param Texture_NEGATIVE_Z 反面纹理Z
+         * @param Texture_POSITIVE_X 正面纹理X
+         * @param Texture_POSITIVE_Y 正面纹理Y
+         * @param Texture_POSITIVE_Z 正面纹理Z
+         * @param min 最小值
+         * @param max 最大值
+         * @param mipmap 开启mipmap？
+         */
         uploadImages(
             Texture_NEGATIVE_X: framework.texture,
             Texture_NEGATIVE_Y: framework.texture,
@@ -638,7 +753,7 @@ limitations under the License.
             Texture_POSITIVE_X: framework.texture,
             Texture_POSITIVE_Y: framework.texture,
             Texture_POSITIVE_Z: framework.texture,
-            min = WebGLRenderingContext.NEAREST, max = WebGLRenderingContext.NEAREST, mipmap: number = null
+            min: number = WebGL2RenderingContext.NEAREST, max: number = WebGL2RenderingContext.NEAREST, mipmap: number = null
         ) {
             let wrc = this.webgl;
 
@@ -663,6 +778,13 @@ limitations under the License.
 
         }
 
+        /**
+         * 上载 纹理像素数据 到webgl API
+         * @param data 纹理像素数据
+         * @param width 宽
+         * @param height 高
+         * @param TEXTURE_CUBE_MAP_ cube map的索引
+         */
         private upload(data: HTMLImageElement | Uint8Array, width: number, height: number, TEXTURE_CUBE_MAP_: number): void {
             this.width = width;
             this.height = height;
@@ -671,7 +793,7 @@ limitations under the License.
             // gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,1);
 
             this.webgl.bindTexture(this.webgl.TEXTURE_CUBE_MAP, this.texture);
-            var formatGL = this.webgl.RGBA;
+            var formatGL: number = this.webgl.RGBA;
             if (this.format == TextureFormatEnum.RGB)
                 formatGL = this.webgl.RGB;
             else if (this.format == TextureFormatEnum.Gray)
@@ -773,7 +895,7 @@ limitations under the License.
 
         }
 
-        webgl: WebGLRenderingContext;
+        webgl: WebGL2RenderingContext;
         //img: HTMLImageElement = null;
         loaded: boolean = false;
         texture: WebGLTexture;
@@ -797,7 +919,7 @@ limitations under the License.
             return len;
         }
         //disposeit: boolean = false;
-        dispose(webgl: WebGLRenderingContext) {
+        dispose(webgl: WebGL2RenderingContext) {
             if (this.texture != null) {
                 webgl.deleteTexture(this.texture);
                 this.texture = null;
@@ -811,11 +933,24 @@ limitations under the License.
      * @private
      */
     export class WriteableTexture2D implements ITexture {
-        constructor(webgl: WebGLRenderingContext, format: TextureFormatEnum = TextureFormatEnum.RGBA, width: number, height: number, linear: boolean, premultiply: boolean = true, repeat: boolean = false, mirroredU: boolean = false, mirroredV: boolean = false) {
+        /**
+         * 可写入的 2D纹理
+         * @param webgl webgl上下文
+         * @param format 纹理格式
+         * @param width 宽
+         * @param height 高
+         * @param linear 线性纹理采样？
+         * @param premultiply alpha 预乘？
+         * @param repeat 超出UV后重复？
+         * @param mirroredU 超出UV后U镜像填充？
+         * @param mirroredV 超出UV后V镜像填充？
+         */
+        constructor(webgl: WebGL2RenderingContext, format: TextureFormatEnum = TextureFormatEnum.RGBA, width: number, height: number, linear: boolean, premultiply: boolean = true, repeat: boolean = false, mirroredU: boolean = false, mirroredV: boolean = false) {
             this.webgl = webgl;
-
+            this.width = width;
+            this.height = height;
             this.texture = webgl.createTexture();
-
+            this.premultiply=premultiply;
             this.webgl.pixelStorei(this.webgl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premultiply ? 1 : 0);
             this.webgl.pixelStorei(this.webgl.UNPACK_FLIP_Y_WEBGL, 0);
 
@@ -884,8 +1019,18 @@ limitations under the License.
         repeat: boolean = false;
         mirroredU: boolean = false;
         mirroredV: boolean = false
-        updateRect(data: Uint8Array, x: number, y: number, width: number, height: number) {
+        /**
+         * 更新纹理 指定矩形区域的像素数据
+         * @param data 纹理数据
+         * @param x 坐标x
+         * @param y 坐标y
+         * @param width 宽
+         * @param height 高
+         */
+        updateRect(data: Uint8Array | Uint8ClampedArray, x: number, y: number, width: number, height: number) {
             this.webgl.bindTexture(this.webgl.TEXTURE_2D, this.texture);
+            this.webgl.pixelStorei(this.webgl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiply ? 1 : 0);
+            this.webgl.pixelStorei(this.webgl.UNPACK_FLIP_Y_WEBGL, 0);
 
             this.webgl.texSubImage2D(this.webgl.TEXTURE_2D, 0,
                 x, y, width, height,
@@ -893,6 +1038,13 @@ limitations under the License.
                 this.webgl.UNSIGNED_BYTE,
                 data);
         }
+
+        /**
+         * 更新纹理 指定矩形区域的像素数据
+         * @param data 纹理数据
+         * @param x 坐标x
+         * @param y 坐标y
+         */
         updateRectImg(data: ImageData | HTMLVideoElement | HTMLImageElement | HTMLCanvasElement, x: number, y: number) {
             this.webgl.bindTexture(this.webgl.TEXTURE_2D, this.texture);
             this.webgl.texSubImage2D(this.webgl.TEXTURE_2D, 0,
@@ -902,18 +1054,17 @@ limitations under the License.
                 data);
         }
 
-
         isFrameBuffer(): boolean {
             return false;
         }
-        webgl: WebGLRenderingContext;
+        webgl: WebGL2RenderingContext;
         texture: WebGLTexture;
         format: TextureFormatEnum;
         formatGL: number;
         width: number = 0;
         height: number = 0;
 
-        dispose(webgl: WebGLRenderingContext) {
+        dispose(webgl: WebGL2RenderingContext) {
             if (this.texture != null) {
                 webgl.deleteTexture(this.texture);
                 this.texture = null;
@@ -931,4 +1082,190 @@ limitations under the License.
             return len;
         }
     }
+
+    /**
+     * 视频纹理
+     */
+    export class videoTexture implements ITexture {
+        private _video: HTMLVideoElement;
+        private _needUpdateVideo = false;
+        public texture: WebGLTexture;
+        public width: number = 1;
+        public height: number = 1;
+        public premultiply: boolean = false;
+        public flipY: boolean = true;
+        public mipmap: boolean = false;
+        public linear: boolean = true;
+        public repeat: boolean = true;
+        public mirroredU: boolean = false;
+        public mirroredV: boolean = false;
+        /**
+         * 视频纹理
+         * @param video HTMLVideoElement 视频对象
+         */
+        constructor(video: HTMLVideoElement) {
+            this._video = video;
+            const gl = m4m.framework.sceneMgr.app.webgl;
+            this.texture = gl.createTexture();
+            if (!video) {
+                console.error(`video is null`);
+                return;
+            }
+            this.width = video.width;
+            this.height = video.height;
+            this.applyProperty();
+            if (video.buffered.length) {    //video 有数据了可以上传纹理
+                this.refreshTexture();
+            }
+            if ('requestVideoFrameCallback' in video) {
+                (video as any).requestVideoFrameCallback(() => {
+                    this.updateVideo();
+                });
+            }
+        }
+
+        /** 视频对象 */
+        public get video() { return this._video; }
+
+        /**
+         * 应用webgl纹理属性
+         */
+        applyProperty() {
+            if (!this._video) {
+                console.warn(`video is null`);
+            }
+            let mipmap = this.mipmap;
+            if (mipmapCancel) {
+                mipmap = false;
+            }
+            const linear = this.linear;
+            const repeat = this.repeat;
+            const mirroredU = this.mirroredU;
+            const mirroredV = this.mirroredV;
+
+            const gl = m4m.framework.sceneMgr.app.webgl;
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
+            if (mipmap) {
+                //生成mipmap
+                gl.generateMipmap(gl.TEXTURE_2D);
+
+                if (linear) {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+                }
+                else {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+
+                }
+            }
+            else {
+                if (linear) {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                }
+                else {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
+                }
+            }
+
+            if (repeat) {
+                if (mirroredU && mirroredV) {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+                }
+                else if (mirroredU) {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+                }
+                else if (mirroredV) {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+                }
+                else {
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+                }
+            }
+            else {
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            }
+
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        }
+
+        isFrameBuffer(): boolean {
+            return false;
+        }
+        dispose(webgl: WebGL2RenderingContext) {
+            this._video = null;
+            const gl = m4m.framework.sceneMgr.app.webgl;
+            if (this.texture) {
+                gl.deleteTexture(this.texture);
+                this.texture = null;
+            }
+
+        }
+        caclByteLength(): number {
+            return 0;
+        }
+
+        /** 开启 视频到纹理的更新循环 */
+        loopVideoToTexture() {
+            if (this._needUpdateVideo) return;
+            this.updateVideo();
+        }
+
+        /** 更新 视频帧 到纹理 , */
+        private updateVideo() {
+            this._needUpdateVideo = false;
+
+            if (!this._video) {
+                console.warn(`video is null`);
+                return;
+            }
+
+            //更新帧数据到 webgl 纹理
+            this.refreshTexture();
+
+            if ('requestVideoFrameCallback' in this._video) {
+                this._needUpdateVideo = true;
+                (this._video as any).requestVideoFrameCallback(() => {
+                    this.updateVideo();
+                });
+            }
+
+        }
+
+        /**
+         * 更新纹理
+         */
+        private refreshTexture() {
+            if (!this._video) {
+                console.warn(`video is null`);
+            }
+            const gl = m4m.framework.sceneMgr.app.webgl;
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiply ? 1 : 0);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.flipY ? 1 : 0);
+
+            let formatGLxF = gl.RGB;
+            let internalformatGL = gl.RGB;
+            gl.texImage2D(gl.TEXTURE_2D,
+                0,
+                internalformatGL,
+                formatGLxF,
+                //最后这个type，可以管格式
+                gl.UNSIGNED_BYTE
+                , this._video);
+
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        }
+    }
+
 }

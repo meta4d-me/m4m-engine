@@ -32,5 +32,6 @@ namespace m4m.framework
         selected: transform2D;//是否有谁被选中
         c_x : number; //canvas 坐标系 x
         c_y : number;  //canvas 坐标系 y
+        multiTouch:boolean;
     }
 }

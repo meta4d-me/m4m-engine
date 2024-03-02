@@ -14,108 +14,93 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-namespace m4m.framework
-{
-    export class defShader
-    {
+namespace m4m.framework {
+    export class defShader {
 
-        // static vscode_test: string = "\
-        // attribute vec4 _glesVertex;   \
-        // attribute vec4 _glesColor;                  \
-        // attribute vec4 _glesMultiTexCoord0;         \
-        // uniform highp mat4 glstate_matrix_mvp;      \
-        // varying lowp vec4 xlv_COLOR;                \
-        // varying highp vec2 xlv_TEXCOORD0;           \
-        // void main()                                     \
-        // {                                               \
-        //     highp vec4 tmpvar_1;                        \
-        //     tmpvar_1.w = 1.0;                           \
-        //     tmpvar_1.xyz = _glesVertex.xyz;             \
-        //     xlv_COLOR = _glesColor;                     \
-        //     xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;     \
-        //     gl_Position = (glstate_matrix_mvp * tmpvar_1);  \
-        // }";
+        static vscode: string = `#version 300 es
+            precision mediump float;
 
-        // static fscode_test: string = "         \
-        // varying lowp vec4 xlv_COLOR;                                                 \
-        // varying highp vec2 xlv_TEXCOORD0;   \
-        // void main() \
-        // {\
-        //     gl_FragData[0] = xlv_COLOR;\
-        // }\
-        // ";
-        static shader0: string = "{\
-            \"properties\": [\
-              \"_MainTex('MainTex',Texture)='white'{}\"\
-            ]\
-          }";
-        static vscode: string = "\
-        attribute vec4 _glesVertex;   \
-        attribute vec4 _glesColor;                  \
-        attribute vec4 _glesMultiTexCoord0;         \
-        uniform highp mat4 glstate_matrix_mvp;      \
-        varying lowp vec4 xlv_COLOR;                \
-        varying highp vec2 xlv_TEXCOORD0;           \
-        void main()                                     \
-        {                                               \
-            highp vec4 tmpvar_1;                        \
-            tmpvar_1.w = 1.0;                           \
-            tmpvar_1.xyz = _glesVertex.xyz;             \
-            xlv_COLOR = _glesColor;                     \
-            xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;     \
-            gl_Position = (glstate_matrix_mvp * tmpvar_1);  \
-        }";
-        static fscode: string = "         \
-        uniform sampler2D _MainTex;                                                 \
-        varying lowp vec4 xlv_COLOR;                                                 \
-        varying highp vec2 xlv_TEXCOORD0;   \
-        void main() \
-        {\
-            lowp vec4 col_1;    \
-            mediump vec4 prev_2;\
-            lowp vec4 tmpvar_3;\
-            tmpvar_3 = (xlv_COLOR * texture2D(_MainTex, xlv_TEXCOORD0));\
-            prev_2 = tmpvar_3;\
-            mediump vec4 tmpvar_4;\
-            tmpvar_4 = mix(vec4(1.0, 1.0, 1.0, 1.0), prev_2, prev_2.wwww);\
-            col_1 = tmpvar_4;\
-            col_1.x =xlv_TEXCOORD0.x;\
-            col_1.y =xlv_TEXCOORD0.y;\
-            gl_FragData[0] = col_1;\
-        }\
-        ";
+            layout(location = 0) in vec3 _glesVertex;
+            layout(location = 3) in vec4 _glesColor;
+            layout(location = 4) in vec4 _glesMultiTexCoord0;
+            uniform highp mat4 glstate_matrix_mvp;
+            out lowp vec4 xlv_COLOR;
+            out highp vec2 xlv_TEXCOORD0;
+            void main()
+            {
+                highp vec4 tmpvar_1;
+                tmpvar_1.w = 1.0;
+                tmpvar_1.xyz = _glesVertex.xyz;
+                xlv_COLOR = _glesColor;
+                xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;
+                gl_Position = (glstate_matrix_mvp * tmpvar_1);
+            }
+        `;
 
-        static fscode2: string = "         \
-        void main() \
-        {\
-            gl_FragData[0] = vec4(1.0, 1.0, 1.0, 1.0);\
-        }\
-        ";
-        //----------------------------------------UI-------------------------
-        static uishader: string = "{\
-            \"properties\": [\
-              \"_MainTex('MainTex',Texture)='white'{}\",\
-              \"_MaskTex('MaskTex',Texture)='white'{}\"\
-            ]\
-            }";
+        static fscode: string = `#version 300 es
+            precision mediump float;
 
-        static fscodeUI: string = `
             uniform sampler2D _MainTex;
-            varying lowp vec4 xlv_COLOR;
-            varying highp vec2 xlv_TEXCOORD0;
+            in lowp vec4 xlv_COLOR;
+            in highp vec2 xlv_TEXCOORD0;
+            out vec4 color;
+            void main()
+            {
+                lowp vec4 col_1;
+                mediump vec4 prev_2;
+                lowp vec4 tmpvar_3;
+                tmpvar_3 = (xlv_COLOR * texture(_MainTex, xlv_TEXCOORD0));
+                prev_2 = tmpvar_3;
+                mediump vec4 tmpvar_4;
+                tmpvar_4 = mix(vec4(1.0, 1.0, 1.0, 1.0), prev_2, prev_2.wwww);
+                col_1 = tmpvar_4;
+                col_1.x =xlv_TEXCOORD0.x;
+                col_1.y =xlv_TEXCOORD0.y;
+                color = col_1;
+            }
+        `;
+
+        static fscode2: string = `#version 300 es
+            precision mediump float;
+
+            out vec4 color;
+            void main()
+            {
+                color = vec4(1.0, 1.0, 1.0, 1.0);
+            }
+        `;
+        //----------------------------------------UI-------------------------
+        static uishader: string = `{
+                "properties": [
+                "_MainTex('MainTex',Texture)='white'{}",
+                "_MaskTex('MaskTex',Texture)='white'{}"
+                ]
+            }
+        `;
+
+        static fscodeUI: string = `#version 300 es
+            precision mediump float;
+
+            uniform sampler2D _MainTex;
+            in lowp vec4 xlv_COLOR;
+            in highp vec2 xlv_TEXCOORD0;
+            out vec4 color;
             void main()
             {
                 lowp vec4 tmpvar_3;
-                tmpvar_3 = (xlv_COLOR * texture2D(_MainTex, xlv_TEXCOORD0));
-                gl_FragData[0] = tmpvar_3;
-            }`;
-        static vscodeUI: string = `
-            attribute vec4 _glesVertex;    
-            attribute vec4 _glesColor;                   
-            attribute vec4 _glesMultiTexCoord0;          
+                tmpvar_3 = (xlv_COLOR * texture(_MainTex, xlv_TEXCOORD0));
+                color = tmpvar_3;
+            }
+            `;
+        static vscodeUI: string = `#version 300 es
+            precision mediump float;
+
+            layout(location = 0) in vec3 _glesVertex;    
+            layout(location = 3) in vec4 _glesColor;                   
+            layout(location = 4) in vec4 _glesMultiTexCoord0;          
             uniform highp mat4 glstate_matrix_mvp;       
-            varying lowp vec4 xlv_COLOR;                 
-            varying highp vec2 xlv_TEXCOORD0;            
+            out lowp vec4 xlv_COLOR;                 
+            out highp vec2 xlv_TEXCOORD0;            
             void main()                                      
             {                                                
                 highp vec4 tmpvar_1;                         
@@ -126,131 +111,106 @@ namespace m4m.framework
                 gl_Position = (glstate_matrix_mvp * tmpvar_1);   
             }
         `;
-        static vscodeMaskUI: string = ` 
-        attribute vec4 _glesVertex;    
-        attribute vec4 _glesColor;                   
-        attribute vec4 _glesMultiTexCoord0;          
-        uniform highp mat4 glstate_matrix_mvp;       
-        varying lowp vec4 xlv_COLOR;                 
-        varying highp vec2 xlv_TEXCOORD0;            
-        varying highp vec2 mask_TEXCOORD;            
-        void main()                                      
-        {                                                
-            highp vec4 tmpvar_1;                         
-            tmpvar_1.w = 1.0;                            
-            tmpvar_1.xyz = _glesVertex.xyz;              
-            xlv_COLOR = _glesColor;                      
-            xlv_TEXCOORD0 = vec2(_glesMultiTexCoord0.x,1.0-_glesMultiTexCoord0.y);      
-            mask_TEXCOORD.x = (_glesVertex.x - 1.0)/-2.0; 
-            mask_TEXCOORD.y = (_glesVertex.y - 1.0)/-2.0; 
-            gl_Position = (glstate_matrix_mvp * tmpvar_1);   
-        }`;
+        static vscodeMaskUI: string = `#version 300 es
+            precision mediump float;
 
-        static fscodeMaskUI: string = `          
-        uniform sampler2D _MainTex;                                                  
-        uniform highp vec4 _maskRect;                                                  
-        varying lowp vec4 xlv_COLOR;                                                  
-        varying highp vec2 xlv_TEXCOORD0;    
-        varying highp vec2 mask_TEXCOORD;            
-        bool CalcuCut(){    
-            highp float l; 
-            highp float t; 
-            highp float r; 
-            highp float b; 
-            highp vec2 texc1; 
-            bool beCut; 
-            l = _maskRect.x; 
-            t = _maskRect.y; 
-            r = _maskRect.z + l; 
-            b = _maskRect.w + t; 
-            texc1 = mask_TEXCOORD; 
-            if(texc1.x >(1.0 - l) || texc1.x <(1.0 - r) || texc1.y <t || texc1.y>b){  
-                beCut = true;  
-            }else{ 
-                beCut = false; 
-            } 
-            return beCut; 
-        } 
-            
-        void main()  
-        { 
-            if(CalcuCut()) discard; 
-            lowp vec4 tmpvar_3; 
-            tmpvar_3 = (xlv_COLOR * texture2D(_MainTex, xlv_TEXCOORD0)); 
-            gl_FragData[0] = tmpvar_3 ; 
-        } 
+            layout(location = 0) in vec3 _glesVertex;    
+            layout(location = 3) in vec4 _glesColor;                   
+            layout(location = 4) in vec4 _glesMultiTexCoord0;          
+            uniform highp mat4 glstate_matrix_mvp;       
+            out lowp vec4 xlv_COLOR;                 
+            out highp vec2 xlv_TEXCOORD0;            
+            out highp vec2 mask_TEXCOORD;            
+            void main()                                      
+            {                                                
+                highp vec4 tmpvar_1;                         
+                tmpvar_1.w = 1.0;                            
+                tmpvar_1.xyz = _glesVertex.xyz;              
+                xlv_COLOR = _glesColor;                      
+                xlv_TEXCOORD0 = vec2(_glesMultiTexCoord0.x,1.0-_glesMultiTexCoord0.y);      
+                mask_TEXCOORD.x = (_glesVertex.x - 1.0)/-2.0; 
+                mask_TEXCOORD.y = (_glesVertex.y - 1.0)/-2.0; 
+                gl_Position = (glstate_matrix_mvp * tmpvar_1);   
+            }
         `;
-        static shaderuifront: string = "{\
-            \"properties\": [\
-              \"_MainTex('MainTex',Texture)='white'{}\"\
-            ]\
-            }";
 
-        static vscodefontUI: string = ` 
-        attribute vec4 _glesVertex;    
-        attribute vec4 _glesColor;                   
-        attribute vec4 _glesColorEx;                   
-        attribute vec4 _glesMultiTexCoord0;          
-        uniform highp mat4 glstate_matrix_mvp;       
-        varying lowp vec4 xlv_COLOR;                 
-        varying lowp vec4 xlv_COLOREx;                                                  
-        varying highp vec2 xlv_TEXCOORD0;            
-        void main()                                      
-        {                                                
-            highp vec4 tmpvar_1;                         
-            tmpvar_1.w = 1.0;                            
-            tmpvar_1.xyz = _glesVertex.xyz;              
-            xlv_COLOR = _glesColor;                      
-            xlv_COLOREx = _glesColorEx;                      
-            xlv_TEXCOORD0 = vec2(_glesMultiTexCoord0.x,1.0-_glesMultiTexCoord0.y);      
-            gl_Position = (glstate_matrix_mvp * tmpvar_1);   
-        }`;
+        static fscodeMaskUI: string = `#version 300 es
+            precision mediump float;
 
-        // 使用正常位图字体shader
-        // static fscodefontUI: string = ` 
-        // precision mediump float ; 
-        // uniform sampler2D _MainTex; 
-        // varying lowp vec4 xlv_COLOR; // 字体颜色
-        // varying lowp vec4 xlv_COLOREx; // 描边颜色
-        // varying highp vec2 xlv_TEXCOORD0;     
-        // void main()   
-        // {  
-        //     vec4 col = texture2D(_MainTex, xlv_TEXCOORD0);
-        //     col.a = col.r * xlv_COLOR.a;
-        //     col.rgb = xlv_COLOR.rgb;
+            uniform sampler2D _MainTex;                                                  
+            uniform highp vec4 _maskRect;                                                  
+            in lowp vec4 xlv_COLOR;                                                  
+            in highp vec2 xlv_TEXCOORD0;    
+            in highp vec2 mask_TEXCOORD;            
+            bool CalcuCut(){    
+                highp float l; 
+                highp float t; 
+                highp float r; 
+                highp float b; 
+                highp vec2 texc1; 
+                bool beCut; 
+                l = _maskRect.x; 
+                t = _maskRect.y; 
+                r = _maskRect.z + l; 
+                b = _maskRect.w + t; 
+                texc1 = mask_TEXCOORD; 
+                if(texc1.x >(1.0 - l) || texc1.x <(1.0 - r) || texc1.y <t || texc1.y>b){  
+                    beCut = true;  
+                }else{ 
+                    beCut = false; 
+                } 
+                return beCut; 
+            } 
+                
+            out vec4 color;
+            void main()  
+            { 
+                if(CalcuCut()) discard; 
+                lowp vec4 tmpvar_3; 
+                tmpvar_3 = (xlv_COLOR * texture(_MainTex, xlv_TEXCOORD0)); 
+                color = tmpvar_3 ; 
+            } 
+        `;
+        static shaderuifront: string = `{
+                "properties": [
+                "_MainTex('MainTex',Texture)='white'{}"
+                ]
+            }`;
 
-        //     gl_FragData[0] = col;
-        // }`;
+        static vscodefontUI: string = `#version 300 es
+            precision mediump float;
 
-        // 原来sdf字体shader
-        // static fscodefontUI: string = ` 
-        // precision mediump float ; 
-        // uniform sampler2D _MainTex; 
-        // varying lowp vec4 xlv_COLOR; // 字体颜色
-        // varying lowp vec4 xlv_COLOREx; // 描边颜色
-        // varying highp vec2 xlv_TEXCOORD0;     
-        // void main()   
-        // {  
-        //     float scale = 10.0;    
-        //     float d = (texture2D(_MainTex, xlv_TEXCOORD0).r - 0.47)*scale;    
-        //     float bd = (texture2D(_MainTex, xlv_TEXCOORD0).r - 0.4)*scale;    
-
-        //     float c=xlv_COLOR.a * clamp ( d,0.0,1.0);   
-        //     float bc=xlv_COLOREx.a * clamp ( bd,0.0,1.0);   
-        //     bc =min(1.0-c,bc);  
-        //     gl_FragData[0] =xlv_COLOR*c + xlv_COLOREx*bc;  
-        // }`;
+            layout(location = 0) in vec3 _glesVertex;    
+            layout(location = 3) in vec4 _glesColor;                   
+            layout(location = 8) in vec4 _glesColorEx;                   
+            layout(location = 4) in vec4 _glesMultiTexCoord0;          
+            uniform highp mat4 glstate_matrix_mvp;       
+            out lowp vec4 xlv_COLOR;                 
+            out lowp vec4 xlv_COLOREx;                                                  
+            out highp vec2 xlv_TEXCOORD0;            
+            void main()                                      
+            {                                                
+                highp vec4 tmpvar_1;                         
+                tmpvar_1.w = 1.0;                            
+                tmpvar_1.xyz = _glesVertex.xyz;              
+                xlv_COLOR = _glesColor;                      
+                xlv_COLOREx = _glesColorEx;                      
+                xlv_TEXCOORD0 = vec2(_glesMultiTexCoord0.x,1.0-_glesMultiTexCoord0.y);      
+                gl_Position = (glstate_matrix_mvp * tmpvar_1);   
+            }
+        `;
 
         // 根据 https://zhuanlan.zhihu.com/p/26217154 文章进行修改的shader
-        static fscodefontUI: string = ` 
+        static fscodefontUI: string = `#version 300 es
             precision mediump float ; 
             uniform sampler2D _MainTex; 
 
             uniform highp float _outlineWidth; // 描边宽度
 
-            varying lowp vec4 xlv_COLOR; // 字体颜色
-            varying lowp vec4 xlv_COLOREx; // 描边颜色
-            varying highp vec2 xlv_TEXCOORD0;     
+            in lowp vec4 xlv_COLOR; // 字体颜色
+            in lowp vec4 xlv_COLOREx; // 描边颜色
+            in highp vec2 xlv_TEXCOORD0;     
+            out vec4 color;
             void main()   
             {  
                 // 在m4m中使用的sdf字体做了最大值为2像素的有向距离运算且保存到位图上。
@@ -262,7 +222,7 @@ namespace m4m.framework
 
                 float _OutlineDistanceMark = -_outlineWidth; // 描边位置
 
-                vec4 col = texture2D(_MainTex, xlv_TEXCOORD0);
+                vec4 col = texture(_MainTex, xlv_TEXCOORD0);
                 float distance = col.r * 4.0 - 2.0;
 
                 // 平滑字体边缘
@@ -288,19 +248,21 @@ namespace m4m.framework
                 col.a = col.a * xlv_COLOR.a;
                 
                 // 设置最终值
-                gl_FragData[0] = col;
+                color = col;
         }`;
 
-        static vscodeuifontmask: string = ` 
-            attribute vec4 _glesVertex;    
-            attribute vec4 _glesColor;                   
-            attribute vec4 _glesColorEx;                   
-            attribute vec4 _glesMultiTexCoord0;          
+        static vscodeuifontmask: string = `#version 300 es
+            precision mediump float;
+
+            layout(location = 0) in vec3 _glesVertex;    
+            layout(location = 3) in vec4 _glesColor;                   
+            layout(location = 8) in vec4 _glesColorEx;                   
+            layout(location = 4) in vec4 _glesMultiTexCoord0;          
             uniform highp mat4 glstate_matrix_mvp;       
-            varying lowp vec4 xlv_COLOR;                 
-            varying lowp vec4 xlv_COLOREx;                                                  
-            varying highp vec2 xlv_TEXCOORD0;            
-            varying highp vec2 mask_TEXCOORD;            
+            out lowp vec4 xlv_COLOR;                 
+            out lowp vec4 xlv_COLOREx;                                                  
+            out highp vec2 xlv_TEXCOORD0;            
+            out highp vec2 mask_TEXCOORD;            
             void main()                                      
             {                                                
                 highp vec4 tmpvar_1;                         
@@ -314,14 +276,14 @@ namespace m4m.framework
                 gl_Position = (glstate_matrix_mvp * tmpvar_1);   
             }`;
 
-        static fscodeuifontmask: string = ` 
+        static fscodeuifontmask: string = `#version 300 es
             precision mediump float; 
             uniform sampler2D _MainTex;   
             uniform highp vec4 _maskRect;        
-            varying lowp vec4 xlv_COLOR;  
-            varying lowp vec4 xlv_COLOREx;  
-            varying highp vec2 xlv_TEXCOORD0;     
-            varying highp vec2 mask_TEXCOORD;      
+            in lowp vec4 xlv_COLOR;  
+            in lowp vec4 xlv_COLOREx;  
+            in highp vec2 xlv_TEXCOORD0;     
+            in highp vec2 mask_TEXCOORD;      
             bool CalcuCut(){    
                 highp float l; 
                 highp float t; 
@@ -342,140 +304,151 @@ namespace m4m.framework
                 return beCut; 
             } 
              
+            out vec4 color;
             void main()   
             {  
                 if(CalcuCut())  discard; 
                 float scale = 10.0;    
-                float d = (texture2D(_MainTex, xlv_TEXCOORD0).r - 0.47)*scale;   
-                float bd = (texture2D(_MainTex, xlv_TEXCOORD0).r - 0.4)*scale;   
+                float d = (texture(_MainTex, xlv_TEXCOORD0).r - 0.47)*scale;   
+                float bd = (texture(_MainTex, xlv_TEXCOORD0).r - 0.4)*scale;   
                 
                 float c=xlv_COLOR.a * clamp ( d,0.0,1.0);   
                 float bc=xlv_COLOREx.a * clamp ( bd,0.0,1.0);   
                 bc =min(1.0-c,bc);  
                 lowp vec4 final =  xlv_COLOR*c + xlv_COLOREx*bc ; 
-                gl_FragData[0] = final ; 
+                color = final ; 
             }`;
 
-        static diffuseShader: string = "{\
-            \"properties\": [\
-              \"_MainTex('MainTex',Texture)='white'{}\",\
-              \"_AlphaCut('AlphaCut',Range(0.0,1.0)) = 0.5\"\
-            ]\
-            }";
+        static vsdiffuse: string = `#version 300 es
+            precision mediump float;
 
-        static vsdiffuse: string = "\
-        attribute vec4 _glesVertex;\
-        attribute vec4 _glesMultiTexCoord0;\
-        uniform highp mat4 glstate_matrix_mvp;\
-        varying highp vec2 xlv_TEXCOORD0;\
-        void main()\
-        {\
-            highp vec4 tmpvar_1;\
-            tmpvar_1.w = 1.0;\
-            tmpvar_1.xyz = _glesVertex.xyz;\
-            xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;\
-            gl_Position = (glstate_matrix_mvp * tmpvar_1);\
-        }";
+            layout(location = 0) in vec3 _glesVertex;
+            layout(location = 4) in vec4 _glesMultiTexCoord0;
+            uniform highp mat4 glstate_matrix_mvp;
+            out highp vec2 xlv_TEXCOORD0;
+            void main()
+            {
+                highp vec4 tmpvar_1;
+                tmpvar_1.w = 1.0;
+                tmpvar_1.xyz = _glesVertex.xyz;
+                xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;
+                gl_Position = (glstate_matrix_mvp * tmpvar_1);
+            }
+        `;
 
-        static fsdiffuse: string = "\
-        uniform sampler2D _MainTex;\
-        uniform lowp float _AlphaCut;\
-        varying highp vec2 xlv_TEXCOORD0;\
-        void main() \
-        {\
-            lowp vec4 tmpvar_3 = texture2D(_MainTex, xlv_TEXCOORD0);\
-            if(tmpvar_3.a < _AlphaCut)\
-                discard;\
-            gl_FragData[0] = tmpvar_3;\
-        }";
+        static fsdiffuse: string = `#version 300 es
+            precision mediump float;
+
+            uniform sampler2D _MainTex;
+            uniform vec4 _MainColor;
+            uniform lowp float _AlphaCut;
+            in highp vec2 xlv_TEXCOORD0;
+            out vec4 color;
+            void main()
+            {
+                lowp vec4 _color = texture(_MainTex, xlv_TEXCOORD0) * _MainColor;
+                if(_color.a < _AlphaCut)
+                    discard;
+                color = _color;
+            }
+        `;
 
 
         //editor
-        static vsline: string = "\
-        attribute vec4 _glesVertex;\
-        attribute vec4 _glesColor;\
-        uniform highp mat4 glstate_matrix_mvp;\
-        varying lowp vec4 xlv_COLOR;\
-        void main()\
-        {\
-            highp vec4 tmpvar_1;\
-            tmpvar_1.w = 1.0;\
-            tmpvar_1.xyz = _glesVertex.xyz;\
-            xlv_COLOR = _glesColor;\
-            gl_Position = (glstate_matrix_mvp * tmpvar_1);\
-        }";
+        static vsline: string = `#version 300 es
+            precision mediump float;
 
-        static fsline: string = "\
-        varying lowp vec4 xlv_COLOR;\
-        void main()\
-        {\
-            gl_FragData[0] = xlv_COLOR;\
-        }";
-
-
-        static materialShader: string = "{\
-            \"properties\": [\
-              \"_Color('Color',Vector) = (1,1,1,1)\",\
-              \"_Alpha('Alpha', Range(0.0, 1.0)) = 1.0\"\
-            ]\
-            }";
-        static vsmaterialcolor: string = "\
-        attribute vec4 _glesVertex;\
-        uniform vec4 _Color;\
-        uniform float _Alpha;\
-        uniform highp mat4 glstate_matrix_mvp;\
-        varying lowp vec4 xlv_COLOR;\
-        void main()\
-        {\
-            highp vec4 tmpvar_1;\
-            tmpvar_1.w = 1.0;\
-            tmpvar_1.xyz = _glesVertex.xyz;\
-            xlv_COLOR = _Color;\
-            xlv_COLOR.a = xlv_COLOR.a * _Alpha;\
-            gl_Position = (glstate_matrix_mvp * tmpvar_1);\
-        }";
-
-        static vslinetrail = `
-        attribute vec4 _glesVertex;
-        attribute vec2 _glesMultiTexCoord0;
-        attribute vec4 _glesColor;
-        
-        uniform mat4 glstate_matrix_mvp;
-        
-        varying vec2 xlv_TEXCOORD0;
-        varying vec4 xlv_COLOR;
-        
-        void main() 
-        {
-            gl_Position = glstate_matrix_mvp * _glesVertex;
-            xlv_TEXCOORD0 = _glesMultiTexCoord0;
-            xlv_COLOR = _glesColor;
-        }
+            layout(location = 0) in vec3 _glesVertex;
+            layout(location = 3) in vec4 _glesColor;
+            uniform highp mat4 glstate_matrix_mvp;
+            out lowp vec4 xlv_COLOR;
+            void main()
+            {
+                highp vec4 tmpvar_1;
+                tmpvar_1.w = 1.0;
+                tmpvar_1.xyz = _glesVertex.xyz;
+                xlv_COLOR = _glesColor;
+                gl_Position = (glstate_matrix_mvp * tmpvar_1);
+            }
         `;
 
-        static linetrailShader: string = "{\
-            \"properties\": [\
-              \"_MainTex('MainTex',Texture)='white'{}\"\
-            ]\
-            }";
+        static fsline: string = `#version 300 es
+            precision mediump float;
 
-        static fslinetrail = `
-        precision mediump float;
-
-        uniform sampler2D _MainTex; 
-        
-        varying vec2 xlv_TEXCOORD0;
-        varying vec4 xlv_COLOR;
-        
-        void main() 
-        {
-            vec4 color = texture2D(_MainTex, xlv_TEXCOORD0);
-            gl_FragColor = color * xlv_COLOR;
-        }
+            in lowp vec4 xlv_COLOR;
+            out vec4 color;
+            void main()
+            {
+                color = xlv_COLOR;
+            }
         `;
 
-        static initDefaultShader(assetmgr: assetMgr)
-        {
+        static vsmaterialcolor: string = `#version 300 es
+            precision mediump float;
+
+            layout(location = 0) in vec3 _glesVertex;
+            uniform vec4 _Color;
+            uniform float _Alpha;
+            uniform highp mat4 glstate_matrix_mvp;
+            out lowp vec4 xlv_COLOR;
+            void main()
+            {
+                highp vec4 tmpvar_1;
+                tmpvar_1.w = 1.0;
+                tmpvar_1.xyz = _glesVertex.xyz;
+                xlv_COLOR = _Color;
+                xlv_COLOR.a = xlv_COLOR.a * _Alpha;
+                gl_Position = (glstate_matrix_mvp * tmpvar_1);
+            }
+        `;
+
+        static vslinetrail = `#version 300 es
+            precision mediump float;
+            layout(location = 0) in vec3 _glesVertex;
+            layout(location = 4) in vec4 _glesMultiTexCoord0;
+            layout(location = 3) in vec4 _glesColor;
+            
+            uniform mat4 glstate_matrix_mvp;
+            
+            out vec2 xlv_TEXCOORD0;
+            out vec4 xlv_COLOR;
+            
+            void main() 
+            {
+                gl_Position = glstate_matrix_mvp * vec4(_glesVertex , 1.0);
+                xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;
+                xlv_COLOR = _glesColor;
+            }
+        `;
+
+        static linetrailShader: string = `{
+                "properties": [
+                "_MainTex('MainTex',Texture)='white'{}"
+                ]
+            }
+            `;
+
+        static fslinetrail = `#version 300 es
+            precision mediump float;
+
+            uniform sampler2D _MainTex; 
+            
+            in vec2 xlv_TEXCOORD0;
+            in vec4 xlv_COLOR;
+            
+            out vec4 color;
+            void main() 
+            {
+                vec4 color = texture(_MainTex, xlv_TEXCOORD0);
+                color = color * xlv_COLOR;
+            }
+        `;
+
+        /**
+         * 初始化默认着色器
+         * @param assetmgr 资源管理
+         */
+        static initDefaultShader(assetmgr: assetMgr) {
             var pool = assetmgr.shaderPool;
             //鍙戠幇鏄簳灞備竴涓紩鐢ㄤ贡浜嗭紝鍘熺粨鏋勬病闂
 
@@ -700,6 +673,20 @@ namespace m4m.framework
                 p.state_zwrite = false;
                 p.state_ztest_method = render.webglkit.LEQUAL;
                 p.setAlphaBlend(render.BlendModeEnum.Blend);
+                assetmgr.mapShader[sh.getName()] = sh;
+            }
+            {
+                var sh = new shader("shader/ulit");
+                sh.defaultAsset = true;
+                sh.passes["base"] = [];
+                var p = new render.glDrawPass();
+                sh.passes["base"].push(p);
+                p.setProgram(programdiffuse);
+                sh.fillUnDefUniform(p);
+                p.state_ztest = true;
+                p.state_zwrite = true;
+                p.state_showface = render.ShowFaceStateEnum.ALL;
+                sh.layer = RenderLayerEnum.Common;
                 assetmgr.mapShader[sh.getName()] = sh;
             }
         }

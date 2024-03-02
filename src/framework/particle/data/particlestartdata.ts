@@ -233,6 +233,11 @@ limitations under the License.
             return this.direction;
         }
 
+        /**
+         * 获取位置坐标
+         * @param dir 方向向量
+         * @param length    长度 
+         */
         private getposition(dir: m4m.math.vector3, length: number)
         {
             math.vec3ScaleByNum(dir, length, dir);
@@ -240,6 +245,10 @@ limitations under the License.
             this.position.y = dir.y;
             this.position.z = dir.z;
         }
+        /**
+         * 克隆
+         * @returns 
+         */
         clone()
         {
             let data = new ParticleStartData();

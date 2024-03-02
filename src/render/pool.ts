@@ -70,6 +70,12 @@ namespace m4m.math
     export class pool
     {
         private static helpDataMap: {[type:string]:{[id:number]:any}} = {};
+        /**
+         * 生成 help 数据
+         * @param type 类型标记
+         * @param id id
+         * @returns help数据
+         */
         static genHelpData(type:string,id:number){
             let result ;
             if(!type || id == null) return result;

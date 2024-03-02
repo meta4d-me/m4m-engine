@@ -15,6 +15,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
  */
 ﻿namespace m4m.math {
+    /**
+     * 四元数初始化值
+     * @param src 四元数
+     */
     export function quatIdentity(src:quaternion)
     {
         src.x=0;
@@ -23,6 +27,11 @@ limitations under the License.
         src.w=1;
     }
 
+    /**
+     * 四元数归一化
+     * @param src 四元数
+     * @param out 输出归一化后的四元数
+     */
     export function quatNormalize(src: quaternion, out: quaternion) {
         var mag: number = 1 / Math.sqrt(src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w);
 
@@ -32,6 +41,12 @@ limitations under the License.
         out.w *= mag;
     }
 
+    /**
+     * 通过四元数变换三维向量
+     * @param src 四元数
+     * @param vector 三维向量
+     * @param out 输出的三维向量
+     */
     export function quatTransformVector(src: quaternion, vector: vector3, out: vector3) {
         var x1: number, y1: number, z1: number, w1: number;
         var x2: number = vector.x, y2: number = vector.y, z2: number = vector.z;
@@ -46,6 +61,13 @@ limitations under the License.
         out.z = -w1 * src.z - x1 * src.y + y1 * src.x + z1 * src.w;
 
     }
+    /**
+     * 通过buffer中的四元数数据变换三维向量
+     * @param src buffer
+     * @param srcseek buffer中的偏移
+     * @param vector 三维向量
+     * @param out 输出的三维向量
+     */
     export function quatTransformVectorDataAndQuat(src: Float32Array, srcseek: number, vector: vector3, out: vector3) {
         var x1: number, y1: number, z1: number, w1: number;
         var x2: number = vector.x, y2: number = vector.y, z2: number = vector.z;
@@ -61,10 +83,21 @@ limitations under the License.
         out.z = -w1 * srcz - x1 * srcy + y1 * srcx + z1 * srcw;
 
     }
+
+    /**
+     * 获取四元数的标量值（长度）
+     * @param src 四元数
+     * @returns 标量值（长度）
+     */
     export function quatMagnitude(src: quaternion): number {
         return Math.sqrt(src.w * src.w + src.x * src.x + src.y * src.y + src.z * src.z);
     }
 
+    /**
+     * 克隆四元数
+     * @param src 源四元数
+     * @param out 输出的克隆四元数
+     */
     export function quatClone(src: quaternion, out: quaternion) {
         out.x = src.x;
         out.y = src.y;
@@ -77,6 +110,13 @@ limitations under the License.
         // out.rawData[3]=src.rawData[3];
     }
 
+    /**
+     * 判断四元数是否相等
+     * @param quat 四元数a
+     * @param quat2 四元数b
+     * @param threshold 误差范围
+     * @returns 是相等？
+     */
     export function quatEqual(quat:quaternion,quat2:quaternion,threshold = 0.000001){
         if (Math.abs(quat.x - quat2.x) > threshold)
         return false;
@@ -90,6 +130,11 @@ limitations under the License.
         return true;
     }
 
+    /**
+     * 用四元数构建 旋转矩阵
+     * @param src 四元数
+     * @param out 输出的旋转矩阵
+     */
     export function quatToMatrix(src: quaternion, out: matrix) {
         var xy2: number = 2.0 * src.x * src.y, xz2: number = 2.0 * src.x * src.z, xw2: number = 2.0 * src.x * src.w;
         var yz2: number = 2.0 * src.y * src.z, yw2: number = 2.0 * src.y * src.w, zw2: number = 2.0 * src.z * src.w;
@@ -113,6 +158,11 @@ limitations under the License.
         out.rawData[15] = 1;
     }
 
+    /**
+     * 计算四元数的逆
+     * @param src 四元数
+     * @param out 输出的四元数的逆
+     */
     export function quatInverse(src: quaternion, out: quaternion) {
         var norm: number = src.w * src.w + src.x * src.x + src.y * src.y + src.z * src.z;
 
@@ -125,6 +175,13 @@ limitations under the License.
         }
     }
 
+    /**
+     * 构建四元数通过 偏航角、抛角、滚转角 
+     * @param yaw 偏航角
+     * @param pitch 抛角
+     * @param roll 滚转角
+     * @param result 输出的四元数
+     */
     export function quatFromYawPitchRoll(yaw: number, pitch: number, roll: number, result: quaternion): void {
         // Produces a quaternion from Euler angles in the z-y-x orientation (Tait-Bryan angles)
         var halfRoll = roll * 0.5;
@@ -143,6 +200,13 @@ limitations under the License.
         result.z = (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll);
         result.w = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
     }
+
+    /**
+     * 计算两个四元数相乘
+     * @param srca 四元数a
+     * @param srcb 四元数b
+     * @param out 输出的四元数
+     */
     export function quatMultiply(srca: quaternion, srcb: quaternion, out: quaternion) {
         var w1: number = srca.w, x1: number = srca.x, y1: number = srca.y, z1: number = srca.z;
         var w2: number = srcb.w, x2: number = srcb.x, y2: number = srcb.y, z2: number = srcb.z;
@@ -158,6 +222,14 @@ limitations under the License.
         // out.y = -x1 * z2 + y1 * w2 + z1 * x2 + w1 * y2;
         // out.z = x1 * y2 - y1 * x2 + z1 * w2 + w1 * z2;
     }
+
+    /**
+     * 计算一个buffer中的四元数 与另一个四元数相乘
+     * @param srca 四元数a 的 buffer
+     * @param srcaseek buffer的偏移 
+     * @param srcb 四元数b
+     * @param out 输出的四元数
+     */
     export function quatMultiplyDataAndQuat(srca: Float32Array, srcaseek: number, srcb: quaternion, out: quaternion) {
         var w1: number = srca[srcaseek + 3], x1: number = srca[srcaseek + 0], y1: number = srca[srcaseek + 1], z1: number = srca[srcaseek + 2];
         var w2: number = srcb.w, x2: number = srcb.x, y2: number = srcb.y, z2: number = srcb.z;
@@ -173,6 +245,13 @@ limitations under the License.
         // out.y = -x1 * z2 + y1 * w2 + z1 * x2 + w1 * y2;
         // out.z = x1 * y2 - y1 * x2 + z1 * w2 + w1 * z2;
     }
+
+    /**
+     * 计算一个四元数与一个三维向量相乘
+     * @param vector 三维向量
+     * @param scr 四元数
+     * @param out 输出的四元数
+     */
     export function quatMultiplyVector(vector: vector3, scr: quaternion, out: quaternion) {
         var x2: number = vector.x;
         var y2: number = vector.y;
@@ -184,6 +263,13 @@ limitations under the License.
         out.z = scr.w * z2 + scr.x * y2 - scr.y * x2;
     }
 
+    /**
+     * 通过差值度计算两个四元数的线性差值
+     * @param srca 开始的四元数
+     * @param srcb 结束的四元数
+     * @param out 输出的四元数
+     * @param t 差值度（0-1）
+     */
     export function quatLerp(srca: quaternion, srcb: quaternion, out: quaternion, t: number) {
         var w1: number = srca.w, x1: number = srca.x, y1: number = srca.y, z1: number = srca.z;
         var w2: number = srcb.w, x2: number = srcb.x, y2: number = srcb.y, z2: number = srcb.z;
@@ -207,7 +293,12 @@ limitations under the License.
         out.z *= len;
     }
 
-
+    /**
+     * 构建四元数 通过 轴和旋转度
+     * @param axis  轴
+     * @param angle 旋转度
+     * @param out 输出的四元数
+     */
     export function quatFromAxisAngle(axis: vector3, angle: number, out: quaternion) {
         angle *= Math.PI / 180.0;
         var halfAngle: number = angle * 0.5;
@@ -220,6 +311,12 @@ limitations under the License.
         // math.quatNormalize(out, out);
     }
 
+    /**
+     * 通过四元数和指定轴 获取 旋转度 
+     * @param src 四元数
+     * @param axis 轴
+     * @returns 旋转度 
+     */
     export function quatToAxisAngle(src: quaternion, axis: vector3): number {
         var sqrLength: number = src.x * src.x + src.y * src.y + src.z * src.z;
         var angle: number = 0;
@@ -240,6 +337,13 @@ limitations under the License.
         return angle;
     }
 
+    /**
+     * 构建四元数 通过 xyz欧拉角 
+     * @param ax x欧拉角
+     * @param ay y欧拉角
+     * @param az z欧拉角
+     * @param out 输出的四元数
+     */
     export function quatFromEulerAngles(ax: number, ay: number, az: number, out: quaternion) {
         ax *= Math.PI / 180;
         ay *= Math.PI / 180;
@@ -257,6 +361,12 @@ limitations under the License.
 
         math.quatNormalize(out, out);
     }
+
+    /**
+     * 通过四元数 获取 xyz欧拉角度 
+     * @param src 四元数
+     * @param result 输出xyz欧拉角度
+     */
     export function quatToEulerAngles(src: quaternion, result: vector3) {
         let qz = src.z;
         let qx = src.x;
@@ -290,13 +400,23 @@ limitations under the License.
         result.z /= Math.PI / 180;
     }
     
+    /**
+     * 重置四元数
+     * @param src 四元数
+     */
     export function quatReset(src: quaternion) {
         src.x = 0;
         src.y = 0;
         src.z = 0;
         src.w = 1;
     }
-    //获取一个注视目标的四元数
+    
+    /**
+     * 构建四元数 通过 一个点坐标和一个需要看向目标点坐标
+     * @param pos 点坐标
+     * @param targetpos 目标点坐标
+     * @param out 输出的四元数
+     */
     export function quatLookat(pos: vector3, targetpos: vector3, out: quaternion) {
         var dir = pool.new_vector3();
         math.vec3Subtract(targetpos, pos, dir);
@@ -329,6 +449,13 @@ limitations under the License.
         pool.delete_vector3(dirxz1);
     }
 
+    /**
+     * 构建四元数 通过 一个点坐标和一个需要看向目标点坐标 以及视窗上方向量
+     * @param pos 点坐标
+     * @param targetpos 目标点坐标
+     * @param out 输出的四元数
+     * @param updir 视窗上方向量
+     */
     export function quat2Lookat(pos: vector3, targetpos: vector3, out: quaternion, updir: m4m.math.vector3 = m4m.math.pool.vector3_up) {
         var dir = m4m.math.pool.new_vector3();
         math.vec3Subtract(targetpos, pos, dir);
@@ -354,12 +481,25 @@ limitations under the License.
         m4m.math.quatFromAxisAngle(rotAxis, rotangle, out);
     }
 
+    /**
+     * 构建四元数 通过 一个点坐标和一个需要看向目标点坐标 以及视窗上方向量
+     * @param pos 点坐标
+     * @param targetpos 目标点坐标
+     * @param upwards 视窗上方向量
+     * @param out 输出的四元数
+     */
     export function quat2LookRotation(pos: vector3, targetpos: vector3, upwards: vector3, out: quaternion) {
         let dir = m4m.math.pool.new_vector3();
         math.vec3Subtract(targetpos, pos, dir);
         math.quatLookRotation(dir,upwards,out);
     }
 
+    /**
+     * 构建四元数 通过 一个视线方向向量 和 视窗上方向量
+     * @param dir 视线方向向量
+     * @param upwards 视窗上方向量
+     * @param out 输出的四元数
+     */
     export function quatLookRotation(dir:vector3, upwards: vector3, out: quaternion){
         math.vec3Normalize(dir, dir);
         let ab = math.vec3Dot(dir, m4m.math.pool.vector3_forward);
@@ -418,6 +558,12 @@ limitations under the License.
         // m4m.math.pool.delete_quaternion(yq);
     }
 
+    /**
+     * 构建四元数 通过 一个点坐标和一个需要看向目标点坐标 以及视窗上方为单位Y轴
+     * @param pos 点坐标
+     * @param targetpos 目标点坐标
+     * @param out 输出的四元数
+     */
     export function quatYAxis(pos: vector3, targetpos: vector3, out: quaternion) {
         var dir = pool.new_vector3();
         math.vec3Subtract(targetpos, pos, dir);
@@ -450,7 +596,12 @@ limitations under the License.
         pool.delete_vector3(dirxz);
     }
 
-    /** 计算 从 start 到 end 旋转的四元数 */
+    /**
+     * 计算 从 start方向 到 end方向 旋转的四元数
+     * @param start  start方向
+     * @param end end方向
+     * @param out 输出的四元数
+     */
     export function quatRotationTo (start: vector3, end: vector3,out: quaternion){
         vec3Normalize(start,start);
         vec3Normalize(end,end);
@@ -483,6 +634,12 @@ limitations under the License.
         pool.delete_vector3(cross_product);
     }
 
+    /**
+     * 构建四元数 通过 一个视线方向向量 以及视窗上方向量
+     * @param dir 视线方向向量
+     * @param out 输出的四元数
+     * @param up 视窗上方向量
+     */
     export function myLookRotation(dir:vector3, out:quaternion,up:vector3=pool.vector3_up)
     {
         if(vec3Equal(dir,pool.vector3_zero))

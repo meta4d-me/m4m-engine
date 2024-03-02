@@ -25,12 +25,23 @@ namespace m4m.framework {
         HValue: number = 0;
         GValue: number = 0;
         ArrivalWall: number = 0;
+        /**
+         * 计算Heuristic值
+         * @param info 导航网格信息
+         * @param endPos 结束点
+         */
         CalcHeuristic(info: navMeshInfo, endPos: navVec3): void {
             var center: navVec3 = info.nodes[this.nodeid].center;
             var num: number = Math.abs(center.x - endPos.x);
             var num2: number = Math.abs(center.z - endPos.z);
             this.HValue = Math.sqrt(num * num + num2 * num2);
         }
+        /**
+         * 获取 消耗值
+         * @param info 导航网格信息
+         * @param neighborID 邻居ID
+         * @returns 消耗值
+         */
         GetCost(info: navMeshInfo, neighborID: number): number {
             var bc = info.nodes[neighborID].center;
             var nc = info.nodes[this.nodeid].center;
@@ -44,6 +55,15 @@ namespace m4m.framework {
         }
     }
     export class pathFinding {
+        /**
+         * 计算A星多边形路径
+         * @param info 导航网格信息
+         * @param startPoly 开始的多边形
+         * @param endPoly 结束的多边形
+         * @param endPos 结束位置
+         * @param offset 偏移
+         * @returns 输出的多变形路径列表
+         */
         static calcAStarPolyPath(info: navMeshInfo, startPoly: number, endPoly: number, endPos: navVec3 = null, offset: number = 0.1): number[] {
             var nodeFind: FindNode[] = [];// new List<FindNode>();
             var nodes: navNode[] = info.nodes;
@@ -146,6 +166,7 @@ namespace m4m.framework {
 
             return list3;
         }
+        /** @deprecated [已弃用] */
         private static NearAngle(a: number, b: number): number {
             var num: number = a;
             var flag: boolean = a >= 180.0;
@@ -167,6 +188,14 @@ namespace m4m.framework {
             }
             return result;
         }
+        /**
+         * 找路
+         * @param info 导航网格信息
+         * @param startPos 开始点
+         * @param endPos 结束始点
+         * @param offset 偏移
+         * @returns 输出的路径坐标列表
+         */
         static FindPath(info: navMeshInfo, startPos: navVec3, endPos: navVec3, offset: number = 0.1): navVec3[] {
             var startPoly: number = -1;
             var endPoly: number = -1;
@@ -184,6 +213,15 @@ namespace m4m.framework {
             return pathFinding.calcWayPoints(info, startPos, endPos, polyPath, offset);
         }
 
+        /**
+         * 计算路点
+         * @param info 导航网格信息
+         * @param startPos 开始点
+         * @param endPos 结束始点
+         * @param polyPath 多边形路径
+         * @param offset 偏移
+         * @returns 输出的路径坐标列表
+         */
         static calcWayPoints(info: navMeshInfo, startPos: navVec3, endPos: navVec3, polyPath: number[], offset: number = 0.1): navVec3[] {
             var wayPoints: navVec3[] = [];// new List<navVec3>();
             if (polyPath.length == 0 || startPos == null || endPos == null) {
@@ -381,6 +419,14 @@ namespace m4m.framework {
             return wayPoints;
         }
 
+        /**
+         * 边界相交
+         * @param a 
+         * @param b 
+         * @param c 
+         * @param d 
+         * @returns 
+         */
         static intersectBorder(a:navVec3, b:navVec3, c:navVec3, d:navVec3):navVec3{  
 
             //线段ab的法线N1  

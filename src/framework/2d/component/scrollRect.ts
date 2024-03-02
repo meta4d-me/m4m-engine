@@ -180,7 +180,12 @@ namespace m4m.framework
         private lastPoint = new math.vector2();
         private strPoint = new math.vector2();
         private strPos = new math.vector2();
-        //滑动一定距离
+        /**
+         * 滑动一定距离
+         * @param addtransX 滑动 X轴增量
+         * @param addtransY 滑动 Y轴增量
+         * @returns 
+         */
         private SlideTo(addtransX, addtransY)
         {
             if (!this._content) return;
@@ -209,7 +214,10 @@ namespace m4m.framework
 
         private readonly collectNum = 3; //控制采集精度
         private points: m4m.math.vector2[] = [];
-        //收集点数据
+        /**
+         * 收集点数据
+         * @returns 
+         */
         private collectPointing()
         {
             if (!this.isPointDown) return;
@@ -225,7 +233,9 @@ namespace m4m.framework
         }
 
         private flyVelocity = new math.vector2(); //速度
-        //点up
+        /**
+         * 连续滑动后释放时触发
+         */
         private onInertiaSliderUp()
         {
             if (this.points.length < 2)
@@ -256,7 +266,10 @@ namespace m4m.framework
         private readonly cgTime = 0.2;
         private cgCount = this.cgTime;
         private lastfv = new math.vector2();
-        //惯性滑动
+        /**
+         * 惯性滑动 更新
+         * @param delta 上一帧间隔时间（s）
+         */
         private flyingSlidr(delta: number)
         {
             if (!this.canfly || !this.inertia) return;
@@ -283,10 +296,23 @@ namespace m4m.framework
                 if(this.onSlideEndFun)this.onSlideEndFun();
             }
         }
+        /**
+         * 当移动时触发
+         */
         public onMoveFun: (x: number, y: number) => {};
+        /**
+         * 当点击下时触发
+         */
         public onDownFun: (x: number, y: number) => {};
+        /**
+         * 当点击释放时触发
+         */
         public onUpFun: () => {};
-        public onSlideEndFun: () => {};//惯性滑动 结束
+        /**
+         * 当惯性滑动 结束时触发
+         */
+        public onSlideEndFun: () => {};
+        
         remove()
         {
             this._content = null;

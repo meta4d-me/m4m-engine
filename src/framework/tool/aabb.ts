@@ -294,6 +294,10 @@ limitations under the License.
             return aabb;
         }
 
+        /**
+         * 克隆
+         * @param to 输出的aabb
+         */
         public cloneTo(to:aabb)
         {
             math.vec3Clone(this.minimum,to.minimum);
@@ -365,7 +369,6 @@ limitations under the License.
             {
                 var sm = new subMeshInfo();
                 sm.matIndex = 0;
-                sm.useVertexIndex = 0;
                 sm.start = 0;
                 sm.size = i16.length;
                 sm.line = true;

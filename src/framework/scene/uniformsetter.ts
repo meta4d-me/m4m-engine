@@ -19,7 +19,9 @@ namespace m4m.framework
     export class uniformSetter
     {
         static autoUniformDic:{[name:string]:(context: renderContext)=>any}={};
-
+        /**
+         * 初始化自动 默认 uniform 数据
+         */
         static initAutouniform()
         {
             this.autoUniformDic["glstate_matrix_model"]=(context: renderContext)=>{

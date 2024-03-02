@@ -28,7 +28,7 @@ namespace m4m.framework {
     export class inputField implements I2DComponent, I2DPointListener {
         static readonly ClassName: string = "inputField";
         private static readonly helpV2: m4m.math.vector2 = new m4m.math.vector2();
-        private static _isIos: boolean;
+        private static _isMobile: boolean;
 
         /**
          * @public
@@ -60,6 +60,8 @@ namespace m4m.framework {
         private inputElement: HTMLInputElement | HTMLTextAreaElement;
         private _text: string = "";
         private _lastAddRTextFID = 0;
+        private _inputStop: boolean = false;
+        private _eventsHandle: { [eventKey: string]: Function } = {};
 
         /** 用户 按回车键时提交 回调函数 */
         public onTextSubmit: (text: string) => void;
@@ -67,6 +69,8 @@ namespace m4m.framework {
         public onfocus: () => void;
         /** 用户 从输入框移出焦点 回调函数 */
         public onblur: () => void;
+        /** 用户 从输入框移出 回调函数 */
+        public onmouseout: () => void;
 
         /** 选择区域的开始位置 */
         get selectionStart() {
@@ -173,6 +177,13 @@ namespace m4m.framework {
             this._contentType = contentType;
         }
 
+        private _overflowMode: number = inputOverflowMode.AUTO;
+        get OverflowMode() { return this._overflowMode; }
+        set OverflowMode(overflowMode: inputOverflowMode) {
+            this._overflowMode = overflowMode;
+            this.setTextAreaOverflow();
+        }
+
         private _textLable: label;
         /**
          * @public
@@ -245,27 +256,53 @@ namespace m4m.framework {
             Ele.style.display = "none"
         }
 
+        /**
+         * 创建 Html的InputElement 对象
+         */
         private createInputEle() {
             this.inputElement = <HTMLInputElement>document.createElement("Input");
             let inpEle = this.inputElement;
+            if (this.ContentType == contentType.PassWord) {
+                inpEle.type = "password";
+            } else {
+                inpEle.type = "text";
+            }
             this.setStyleEle(inpEle);
-            inpEle.type = "text";
             inpEle.style["-moz-appearance"] = 'textfield';
         }
 
+        /**
+         * 创建 Html的TextareaElement 对象
+         * 多行文本输入会使用到
+         */
         private createTextAreaEle() {
             this.inputElement = <HTMLTextAreaElement>document.createElement("textarea");
             let inpEle = this.inputElement;
             this.setStyleEle(inpEle);
             inpEle.style.resize = "none";
-            inpEle.style.overflowY = 'scroll';   //Y 轴滚动条
+            // inpEle.style.overflowY = 'scroll';   //Y 轴滚动条
             // inpEle.style.scrollbarGutter = "stable";
+            this.setTextAreaOverflow();
+        }
+
+        /**
+         * 设置 TextareaElement 对象 的Overflow模式
+         */
+        private setTextAreaOverflow() {
+            if (!this.inputElement || this._lineType == lineType.SingleLine) return;
+            let _ofyStr = "";
+            switch (this._overflowMode) {
+                case inputOverflowMode.AUTO: _ofyStr = "auto"; break;
+                case inputOverflowMode.SCROLL: _ofyStr = "scroll"; break;
+                case inputOverflowMode.HIDDEN: _ofyStr = "hidden"; break;
+            }
+            this.inputElement.style.overflowY = _ofyStr;
         }
 
         /** 初始化 html 元素 */
         private initEle() {
             //ios fix thing
-            this.ckIsIos();
+            this.ckIsMobile();
 
             //create Ele
             if (this._lineType == lineType.SingleLine) {
@@ -285,38 +322,62 @@ namespace m4m.framework {
                     htmlCanv.parentElement.appendChild(inpEle);
             }
 
-            //reg event
-            inpEle.onblur = (e) => {
+            let eventsH = this._eventsHandle;
+
+            //事件 handle 绑定函数
+            eventsH.compositionstart = (e) => {
+                this._inputStop = true;
+            }
+
+            eventsH.compositionend = (e) => {
+                this._inputStop = false;
+                this.textRefresh();
+            }
+
+            eventsH.blur = (e) => {
+                if (inputField._isMobile && this._inputStop) {
+                    if (eventsH.compositionend) eventsH.compositionend();
+                }
                 this.beFocus = false;
                 if (this.onblur) this.onblur();
             }
 
-            inpEle.onfocus = (e) => {
+            eventsH.focus = (e) => {
                 this.beFocus = true;
                 if (this.onfocus) this.onfocus();
             }
 
-            inpEle.onkeydown = (ev: KeyboardEvent) => {
-                if (ev.code == "Enter") {
+            eventsH.mouseout = (e) => {
+                if (this.onmouseout) this.onmouseout();
+            }
+
+            eventsH.keydown = (ev: KeyboardEvent) => {
+                if (this._inputStop) return;
+                if (ev.code == "Enter" || (ev as any).keyCode == 13) {
                     let needSubmit = this._lineType != lineType.MultiLine_NewLine;
                     if (ev.ctrlKey) needSubmit = true; //ctr + Enter = 强制提交
                     if (needSubmit) {
-                        inpEle.blur();
+                        // inpEle.blur();
+                        this.setFocus(false);
                         if (this.onTextSubmit) this.onTextSubmit(this._text);
                     }
                 }
                 // console.error(`code:${ev.code}`);
             }
 
-            // inpEle.addEventListener('compositionstart', () => { console.log("compositionstart") });
-            // inpEle.addEventListener('compositionend', () => { console.log("compositionend") });
-            // inpEle.addEventListener('input', () => { console.log("input") });
-            // inpEle.addEventListener('keydown', () => { console.log("keydown") });
-            // inpEle.addEventListener('touchstart', () => { console.log("touchstart") });
+            //reg all event
+            for (let key in eventsH) {
+                let fun = eventsH[key];
+                inpEle.addEventListener(key, fun as any);
+            }
 
             this.inputElmLayout();
         }
 
+        /**
+         * 更新 html 元素的Style（样式）
+         * @returns 
+         */
         private updateEleStyle() {
             let inpEle = this.inputElement;
             if (!inpEle) return;
@@ -341,12 +402,19 @@ namespace m4m.framework {
             inpEle.placeholder = placeholderStr;
         }
 
+        /**
+         * 销毁 html 元素
+         * @returns 
+         */
         private removeEle() {
             let inpEle = this.inputElement;
             if (!inpEle) return;
-            inpEle.onfocus = null;
-            inpEle.onclick = null;
-            inpEle.onblur = null;
+            //unreg all event
+            for (let key in this._eventsHandle) {
+                let fun = this._eventsHandle[key];
+                inpEle.removeEventListener(key, fun as any);
+            }
+            //remove
             inpEle.disabled = false;
             inpEle.value = "";
             inpEle.style.display = "none";
@@ -355,21 +423,20 @@ namespace m4m.framework {
             this.inputElement = null;
         }
 
-        /**
-         * @private
-         */
         start() {
             this.initEle();
         }
 
-        private ckIsIos() {
-            //ios 有保护 , focus 必须在 dom 事件帧触发。
-            if (inputField._isIos == null) {
+        /**
+         * 检查是否是 移动设备
+         */
+        private ckIsMobile() {
+            if (inputField._isMobile == null) {
                 if (navigator && navigator.userAgent) {
-                    let u = navigator.userAgent;
-                    inputField._isIos = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
+                    let u = navigator.userAgent.toLowerCase();
+                    inputField._isMobile = /mobile|iphone|ipad|android/.test(u);
                 } else {
-                    inputField._isIos = false;
+                    inputField._isMobile = false;
                 }
             }
         }
@@ -379,7 +446,6 @@ namespace m4m.framework {
         }
 
         /**
-        * @private
         * inputElement 位置、宽高刷新
         */
         private inputElmLayout() {
@@ -405,12 +471,10 @@ namespace m4m.framework {
         }
 
         /**
-         * @private
          * 输入文本刷新
          */
         private textRefresh() {
-
-            if (!this.inputElement) return;
+            if (this._inputStop || !this.inputElement) return;
 
             let realMaxLen = this._charlimit;
             if (realMaxLen <= 0) { realMaxLen = -1; }
@@ -420,7 +484,7 @@ namespace m4m.framework {
                 return;
             }
 
-            if (!this.beFocus || !this._textLable || !this._placeholderLabel || this._text == this.inputElement.value) return;
+            if (!this._textLable || !this._placeholderLabel || this._text == this.inputElement.value) return;
 
             this._text = this.inputElement.value;
             if (this._contentType == contentType.Custom) {
@@ -461,20 +525,18 @@ namespace m4m.framework {
             this.inputElement.value = this._text;
             if (this._textLable) {
                 this._textLable.text = this._text;
+                //密码模式
+                if (this._contentType == contentType.PassWord) {
+                    this._textLable.text = this._text.replace(/[\S|\s]/g, "*");
+                }
             }
         }
 
-        /**
-         * @private
-         */
         update(delta: number) {
             this.layoutRefresh();
             this.textRefresh();
         }
 
-        /**
-         * @private
-         */
         remove() {
             if (this._textLable) this._textLable.onAddRendererText = null;
             this._placeholderLabel = null;
@@ -485,11 +547,9 @@ namespace m4m.framework {
             this.onTextSubmit = null;
             this.onblur = null;
             this.onfocus = null;
+            this.onmouseout = null;
         }
 
-        /**
-         * @private
-         */
         onPointEvent(canvas: canvas, ev: PointEvent, oncap: boolean) {
             // if(this._isIos) return;
             if (oncap == false) {
@@ -499,7 +559,11 @@ namespace m4m.framework {
             }
         }
 
-        private setFocus(isFocus: boolean) {
+        /**
+         * 设置 输入聚焦状态
+         * @param isFocus 是否聚焦 
+         */
+        setFocus(isFocus: boolean) {
             if (isFocus) {
                 this.showEle();
                 if (!this.beFocus) {
@@ -550,9 +614,9 @@ namespace m4m.framework {
     export enum lineType {
         /** 单行模式 */
         SingleLine,
-        /** 多行模式 */
+        /** 多行模式 (输入回车键提交)*/
         MultiLine,
-        /** 多行模式 (输入回车键换行处理)*/
+        /** 多行模式 (输入回车键换行处理 , ctrl + 回车 为提交处理)*/
         MultiLine_NewLine,
     }
 
@@ -580,5 +644,17 @@ namespace m4m.framework {
         PassWord = 64,
         /** 自定义 */
         Custom = 128,
+    }
+
+    /**
+     * 输入框 滑动进度条模式
+     */
+    export enum inputOverflowMode {
+        /** 按需要启用滑动进度条 */
+        AUTO,
+        /** 隐藏滑动进度条 */
+        HIDDEN,
+        /** 一直显示滑动进度条 */
+        SCROLL
     }
 }

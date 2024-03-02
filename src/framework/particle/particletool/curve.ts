@@ -126,7 +126,11 @@ namespace m4m.framework {
             }
             return new Curve3(beizerPoint, bezierPointNum);
         }
-
+        /**
+         * 曲线
+         * @param points 点列表 
+         * @param nbPoints nb点列表 
+         */
         constructor(points: m4m.math.vector3[], nbPoints: number) {
             this._beizerPoints = points;
             this._bezierPointNum = nbPoints;

@@ -14,8 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-﻿namespace m4m.framework
-{
+﻿namespace m4m.framework {
     /**
      * @public
      * @language zh_CN
@@ -23,8 +22,11 @@ limitations under the License.
      * 射线
      * @version m4m 1.0
      */
-    export class ray
-    {
+    export class ray {
+        private static readonly help_v3 = new math.vector3();
+        private static readonly help_v3_1 = new math.vector3();
+        private static readonly help_v3_2 = new math.vector3();
+
         public origin: math.vector3 = new math.vector3();
         public direction: math.vector3 = new math.vector3();
         /**
@@ -37,9 +39,8 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        constructor(_origin: m4m.math.vector3, _dir: m4m.math.vector3)
-        {
-            this.set(_origin , _dir);
+        constructor(_origin: m4m.math.vector3, _dir: m4m.math.vector3) {
+            this.set(_origin, _dir);
         }
 
         /**
@@ -52,9 +53,9 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        set(_origin: m4m.math.vector3, _dir: m4m.math.vector3 ){
-            math.vec3Clone(_origin,this.origin);
-            math.vec3Clone(_dir,this.direction);
+        set(_origin: m4m.math.vector3, _dir: m4m.math.vector3) {
+            math.vec3Clone(_origin, this.origin);
+            math.vec3Clone(_dir, this.direction);
         }
 
         /**
@@ -66,11 +67,10 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        public intersectAABB(_aabb: aabb): boolean
-        {
+        public intersectAABB(_aabb: aabb): boolean {
             return this.intersectBoxMinMax(_aabb.minimum, _aabb.maximum);
         }
-        
+
         /**
         * @private
         * @language zh_CN
@@ -80,17 +80,15 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        public intersectPlaneTransform(tran: transform,outInfo:pickinfo):boolean
-        {
+        public intersectPlaneTransform(tran: transform, outInfo: pickinfo): boolean {
             let ishided = false;
             var panelpoint = tran.getWorldTranslate();
             var forward = m4m.math.pool.new_vector3();
             tran.getForwardInWorld(forward);
             var hitposition = m4m.math.pool.new_vector3();
-            ishided = this.intersectPlane(panelpoint, forward,hitposition);
-            if (ishided)
-            {
-                m4m.math.vec3Clone(hitposition,outInfo.hitposition);
+            ishided = this.intersectPlane(panelpoint, forward, hitposition);
+            if (ishided) {
+                m4m.math.vec3Clone(hitposition, outInfo.hitposition);
                 outInfo.distance = m4m.math.vec3Distance(outInfo.hitposition, this.origin);
                 outInfo.pickedtran = tran;
             }
@@ -100,8 +98,14 @@ limitations under the License.
             return ishided;
         }
 
-        public intersectPlane(planePoint: m4m.math.vector3, planeNormal:m4m.math.vector3,outHitPoint:m4m.math.vector3):boolean
-        {
+        /**
+         * 判断 与一个平面 是否相交
+         * @param planePoint 平面上的点
+         * @param planeNormal 平面法向量
+         * @param outHitPoint 输出的碰撞点坐标
+         * @returns 碰撞了？
+         */
+        public intersectPlane(planePoint: m4m.math.vector3, planeNormal: m4m.math.vector3, outHitPoint: m4m.math.vector3): boolean {
             var vp1 = planeNormal.x;
             var vp2 = planeNormal.y;
             var vp3 = planeNormal.z;
@@ -115,12 +119,10 @@ limitations under the License.
             var m2 = this.origin.y;
             var m3 = this.origin.z;
             var vpt = v1 * vp1 + v2 * vp2 + v3 * vp3;
-            if (vpt === 0)
-            {
+            if (vpt === 0) {
                 return false;
             }
-            else
-            {
+            else {
                 var t = ((n1 - m1) * vp1 + (n2 - m2) * vp2 + (n3 - m3) * vp3) / vpt;
                 outHitPoint.x = m1 + v1 * t;
                 outHitPoint.y = m2 + v2 * t;
@@ -129,9 +131,9 @@ limitations under the License.
                 return true;
             }
         }
-        
-        private static tempMData : render.meshData;
-        private static tempVecs : m4m.math.vector3[];
+
+        private static tempMData: render.meshData;
+        private static tempVecs: m4m.math.vector3[];
 
         /**
         * @private
@@ -142,46 +144,51 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        public intersectCollider(tran: transform , outInfo: pickinfo):boolean
-        {
+        public intersectCollider(tran: transform, outInfo: pickinfo): boolean {
             let ishided = false;
             let _collider: ICollider = tran.gameObject.collider;
             let lastDistance = Number.MAX_VALUE;
-            if (_collider instanceof boxcollider)
-            {
+            if (_collider instanceof boxcollider) {
                 let obb = _collider.getBound() as obb;
-                if(!obb)    return ishided;
-                if(!ray.tempVecs){
+                if (!obb) return ishided;
+                if (!ray.tempVecs) {
                     ray.tempVecs = [];
-                    for(let i=0;i < 8 ;i++){
+                    for (let i = 0; i < 8; i++) {
                         ray.tempVecs.push(new m4m.math.vector3());
                     }
                 }
                 let wVects = obb.vectorsWorld;
-                for(let i=0; i < 8 ;i++){
-                    math.vec3Clone(wVects[i],ray.tempVecs[i]);
+                for (let i = 0; i < 8; i++) {
+                    math.vec3Clone(wVects[i], ray.tempVecs[i]);
                 }
-                
+
                 // obb.caclWorldVecs(ray.tempVecs, _collider.gameObject.transform.getWorldMatrix());   
-                if(!ray.tempMData) ray.tempMData = new render.meshData();
-                m4m.render.meshData.genBoxByArray(ray.tempVecs,ray.tempMData);    
+                if (!ray.tempMData) ray.tempMData = new render.meshData();
+                m4m.render.meshData.genBoxByArray(ray.tempVecs, ray.tempMData);
                 let data = ray.tempMData;
-                for (var index = 0; index < data.trisindex.length; index += 3)
-                {
-                    var p0 = data.pos[data.trisindex[index]];
-                    var p1 = data.pos[data.trisindex[index + 1]];
-                    var p2 = data.pos[data.trisindex[index + 2]];
+                const trisindexLen = data.getTriIndexCount();
+                for (var index = 0; index < trisindexLen; index += 3) {
+                    // var p0 = data.pos[data.trisindex[index]];
+                    // var p1 = data.pos[data.trisindex[index + 1]];
+                    // var p2 = data.pos[data.trisindex[index + 2]];
+                    const triIdx0 = data.getTriIndex(index);
+                    const triIdx1 = data.getTriIndex(index + 1);
+                    const triIdx2 = data.getTriIndex(index + 2);
+                    let p0 = ray.help_v3;
+                    let p1 = ray.help_v3_1;
+                    let p2 = ray.help_v3_2;
+                    data.getPosition(triIdx0, p0);
+                    data.getPosition(triIdx1, p1);
+                    data.getPosition(triIdx2, p2);
 
                     let tempinfo = math.pool.new_pickInfo();
-                    let bool = this.intersectsTriangle(p0, p1, p2,tempinfo);
-                    if (bool)
-                    {
+                    let bool = this.intersectsTriangle(p0, p1, p2, tempinfo);
+                    if (bool) {
                         if (tempinfo.distance < 0) continue;
-                        if (lastDistance > tempinfo.distance)
-                        {
+                        if (lastDistance > tempinfo.distance) {
                             ishided = true;
                             outInfo.cloneFrom(tempinfo);
-                            outInfo.pickedtran=tran;
+                            outInfo.pickedtran = tran;
                             lastDistance = outInfo.distance;
                             var tdir = m4m.math.pool.new_vector3();
                             m4m.math.vec3ScaleByNum(this.direction, outInfo.distance, tdir);
@@ -192,17 +199,14 @@ limitations under the License.
                     math.pool.delete_pickInfo(tempinfo);
                 }
             }
-            else if (_collider instanceof meshcollider)
-            {
+            else if (_collider instanceof meshcollider) {
                 let mesh = _collider.getBound();
-                if (mesh != null)
-                {
-                    ishided = mesh.intersects(this, tran.getWorldMatrix() , outInfo);
+                if (mesh != null) {
+                    ishided = mesh.intersects(this, tran.getWorldMatrix(), outInfo);
                 }
             }
-            else if (_collider instanceof canvasRenderer)
-            {
-                ishided = this.intersectPlaneTransform(tran,outInfo);
+            else if (_collider instanceof canvasRenderer) {
+                ishided = this.intersectPlaneTransform(tran, outInfo);
             }
             return ishided;
         }
@@ -217,33 +221,27 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        public intersectBoxMinMax(minimum: m4m.math.vector3, maximum: m4m.math.vector3): boolean
-        {
+        public intersectBoxMinMax(minimum: m4m.math.vector3, maximum: m4m.math.vector3): boolean {
             var d = 0.0;
             var maxValue = Number.MAX_VALUE;
             var inv: number;
             var min: number;
             var max: number;
             var temp: number;
-            if (Math.abs(this.direction.x) < 0.0000001)
-            {
-                if (this.origin.x < minimum.x || this.origin.x > maximum.x)
-                {
+            if (Math.abs(this.direction.x) < 0.0000001) {
+                if (this.origin.x < minimum.x || this.origin.x > maximum.x) {
                     return false;
                 }
             }
-            else
-            {
+            else {
                 inv = 1.0 / this.direction.x;
                 min = (minimum.x - this.origin.x) * inv;
                 max = (maximum.x - this.origin.x) * inv;
-                if (max === -Infinity)
-                {
+                if (max === -Infinity) {
                     max = Infinity;
                 }
 
-                if (min > max)
-                {
+                if (min > max) {
                     temp = min;
                     min = max;
                     max = temp;
@@ -252,32 +250,26 @@ limitations under the License.
                 d = Math.max(min, d);
                 maxValue = Math.min(max, maxValue);
 
-                if (d > maxValue)
-                {
+                if (d > maxValue) {
                     return false;
                 }
             }
 
-            if (Math.abs(this.direction.y) < 0.0000001)
-            {
-                if (this.origin.y < minimum.y || this.origin.y > maximum.y)
-                {
+            if (Math.abs(this.direction.y) < 0.0000001) {
+                if (this.origin.y < minimum.y || this.origin.y > maximum.y) {
                     return false;
                 }
             }
-            else
-            {
+            else {
                 inv = 1.0 / this.direction.y;
                 min = (minimum.y - this.origin.y) * inv;
                 max = (maximum.y - this.origin.y) * inv;
 
-                if (max === -Infinity)
-                {
+                if (max === -Infinity) {
                     max = Infinity;
                 }
 
-                if (min > max)
-                {
+                if (min > max) {
                     temp = min;
                     min = max;
                     max = temp;
@@ -286,32 +278,26 @@ limitations under the License.
                 d = Math.max(min, d);
                 maxValue = Math.min(max, maxValue);
 
-                if (d > maxValue)
-                {
+                if (d > maxValue) {
                     return false;
                 }
             }
 
-            if (Math.abs(this.direction.z) < 0.0000001)
-            {
-                if (this.origin.z < minimum.z || this.origin.z > maximum.z)
-                {
+            if (Math.abs(this.direction.z) < 0.0000001) {
+                if (this.origin.z < minimum.z || this.origin.z > maximum.z) {
                     return false;
                 }
             }
-            else
-            {
+            else {
                 inv = 1.0 / this.direction.z;
                 min = (minimum.z - this.origin.z) * inv;
                 max = (maximum.z - this.origin.z) * inv;
 
-                if (max === -Infinity)
-                {
+                if (max === -Infinity) {
                     max = Infinity;
                 }
 
-                if (min > max)
-                {
+                if (min > max) {
                     temp = min;
                     min = max;
                     max = temp;
@@ -320,8 +306,7 @@ limitations under the License.
                 d = Math.max(min, d);
                 maxValue = Math.min(max, maxValue);
 
-                if (d > maxValue)
-                {
+                if (d > maxValue) {
                     return false;
                 }
             }
@@ -337,8 +322,7 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        public intersectsSphere(center: m4m.math.vector3, radius: number): boolean
-        {
+        public intersectsSphere(center: m4m.math.vector3, radius: number): boolean {
             var center_ori = m4m.math.pool.new_vector3();
             m4m.math.vec3Subtract(center, this.origin, center_ori);
             var raydist = m4m.math.vec3Dot(this.direction, center_ori);
@@ -368,22 +352,20 @@ limitations under the License.
         * @version m4m 1.0
         * @platform Web,Native
         */
-        public intersectsTriangle(vertex0: m4m.math.vector3, vertex1: m4m.math.vector3, vertex2: m4m.math.vector3 , outInfo:pickinfo):boolean
-        {
+        public intersectsTriangle(vertex0: m4m.math.vector3, vertex1: m4m.math.vector3, vertex2: m4m.math.vector3, outInfo: pickinfo): boolean {
             var _edge1 = m4m.math.pool.new_vector3();
             var _edge2 = m4m.math.pool.new_vector3();
             var _pvec = m4m.math.pool.new_vector3();
             var _tvec = m4m.math.pool.new_vector3();
             var _qvec = m4m.math.pool.new_vector3();
-         
+
 
             m4m.math.vec3Subtract(vertex1, vertex0, _edge1);
             m4m.math.vec3Subtract(vertex2, vertex0, _edge2);
             m4m.math.vec3Cross(this.direction, _edge2, _pvec);
             var det = m4m.math.vec3Dot(_edge1, _pvec);
 
-            if (det === 0)
-            {
+            if (det === 0) {
                 return false;
             }
 
@@ -393,8 +375,7 @@ limitations under the License.
 
             var bu = m4m.math.vec3Dot(_tvec, _pvec) * invdet;
 
-            if (bu < 0 || bu > 1.0)
-            {
+            if (bu < 0 || bu > 1.0) {
                 return false;
             }
 
@@ -402,8 +383,7 @@ limitations under the License.
 
             var bv = m4m.math.vec3Dot(this.direction, _qvec) * invdet;
 
-            if (bv < 0 || bu + bv > 1.0)
-            {
+            if (bv < 0 || bu + bv > 1.0) {
                 return false;
             }
 
@@ -416,8 +396,8 @@ limitations under the License.
             outInfo.distance = distance;
             //return new pickinfo(bu, bv, distance);
 
-            math.vec3Cross(_edge1,_edge2,outInfo.normal);
-            math.vec3Normalize(outInfo.normal,outInfo.normal);
+            math.vec3Cross(_edge1, _edge2, outInfo.normal);
+            math.vec3Normalize(outInfo.normal, outInfo.normal);
 
             m4m.math.pool.delete_vector3(_edge1);
             m4m.math.pool.delete_vector3(_edge2);

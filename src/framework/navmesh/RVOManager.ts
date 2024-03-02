@@ -35,6 +35,10 @@ namespace m4m.framework {
         private currMoveDir:m4m.math.vector2 = new m4m.math.vector2();
 
         private _RoadPoints:m4m.math.vector3[] = [];
+        /**
+         * 设置路点
+         * @param goalQueue 目标点队列
+         */
         public setRoadPoints(goalQueue:m4m.math.vector3[]){
             if(!goalQueue || goalQueue.length<1) return;
             //clear history
@@ -53,6 +57,7 @@ namespace m4m.framework {
             this.goals[0][1] = this.currGoal.z;
         }
 
+        /** 添加代理 */
         public addAgent(key: number, transform: m4m.framework.transform, radius: number, attackRanges: number, speed: number) {
             let index = this.sim.agents.length;
             let current_position = [transform.localTranslate.x, transform.localTranslate.z];
@@ -77,6 +82,7 @@ namespace m4m.framework {
             this.isRunning = true;
         }
 
+        /** 移除代理 */
         public removeAgent(key: number) {
             let offset = this.map[key];
 
@@ -90,6 +96,7 @@ namespace m4m.framework {
             this.reBuildHashMap();
         }
 
+        /** 重编HashMap */
         private reBuildHashMap() {
             for(let i = 0; i < this.sim.agents.length; i++) {
                 this.map[this.sim.agents[i].id] = i;
@@ -100,28 +107,33 @@ namespace m4m.framework {
             this.sim.kdTree.obstacleTree = 0;
         }
 
+        /** 通过key获取变换节点 */
         public getTransformByKey(key: number): m4m.framework.transform {
             let offset = this.map[key];
             return this.transforms[offset];
         }
-
+        /** 设置 代理半径 */
         public setRadius(id: number, value: number) {
             let i = this.map[id];
             this.sim.agents[i].radius = value;
         }
+        /** 设置代理最大移动速度 */
         public setSpeed(id: number, value: number) {
             let i = this.map[id];
             this.sim.agents[i].maxSpeed = value;
         }
+        /** 设置搜索区域 */
         public setAttackRange(id: number, value: number) {
             let i = this.map[id];
             this.attackRanges[i] = value;
         }
 
+        /** 关闭功能 */
         public disable() {
             this.isRunning = false;
         }
 
+        /** 开启功能 */
         public enable() {
             this.isRunning = true;
             // 更新位置
@@ -130,6 +142,7 @@ namespace m4m.framework {
             }
         }
 
+        /** 更新 */
         public update() {
             if(this.isRunning && (this.transforms.length >= 1)) {
                 this.RVO_check(this.sim, this.goals);
@@ -138,6 +151,7 @@ namespace m4m.framework {
             }
         }
 
+        /** 是静态？ */
         private isAlmostStatic():boolean {
             let threshold = 0.1;
             let amount = 0;
@@ -154,7 +168,7 @@ namespace m4m.framework {
             return false;
         }
 
-
+        /** RVO 系统走一步 */
         private RVO_walking(sim, goals) {
             // 据当前目标重新获取目标方向向量
             for (var i = 0, len = sim.agents.length; i < len; i ++) {
@@ -169,6 +183,7 @@ namespace m4m.framework {
             sim.doStep();   // 移动一帧
         }
 
+        /** 更新引擎变换节点 */
         private updateTransform(sim) {
             for(let i = 0; i < sim.agents.length; i++) {
                 this.transforms[i].localTranslate.x = sim.agents[i].position[0];
@@ -216,6 +231,7 @@ namespace m4m.framework {
         //     // m4m.math.matrixMultiply(monster_Matrix);
         // }
 
+        /** RVO 系统检查目标点 */
         private RVO_check(sim, goals) {
             // 玩家根据 NavMesh 切换目标
             if(this.currGoal){
@@ -264,6 +280,7 @@ namespace m4m.framework {
 
         }
 
+        /** 计算2d方向 */
         private cal2dDir(oPos:m4m.math.vector3,tPos:m4m.math.vector3,out:m4m.math.vector2){
             if(!oPos || !tPos || !out)  return;
             let ov2 = m4m.math.pool.new_vector2();

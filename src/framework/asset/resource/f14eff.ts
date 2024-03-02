@@ -30,6 +30,10 @@ namespace m4m.framework
         defaultAsset: boolean = false;
         private name: constText = null;
         private id: resID = new resID();
+        /**
+         * F14特效 资源
+         * @param assetName 资源名
+         */
         constructor(assetName: string = null)
         {
             if (!assetName)
@@ -71,6 +75,12 @@ namespace m4m.framework
         delayTime: number;
         // trans:transform;
         // f14Effect:f14EffectSystem;
+        /**
+         * 解析 f14 特效系统对象
+         * @param jsonStr 字符串数据（josn）
+         * @param assetmgr 资源管理器
+         * @returns F14Data 
+         */
         Parse(jsonStr: string, assetmgr: assetMgr)
         {
 
@@ -100,6 +110,12 @@ namespace m4m.framework
             return result;
         }
 
+        /**
+         * 执行搜索
+         * @param obj 对象
+         * @param arr 数组
+         * @returns 
+         */
         private doSearch(obj:object, arr:any[]){
             if(!obj) return;
             if(obj instanceof material || obj instanceof framework.mesh || obj instanceof texture)

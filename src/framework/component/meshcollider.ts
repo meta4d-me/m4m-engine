@@ -101,15 +101,16 @@ limitations under the License.
                 this.subTran.gameObject.visible = this._colliderVisible;
             }
         }
-         /**
-         * @private
-         */
+       
         intersectsTransform(tran: transform): boolean
         {
             //obb-mesh  obb-obb  mesh-mesh
             return false;
         }
         private _builded = false;
+        /**
+         * 检查构建mesh
+         */
         private ckbuildMesh()
         {
             if(this._builded || !this._filter) return;
@@ -128,6 +129,10 @@ limitations under the License.
             this._builded = true;
         }
 
+        /**
+         * 获取 碰撞mesh
+         * @returns 碰撞mesh
+         */
         private getColliderMesh(): mesh
         {
             var _mesh: mesh = new mesh();
@@ -138,16 +143,17 @@ limitations under the License.
             var webgl = this.gameObject.getScene().webgl;
 
             _mesh.glMesh = new m4m.render.glMesh();
-            _mesh.glMesh.initBuffer(webgl, vf, _mesh.data.pos.length);
+            _mesh.glMesh.initBuffer(webgl, vf, _mesh.data.getVertexCount());
             _mesh.glMesh.uploadVertexData(webgl, v32);
 
             _mesh.glMesh.addIndex(webgl, i16.length);
             _mesh.glMesh.uploadIndexData(webgl, 0, i16);
+            _mesh.glMesh.initVAO();
+
             _mesh.submesh = [];
             {
                 var sm = new subMeshInfo();
                 sm.matIndex = 0;
-                sm.useVertexIndex = 0;
                 sm.start = 0;
                 sm.size = i16.length;
                 sm.line = true;

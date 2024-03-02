@@ -20,7 +20,11 @@ namespace m4m.framework
     type downloadBindType = (guid: number, url: string, type: AssetTypeEnum, finish: () => void) => void;
 
     export const assetParseMap: { [key: number]: IAssetFactory } = {};
-    //资源处理装饰器
+    /**
+     * 资源处理装饰器
+     * @param type 类型
+     * @returns 
+     */
     export function assetF(type: AssetTypeEnum)
     {
         return function (ctor)
@@ -29,7 +33,11 @@ namespace m4m.framework
         }
     }
 
-    //#region 资源类型
+    /**
+     * 通过url获取资源类型
+     * @param url 资源路径
+     * @returns 资源类型
+     */
     export function calcType(url: string | any): AssetTypeEnum
     {
         var filei = url.lastIndexOf("/");
@@ -118,6 +126,8 @@ namespace m4m.framework
                     return AssetTypeEnum.HDR;
                 case ".gltf":
                     return AssetTypeEnum.GLTF;
+                case ".glb":
+                    return AssetTypeEnum.GLB;
                 case ".bin":
                     return AssetTypeEnum.BIN;
             }
@@ -126,6 +136,11 @@ namespace m4m.framework
         }
     }
 
+    /**
+     * 获取http请求的类型
+     * @param type 资源类型
+     * @returns http请求类型
+     */
     export function calcReqType(type: AssetTypeEnum): "text" | "arraybuffer"
     {
         var e = AssetTypeEnum;
@@ -160,14 +175,13 @@ namespace m4m.framework
             case e.HDR:
             case e.RAW:
             case e.BIN:
+            case e.GLB:
                 return "arraybuffer";
             default:
                 // throw Error(`无法识别类型 enum:${AssetTypeEnum[type]},type:${type}`);
                 return null;
         }
     }
-    //#endregion
-
 
     //资源管理器
     export class assetMgr
@@ -196,7 +210,9 @@ namespace m4m.framework
 
 
 
-        //外部才能确定在哪用,初始化全局资源记录
+        /**
+         * 外部才能确定在哪用,初始化全局资源记录
+         */
         static initGuidList()
         {
             io.loadJSON(assetMgr.guidlistURL, (json) =>
@@ -209,6 +225,11 @@ namespace m4m.framework
             });
         }
 
+        /**
+         * 设置加载中
+         * @param guid id 
+         * @param data 加载中的数据对象
+         */
         static setLoading(guid: number, data: any)
         {
             // let loading = assetMgr.mapLoading[guid];
@@ -216,7 +237,13 @@ namespace m4m.framework
             //     throw new Error(`冲突的guid:${guid}`);
             assetMgr.mapLoading[guid] = data;
         }
-        //加载资源
+        /**
+         * 加载资源
+         * @param url 资源路径
+         * @param type 资源类型
+         * @param onstate 状态时变化回调
+         * @param downloadFinish 加载结束
+         */
         load(url: string, type: AssetTypeEnum = AssetTypeEnum.Auto,
             /** 这是解析完成的回调 */
             onstate: loadCallback = null, downloadFinish: () => void = null)
@@ -313,12 +340,29 @@ namespace m4m.framework
                 assetMgr.setStateError(state, onstate, err);
             });
         }
+        /**
+         * 设置状态异常
+         * @param state 状态
+         * @param onstate 状态时变化回调函数
+         * @param err 异常
+         */
         static setStateError(state: stateLoad, onstate: (state?: stateLoad) => void, err: Error)
         {
             state.errs.push(err);
             state.iserror = true;
             if(onstate) onstate (state);
         }
+
+        /**
+         * 执行下载资源
+         * @param guid id
+         * @param url 资源路径
+         * @param type 资源类型
+         * @param finish 结束回调
+         * @param errcb 异常回调
+         * @param bundle bundle包对象
+         * @returns 
+         */
         download(guid: number, url: string, type: AssetTypeEnum, finish: () => void, errcb?: (err: Error) => void, bundle?: assetBundle)
         {
             let loading = assetMgr.mapLoading[guid];
@@ -373,7 +417,13 @@ namespace m4m.framework
             });
         }
 
-        //加载图片
+        /**
+         * 加载图片
+         * @param guid id
+         * @param url 资源路径
+         * @param cb 回调
+         * @param bundle bundle包对象
+         */
         loadImg(guid: number, url: string, cb: (img , err?) => void, bundle?: assetBundle)
         {
             if (assetMgr.mapImage[guid])
@@ -404,7 +454,11 @@ namespace m4m.framework
             });
         }
 
-        //微信可复写
+        /**
+         * 微信可复写
+         * @param url 资源路径
+         * @param cb 回调
+         */
         protected _loadImg(url: string, cb: (img , err?) => void)
         {
             let img = new Image();
@@ -419,6 +473,10 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 注册使用资源
+         * @param asset 
+         */
         use(asset: IAsset)
         {
             let guid = asset.getGUID();
@@ -452,6 +510,10 @@ namespace m4m.framework
                 ++ref.refcount;
         }
 
+        /**
+         * 取消使用资源
+         * @param asset 
+         */
         unuse(asset: IAsset, disposeNow: boolean = true)
         {
             let guid = asset.getGUID();
@@ -464,7 +526,12 @@ namespace m4m.framework
             }
         }
 
-
+        /**
+         * 解析资源
+         * @param asset 资源
+         * @param bundle bundle包对象
+         * @returns 资源Promise
+         */
         parseRes(asset: { guid: number, type: number, name: string, dwguid?: number }, bundle?: assetBundle)
         {
             return new Promise<IAsset>((resolve, reject) =>
@@ -531,7 +598,12 @@ namespace m4m.framework
             });
         }
 
-
+        /**
+         * 通过资源名获取资源
+         * @param name 资源名
+         * @param bundlename bundle名
+         * @returns 资源
+         */
         getAssetByName<T extends IAsset>(name: string, bundlename?: string): T
         {
             if (bundlename)
@@ -553,10 +625,35 @@ namespace m4m.framework
         mapDefaultCubeTexture: { [id: string]: texture } = {};
         mapDefaultSprite: { [id: string]: sprite } = {};
         mapMaterial: { [id: string]: material } = {};
+        /**
+         * 获取默认mesh
+         * @param name mesh名
+         * @returns mesh
+         */
         getDefaultMesh(name: string): mesh { return this.mapDefaultMesh[name]; }
+        /**
+         * 获取默认纹理
+         * @param name 纹理名
+         * @returns 纹理
+         */
         getDefaultTexture(name: string): texture { return this.mapDefaultTexture[name]; }
+        /**
+         * 获取默认cube纹理
+         * @param name cube纹理名
+         * @returns cube纹理
+         */
         getDefaultCubeTexture(name: string): texture { return this.mapDefaultCubeTexture[name]; }
+        /**
+         * 获取默认sprite
+         * @param name sprite名
+         * @returns sprite
+         */
         getDefaultSprite(name: string): sprite { return this.mapDefaultSprite[name]; }
+        /**
+         * 获取默认材质
+         * @param name 材质名
+         * @returns 材质
+         */
         getMaterial(name: string): material { return this.mapMaterial[name]; }
 
         static useBinJs: boolean = false;
@@ -564,8 +661,12 @@ namespace m4m.framework
         private static bin = ".bin";
         app: m4m.framework.application;
         shaderPool: m4m.render.shaderPool;
-        webgl: WebGLRenderingContext;
+        webgl: WebGL2RenderingContext;
         mapRes: { [id: number]: any } = {};
+        /**
+         * 资源管理器
+         * @param app 引擎app
+         */
         constructor(app: application)
         {
             this.app = app;
@@ -573,6 +674,11 @@ namespace m4m.framework
             this.shaderPool = new m4m.render.shaderPool();
             // this.initAssetFactorys();
         }
+        /**
+         * 修正文件名
+         * @param name 文件名
+         * @returns 修正的文件名
+         */
         static correctFileName(name: string): string
         {
             if (name.indexOf(this.bin) < 0)
@@ -587,6 +693,11 @@ namespace m4m.framework
             }
             return name;
         }
+        /**
+         * 修正文本文件名
+         * @param name 文件名
+         * @returns 修正的文件名
+         */
         static correctTxtFileName(name: string): string
         {
             if (name.indexOf(this.txt) < 0)
@@ -601,11 +712,20 @@ namespace m4m.framework
             }
             return name;
         }
+        /**
+         * 获取着色器
+         * @param name 着色器名
+         * @returns 着色器
+         */
         getShader(name: string): m4m.framework.shader
         {
             return this.mapShader[name];
         }
         private linerenderermat: material;
+        /**
+         * 获取默认线渲染材质
+         * @returns 材质
+         */
         getDefLineRendererMat(): material
         {
             if (this.linerenderermat == null)
@@ -621,6 +741,10 @@ namespace m4m.framework
             return this.linerenderermat;
         }
         private particlemat: material;
+        /**
+         * 获取默认粒子渲染材质
+         * @returns 材质
+         */
         getDefParticleMat(): material
         {
             if (this.particlemat == null)
@@ -639,33 +763,50 @@ namespace m4m.framework
             return this.particlemat;
         }
         private assetUrlDic: { [id: number]: string };// = {};
+        /**
+         * 设置资源url
+         * @param asset 资源
+         * @param url url
+         */
         setAssetUrl(asset: IAsset, url: string)
         {
             // this.assetUrlDic[asset.getGUID()] = url;
         }
+        /**
+         * 获取资源url
+         * @param asset 资源
+         * @returns 资源url
+         */
         getAssetUrl(asset: IAsset): string
         {
             return this.assetUrlDic[asset.getGUID()];
         }
         maploaded: { [url: string]: IAsset };// = {};
-
+        /** @deprecated [已弃用] */
         savePrefab(trans: transform, prefabName: string, fun: (data: SaveInfo, resourses?: string[], contents?: any[]) => void)
         {
         }
+        /** @deprecated [已弃用] */
         loadCompressBundle(url: string, a?)
         {
         }
+        /** @deprecated [已弃用] */
         loadImmediate(url: string)
         {
             return null;
         }
+        /** @deprecated [已弃用] */
         getAssetBundle(url: string): assetBundle
         {
             return this.name_bundles[url];
         }
+        /** @deprecated [已弃用] */
         releaseUnuseAsset()
         {
         }
+        /**
+         * 初始默认资源
+         */
         initDefAsset()
         {
             defMesh.initDefaultMesh(this);
@@ -674,6 +815,11 @@ namespace m4m.framework
             defShader.initDefaultShader(this);
             defmaterial.initDefaultMaterial(this);
         }
+        /**
+         * 加载场景
+         * @param sceneName 场景名
+         * @param onComplete 结束回调
+         */
         loadScene(sceneName: string, onComplete: (firstChilds: Array<transform>) => void)
         {
             let firstChilds = new Array<transform>();
@@ -709,7 +855,10 @@ namespace m4m.framework
             scene.getRoot().markDirty();
             onComplete(firstChilds);
         }
-
+        /**
+         * 卸载
+         * @param url 资源url
+         */
         unload(url: string): void
         {
             let keyUrl = url.replace(assetMgr.cdnRoot, "");

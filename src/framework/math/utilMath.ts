@@ -16,7 +16,13 @@ limitations under the License.
  */
 //找不到归属的放这里
 namespace m4m.math {
-    //row：图片行数//column:图片列数//index：第几张图片（index从0开始计数）
+    /**
+     * row：图片行数//column:图片列数//index：第几张图片（index从0开始计数）
+     * @param row 行
+     * @param column    列 
+     * @param index 索引
+     * @param out 输出的向量
+     */
     export function spriteAnimation(row: number, column: number, index: number, out: vector4) {
         var width = 1.0 / column;
         var height = 1.0 / row;
@@ -41,6 +47,16 @@ namespace m4m.math {
     // this.tex_ST.y = height;
     // this.tex_ST.z = offsetx;
     // this.tex_ST.w = offsety;
+    /**
+     * 沿曲线取点
+     * @param curveStart 曲线开始
+     * @param curveStartHandle 曲线开始控制
+     * @param curveEnd 曲线结束
+     * @param curveEndHandle 曲线结束控制
+     * @param t 进度值
+     * @param out 输出的点
+     * @param crease 
+     */
     export function GetPointAlongCurve(curveStart:vector3,curveStartHandle:vector3,curveEnd:vector3,curveEndHandle:vector3,t:number, out:vector3,crease:number=0.3)
     {
         var oneMinT = 1 - t;

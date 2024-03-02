@@ -28,6 +28,7 @@ namespace m4m.framework
      */
     export enum layoutOption
     {
+        NOTHING = 0,
         LEFT = 1,
         TOP = 2,
         RIGHT = 4,
@@ -45,6 +46,12 @@ namespace m4m.framework
      */
     export interface I2DPointListener
     {
+        /**
+         * Point(点)事件触发
+         * @param canvas 引擎 canvas 对象
+         * @param ev Point(点)事件
+         * @param oncap 是捕获阶段？
+         */
         onPointEvent(canvas: canvas, ev: PointEvent, oncap: boolean);
     }
 
@@ -118,6 +125,11 @@ namespace m4m.framework
         comp: I2DComponent;
         init: boolean;
         OnPlayed: boolean = false;
+        /**
+         * 2D组件实例接口
+         * @param comp 组件
+         * @param init 初始化？
+         */
         constructor(comp: I2DComponent, init: boolean = false)
         {
             this.comp = comp;
@@ -362,7 +374,7 @@ namespace m4m.framework
             if (val != this._visible)
             {
                 this._visible = val;
-                sceneMgr.app.markNotify(this, NotifyType.ChangeVisible);
+                // sceneMgr.app.markNotify(this, NotifyType.ChangeVisible);
             }
         }
 
@@ -605,7 +617,7 @@ namespace m4m.framework
             node.canvas = this.canvas;
             node._parent = this;
             transform2D._transform2DMap[node.insId.getInsID()] = node;
-            sceneMgr.app.markNotify(node, NotifyType.AddChild);
+            // sceneMgr.app.markNotify(node, NotifyType.AddChild);
             this.markDirty();
         }
 
@@ -634,7 +646,7 @@ namespace m4m.framework
             this._children.splice(i, 1);
             node._parent = null;
             delete transform2D._transform2DMap[node.insId.getInsID()];
-            sceneMgr.app.markNotify(node, NotifyType.RemoveChild);
+            // sceneMgr.app.markNotify(node, NotifyType.RemoveChild);
         }
 
         /**

@@ -110,9 +110,17 @@ namespace m4m.framework {
                     this.onUpFun();
             }
         }
-
+        /**
+         * 当移动时触发
+         */
         public onMoveFun: (x: number, y: number) => {};
+        /**
+         * 当点击下时触发
+         */
         public onDownFun: (x: number, y: number) => {};
+        /**
+         * 当点击释放时触发
+         */
         public onUpFun: () => {};
         private isPointDown = false;
         private lastPoint = new math.vector2();

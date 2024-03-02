@@ -96,7 +96,7 @@ namespace m4m.framework
         /**
         * @private
         */
-        public webgl: WebGLRenderingContext;
+        public webgl: WebGL2RenderingContext;
         // private time: number = 0;
 
         private parser = new m4m.framework.EffectParser();
@@ -141,7 +141,10 @@ namespace m4m.framework
             this._textasset = _jsonData;
             this.setJsonDataStr(this.jsonData.content);
         }
-
+        /**
+         * 设置json 格式数据
+         * @param _jsonStr json 格式数据
+         */
         setJsonDataStr(_jsonStr: string)
         {
             this.webgl = m4m.framework.sceneMgr.app.webgl;
@@ -158,6 +161,10 @@ namespace m4m.framework
             this.jsonData = _jsonData;
             this.updateJsonDataStr(this.jsonData.content);
         }
+        /**
+         * 更新特效数据(json字符串数据)
+         * @param _jsonStr json字符串数据
+         */
         updateJsonDataStr(_jsonStr: string)
         {
             this.remove();
@@ -180,7 +187,7 @@ namespace m4m.framework
             return this._data;
         }
         /**
-        * @private
+        * 初始化
         */
         init()
         {
@@ -377,7 +384,7 @@ namespace m4m.framework
             {
                 curAttrsData.meshdataVbo = mesh.data.genVertexDataArray(this.vf);
             }
-            let vertexCount = mesh.data.pos.length;//顶点数量
+            let vertexCount = mesh.data.getVertexCount();//顶点数量
             let vertexArr = curAttrsData.meshdataVbo;
             let vertexSize = effectBatcher.vertexSize;
             for (let i = 0; i < vertexCount; i++)
@@ -458,9 +465,11 @@ namespace m4m.framework
                     if (subEffectBatcher.state === EffectBatcherState.NotInitedStateType)
                     {
                         mesh.glMesh.initBuffer(context.webgl, this.vf, subEffectBatcher.curTotalVertexCount);
-                        if (mesh.glMesh.ebos.length == 0)
+                        if (!mesh.glMesh.ebo)
                         {
                             mesh.glMesh.addIndex(context.webgl, subEffectBatcher.dataForEbo.length);
+                            mesh.glMesh.initVAO();
+
                         }
                         else
                         {
@@ -576,6 +585,9 @@ namespace m4m.framework
             this.resetSingleMesh();
             this.resetparticle();
         }
+        /**
+         * 重置单mesh
+         */
         private resetSingleMesh()
         {
             for (let i in this.effectBatchers)
@@ -590,6 +602,9 @@ namespace m4m.framework
                 }
             }
         }
+        /**
+         * 重置粒子系统
+         */
         private resetparticle()
         {
             if (this.particles != undefined)
@@ -638,6 +653,10 @@ namespace m4m.framework
             this.beLoop = this.data.beLoop;
         }
 
+        /**
+         * 添加特效元素
+         * @param data 特效元素数据
+         */
         private addElement(data: EffectElementData)
         {
             if (data.type == EffectElementTypeEnum.EmissionType)
@@ -678,7 +697,7 @@ namespace m4m.framework
                 }
             }
             let vertexStartIndex = 0;
-            let vertexCount = _initFrameData.attrsData.mesh.data.pos.length;//顶点数量
+            let vertexCount = _initFrameData.attrsData.mesh.data.getVertexCount();//顶点数量
             let indexCount = _initFrameData.attrsData.mesh.data.genIndexDataArray
             let subEffectBatcher: EffectBatcher = null;
             if (index >= 0)
@@ -700,7 +719,6 @@ namespace m4m.framework
                 {
                     var sm = new subMeshInfo();
                     sm.matIndex = 0;
-                    sm.useVertexIndex = 0;
                     sm.start = 0;
                     sm.size = 0;
                     sm.line = false;
@@ -802,7 +820,7 @@ namespace m4m.framework
             }
         }
         /**
-        * @private
+        * 设置帧ID
         */
         public setFrameId(id: number)
         {
@@ -811,7 +829,7 @@ namespace m4m.framework
         }
 
         /**
-        * @private
+        * 获取 dt * FPS
         */
         public getDelayFrameCount(delayTime: number)
         {

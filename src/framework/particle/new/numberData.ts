@@ -125,6 +125,12 @@ namespace m4m.framework
     // }
     export class effTools
     {
+        /**
+         * 获取随机方向和位置 通过 粒子发射器
+         * @param emission 粒子发射器
+         * @param outDir 输出方向
+         * @param outPos 输出位置
+         */
         public static getRandomDirAndPosByZEmission(emission:EffectElementEmission,outDir:m4m.math.vector3,outPos:m4m.math.vector3)
         {
 
@@ -187,6 +193,11 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 获取纹理的 ST值
+         * @param emission 特效元素发射
+         * @param out_St 纹理的ST值
+         */
         public static getTex_ST(emission:EffectElementEmission,out_St:math.vector4)
         {
             if(emission.uvType!=UVTypeEnum.UVSprite)

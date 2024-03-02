@@ -21,6 +21,10 @@ limitations under the License.
         z: number = 0;
 
         realy:number=0;
+        /**
+         * 克隆
+         * @returns 
+         */
         clone(): navVec3 {
             var navVec: navVec3 = new navVec3();
             navVec.x = this.x;
@@ -35,6 +39,10 @@ limitations under the License.
             var num2: number = end.z - start.z;
             return Math.sqrt(num * num + num2 * num2);
         }
+        /**
+         * Normal
+         * @returns 
+         */
         static NormalAZ(start: navVec3, end: navVec3): navVec3 {
             var num: number = end.x - start.x;
             var num2: number = end.z - start.z;
@@ -45,6 +53,10 @@ limitations under the License.
             navVec.z = num2 / num3;
             return navVec;
         }
+        /**
+         * 叉乘
+         * @returns 
+         */
         static Cross(start: navVec3, end: navVec3): navVec3 {
             var navVec: navVec3 = new navVec3();
             navVec.x = start.y * end.z - start.z * end.y;
@@ -52,9 +64,17 @@ limitations under the License.
             navVec.z = start.x * end.y - start.y * end.x;
             return navVec;
         }
+        /**
+         * 点乘
+         * @returns 
+         */
         static DotAZ(start: navVec3, end: navVec3): number {
             return start.x * end.x + start.z * end.z;
         }
+        /**
+         * 旋转度
+         * @returns 
+         */
         static Angle(start: navVec3, end: navVec3): number {
             var d: number = start.x * end.x + start.z * end.z;
             var navVec: navVec3 = navVec3.Cross(start, end);
@@ -65,6 +85,10 @@ limitations under the License.
             }
             return num;
         }
+        /**
+         * 边界
+         * @returns 
+         */
         static Border(start: navVec3, end: navVec3, dist: number): navVec3 {
             var navVec: navVec3 = navVec3.NormalAZ(start, end);
             var navVec2: navVec3 = new navVec3();
@@ -81,7 +105,9 @@ limitations under the License.
             }
             return navVec2;
         }
-
+        /**
+         * 线性差值
+         */
         static lerp(from:navVec3,to:navVec3,lerp:number,out:navVec3)
         {
             out.x=(to.x-from.x)*lerp+from.x;
@@ -96,6 +122,9 @@ limitations under the License.
         borderByPoly: string[] = null;
         borderByPoint: string[] = null;
         center: navVec3 = null;
+        /**
+         * 生成边界
+         */
         genBorder(): void {
             var list: string[] = [];
             for (var i: number = 0; i < this.poly.length; i = i + 1) {
@@ -117,6 +146,10 @@ limitations under the License.
             }
             this.borderByPoint = list;
         }
+        /**
+         * 链接到
+         * @returns 
+         */
         isLinkTo(info: navMeshInfo, nid: number): string {
             var flag: boolean = this.nodeID === nid;
             var result: string;
@@ -146,6 +179,10 @@ limitations under the License.
             }
             return result;
         }
+        /**
+         * 获取链接
+         * @returns 
+         */
         getLinked(info: navMeshInfo): number[] {
             var list: number[] = [];
             var array: string[] = this.borderByPoly;
@@ -169,6 +206,10 @@ limitations under the License.
             }
             return list;
         }
+        /**
+         * 生成中心点
+         * @returns 
+         */
         genCenter(info: navMeshInfo): void {
             this.center = new navVec3();
             this.center.x = 0.0;
@@ -201,6 +242,9 @@ limitations under the License.
         borders: { [id: string]: navBorder } = null;
         min: navVec3 = null;
         max: navVec3 = null;
+        /**
+         * 计算边界
+         */
         calcBound(): void {
             this.min = new navVec3();
             this.max = new navVec3();
@@ -240,6 +284,12 @@ limitations under the License.
         private static cross(p0: navVec3, p1: navVec3, p2: navVec3): number {
             return (p1.x - p0.x) * (p2.z - p0.z) - (p2.x - p0.x) * (p1.z - p0.z);
         }
+        /**
+         * 在多边形中
+         * @param p 
+         * @param poly 
+         * @returns 
+         */
         inPoly(p: navVec3, poly: number[]): boolean {
             var num: number = 0;
             var flag: boolean = poly.length < 3;
@@ -279,6 +329,9 @@ limitations under the License.
             }
             return result;
         }
+        /**
+         * 生成边界
+         */
         genBorder(): void {
             var __border: { [id: string]: navBorder } = {};
             for (var i0: number = 0; i0 < this.nodes.length; i0 = i0 + 1) {
@@ -353,7 +406,11 @@ limitations under the License.
                 v.borderByPoly = newborder;
             }
         }
-
+        /**
+         * 加载mesh信息
+         * @param s 字符串数据
+         * @returns 导航mesh信息
+         */
         static LoadMeshInfo(s: string): navMeshInfo {
             var j = JSON.parse(s);
             var info: navMeshInfo = new navMeshInfo();

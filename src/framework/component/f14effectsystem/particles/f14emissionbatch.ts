@@ -39,6 +39,11 @@ namespace m4m.framework
 
         vertexLength:number=0;
         //private maxcoun:number;
+        /**
+         * F14 发射合批
+         * @param effect F14 特效系统
+         * @param element F14发射器
+         */
         public constructor(effect:f14EffectSystem,element:F14Emission)
         {
             this.type= F14TypeEnum.particlesType;
@@ -53,8 +58,8 @@ namespace m4m.framework
 
             let maxParticlesCount=this.getMaxParticleCount();
             //this.maxcoun=maxParticlesCount;
-            let particleVertexCount=datamesh.data.pos.length;
-            let particleIndexCount=datamesh.data.trisindex.length;
+            let particleVertexCount=datamesh.data.getVertexCount();
+            let particleIndexCount=datamesh.data.getTriIndexCount();
             let totalVertex=maxParticlesCount*particleVertexCount;
             let totalIndex=maxParticlesCount*particleIndexCount;
 
@@ -67,18 +72,24 @@ namespace m4m.framework
             //this.mesh.glMesh.uploadVertexData(webgl, v32);
 
             this.mesh.glMesh.addIndex(this.effect.webgl, this.dataForEbo.length);
+            this.mesh.glMesh.initVAO();
+
             //this.mesh.glMesh.uploadIndexData(webgl, 0, i16);
             this.mesh.submesh = [];
             {
                 var sm = new subMeshInfo();
                 sm.matIndex = 0;
-                sm.useVertexIndex = 0;
                 sm.start = 0;
                 sm.size = this.dataForEbo.length;
                 sm.line = false;
                 this.mesh.submesh.push(sm);
             }
         }
+
+        /**
+         * 获取最大粒子数
+         * @returns 最大粒子数
+         */
         private getMaxParticleCount():number
         {
             let maxrate:number;
@@ -154,12 +165,15 @@ namespace m4m.framework
             //console.log("ebo leng="+this.dataForEbo.length+" vbo leng="+this.dataForVbo.length+" draw size="+this.curIndexCount+"particle count="+this.curVertexcount/this.emission.vertexCount+"max count:"+this.maxcoun);
             this.mat.draw(context,this.mesh,this.mesh.submesh[0]);    
         }
+
         unRender() {
             
         }
+        
         getElementCount(): number {
             return 1;
         }
+
         public dispose()
         {
             this.effect=null;

@@ -145,6 +145,11 @@ namespace m4m.framework
 
         particleStartData: m4m.framework.ParticleStartData = new m4m.framework.ParticleStartData();
         private dataForVbo: Float32Array;
+        /**
+         * 获取 vbo 数据
+         * @param vf 顶点格式数据
+         * @returns vbo 数据
+         */
         getVboData(vf: number): Float32Array
         {
             if (this.dataForVbo == undefined)
@@ -154,6 +159,7 @@ namespace m4m.framework
             return this.dataForVbo;
         }
 
+        /** 克隆 */
         clone()
         {
             let emission = new Emission();
@@ -239,12 +245,18 @@ namespace m4m.framework
                 emission.particleStartData = this.particleStartData.clone();
             return emission;
         }
-
+        /**
+         * 获取世界旋转
+         */
         getworldRotation()
         {
             
         }
-
+        /**
+         * 克隆例子节点数组
+         * @param _array 例子节点数组
+         * @returns 输出克隆
+         */
         cloneParticleNodeArray(_array: Array<ParticleNode>)
         {
             let array = new Array<ParticleNode>();
@@ -254,7 +266,11 @@ namespace m4m.framework
             }
             return array;
         }
-
+        /**
+         * 克隆例子节点值数组
+         * @param _array 例子节点值数组
+         * @returns 输出克隆
+         */
         cloneParticleNodeNumberArray(_array: Array<ParticleNodeNumber>)
         {
             let array = new Array<ParticleNodeNumber>();
@@ -272,6 +288,7 @@ namespace m4m.framework
         public row: number;
         public column: number;
         public totalCount: number;
+        /** 克隆 */
         clone()
         {
             let sprite = new UVSprite();
@@ -289,6 +306,7 @@ namespace m4m.framework
         */
         public uvSpeed: UVSpeedNode;
         public uvSpeedNodes: Array<UVSpeedNode>;
+        /** 克隆 */
         clone()
         {
             let roll = new UVRoll();

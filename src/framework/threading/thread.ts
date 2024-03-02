@@ -32,6 +32,9 @@ namespace m4m.threading
         private worker: Worker;// = new Worker("lib/m4m.thread.js");
         private callID: number = 0;
         private callMap: { [id: number]: { callback: (result) => void } } = {};//new Map<number, { resolve: any }>();
+        /**
+         * 多线程
+         */
         constructor()
         {
             if (!thread.workerInstance)
@@ -53,6 +56,11 @@ namespace m4m.threading
                 this.worker = thread.workerInstance;
             }
         }
+
+        /**
+         * 当消息接收
+         * @param e 
+         */
         public OnMessage(e: MessageEvent)
         {
             if (e.data && this.callMap[e.data.id]){
@@ -61,6 +69,12 @@ namespace m4m.threading
             }
         }
 
+        /**
+         * 执行
+         * @param name 
+         * @param data 
+         * @param callback 
+         */
         public Call(name: string, data: any, callback: (result) => void)
         {
             this.worker.postMessage({

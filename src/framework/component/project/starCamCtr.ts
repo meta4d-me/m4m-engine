@@ -75,10 +75,15 @@ namespace m4m.framework
             
         }
 
+        /** @deprecated [已弃用] */
         clone() {
             
         }
 
+        /**
+         * 移动到
+         * @param to 到的位置
+         */
         moveTo(to:transform)
         {
             m4m.math.quatClone(this.gameObject.transform.localRotate,this.starteCamRot);

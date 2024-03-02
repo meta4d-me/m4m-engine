@@ -41,11 +41,19 @@ namespace m4m.framework
 
         }
         private beActive:boolean=true;
+        /**
+         * 设置是否激活
+         * @param active 是否激活
+         */
         setActive(active:boolean)
         {
             this.beActive=active;
         }
         private target:transform=null;
+        /**
+         * 设置目标
+         * @param trans 目标
+         */
         setTarget(trans:transform)
         {
             this.target=trans;

@@ -41,6 +41,11 @@ namespace m4m.framework
          * @version m4m 1.0
          */
         defaultAsset: boolean = false;
+        /**
+         * 二进制数据资源
+         * @param assetName 资源名 
+         * @param data 数据
+         */
         constructor(assetName: string = null, public data: ArrayBuffer)
         {
             if (!assetName)

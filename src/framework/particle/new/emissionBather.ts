@@ -22,7 +22,7 @@ namespace m4m.framework
     export class EmissionBatcher_new
     {
         public emission: EffectElementEmission;
-        private webgl: WebGLRenderingContext;
+        private webgl: WebGL2RenderingContext;
         public mesh: mesh;
         public mat: material;
 
@@ -30,7 +30,10 @@ namespace m4m.framework
         public dataForEbo: Uint16Array;
 
         public particles: Particle_new[] = [];
-
+        /**
+         * 发射器合批
+         * @param emissionElement 特效发射器元素
+         */
         constructor(emissionElement: EffectElementEmission)
         {
             this.emission = emissionElement;
@@ -39,7 +42,7 @@ namespace m4m.framework
             this.initMesh();
 
         }
-
+        /** 初始化mesh */
         private initMesh()
         {
             this.mesh = new mesh();
@@ -49,7 +52,6 @@ namespace m4m.framework
             {
                 var sm = new subMeshInfo();
                 sm.matIndex = 0;
-                sm.useVertexIndex = 0;
                 sm.start = 0;
                 sm.size = 0;
                 sm.line = false;
@@ -60,9 +62,14 @@ namespace m4m.framework
             this.dataForEbo = new Uint16Array(128);
             this.mesh.glMesh.initBuffer(this.webgl, this.emission.vf, 128, render.MeshTypeEnum.Dynamic);
             this.mesh.glMesh.addIndex(this.webgl, this.dataForEbo.length);
+            this.mesh.glMesh.initVAO();
+
         }
         public curVerCount: number = 0;
         public curIndexCount: number = 0;
+        /**
+         * 添加 粒子
+         */
         addParticle()
         {
             this.refreshBuffer();
@@ -83,7 +90,9 @@ namespace m4m.framework
             
             this.mesh.submesh[0].size = this.curIndexCount;
         }
-
+        /**
+         * 刷新 缓冲区
+         */
         private refreshBuffer()
         {
             var needvercount = this.curVerCount + this.emission.perVertexCount;
@@ -107,6 +116,10 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 更新
+         * @param delta 
+         */
         update(delta: number)
         {
             for (let key in this.particles)
@@ -116,6 +129,12 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 执行渲染
+         * @param context 渲染上下文
+         * @param assetmgr 资源管理器
+         * @param camera 相机
+         */
         render(context: renderContext, assetmgr: assetMgr, camera: m4m.framework.camera)
         {
             let mesh = this.mesh;
@@ -131,6 +150,9 @@ namespace m4m.framework
                 this.mat.draw(context, mesh, mesh.submesh[0], "base");
             }
         }
+        /**
+         * 销毁
+         */
         dispose()
         {
             this.dataForVbo = null;

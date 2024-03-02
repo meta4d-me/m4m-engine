@@ -42,10 +42,10 @@ namespace m4m.framework
          * 全局的webgl实例
          * @version m4m 1.0
          */
-        webgl: WebGLRenderingContext;
+        webgl: WebGL2RenderingContext;
         /**
-         * @private
-         * @param app
+         * 引擎场景
+         * @param 引擎 app
          */
         constructor(app: application)
         {
@@ -173,6 +173,7 @@ namespace m4m.framework
          */
         fog: Fog;
 
+        /** 当Late更新 触发函数 */
         onLateUpdate: (delta: number) => any;
         /**
          * @public
@@ -265,7 +266,9 @@ namespace m4m.framework
             }
         }
 
-        //渲染场景 2dUI overlay
+        /**
+         * 渲染场景 2dUI overlay
+         */
         private rendererSceneOverLay(){
             let ol2ds = this._overlay2ds;
             if (!ol2ds || ol2ds.length < 1) return;
@@ -307,7 +310,10 @@ namespace m4m.framework
             }
         }
 
-        //更新 scene overlayers
+        /**
+         * 更新 场景 覆盖层
+         * @param delta 上帧时间变量
+         */
         private updateSceneOverLay(delta: number)
         {
             let ol2ds = this._overlay2ds;
@@ -327,7 +333,11 @@ namespace m4m.framework
         }
 
         private RealCameraNumber: number = 0;
-        //这个函数后面还有别的过程，应该留给camera
+        /**
+         * 渲染相机
+         * 这个函数后面还有别的过程，应该留给camera
+         * @param camindex 相机索引
+         */
         private _renderCamera(camindex: number)
         {
             //增加当前编辑器状态，管控场编相机
@@ -369,6 +379,10 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 给 覆盖层列表 排序
+         * @param lays 覆盖层列表
+         */
         private sortOverLays(lays: IOverLay[])
         {
             if (!lays || lays.length < 1) return;
@@ -378,6 +392,11 @@ namespace m4m.framework
             });
         }
 
+        /**
+         * 更新场景
+         * @param node 场景节点 
+         * @param delta 上帧时间变量
+         */
         private updateScene(node: transform, delta)
         {
             if (this.app.bePlay)
@@ -390,6 +409,11 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 在编辑器模式 节点更新
+         * @param node 节点
+         * @param delta 上帧时间变量
+         */
         private objupdateInEditor(node: transform, delta)//场编下
         {
             node.gameObject.init();//组件还未初始化的初始化
@@ -415,6 +439,11 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 节点更新
+         * @param node 节点
+         * @param delta 上帧时间变量
+         */
         private objupdate(node: transform, delta)
         {
             let needInit = node.hasInitComp || node.hasInitCompChild || node.hasOnPlayComp || node.hasOnPlayCompChild;
@@ -467,6 +496,11 @@ namespace m4m.framework
             }
         }
         */
+
+        /**
+         * 收集场景中有效的相机和光源
+         * @param node 节点
+         */
         private collectCameraAndLight(node: transform)
         {
             //update 的时候只收集摄像机和灯光信息
@@ -646,6 +680,16 @@ namespace m4m.framework
             //pickinfo.pickedtran.markDirty();
 
         }
+        /**
+         * 执行 拾取
+         * @param ray 射线
+         * @param pickall 拾取所有？
+         * @param isPickMesh 拾取Mesh？
+         * @param root 节点
+         * @param out 输出拾取信息
+         * @param layermask 层级遮罩选项
+         * @returns 是拾取到了？
+         */
         private doPick(ray: ray, pickall: boolean, isPickMesh: boolean, root: transform, out: any, layermask: number = NaN): boolean
         {
             let ishited = false;
@@ -689,6 +733,14 @@ namespace m4m.framework
             return ishited;
         }
 
+        /**
+         * 执行 拾取Mesh
+         * @param ray 射线
+         * @param tran 节点
+         * @param pickedList 拾取信息列表
+         * @param layermask 层级遮罩选项
+         * @returns 是拾取到了？
+         */
         private pickMesh(ray: ray, tran: transform, pickedList: pickinfo[], layermask: number = NaN): boolean
         {
             let ishited = false;
@@ -748,6 +800,14 @@ namespace m4m.framework
             return ishited;
         }
 
+        /**
+         * 执行 拾取碰撞体
+         * @param ray 射线
+         * @param tran 节点
+         * @param pickedList 拾取信息列表
+         * @param layermask 层级遮罩选项
+         * @returns 是拾取到了？
+         */
         private pickCollider(ray: ray, tran: transform, pickedList: Array<pickinfo>, layermask: number = NaN): boolean
         {
             let ishited = false;
@@ -785,7 +845,6 @@ namespace m4m.framework
             return ishited;
         }
 
-
         /**
          * @public
          * @language zh_CN
@@ -818,6 +877,12 @@ namespace m4m.framework
             //physic=new PhysicsEngine(new math.vector3(0,-9.8,0),new OimoJSPlugin());
         }
 
+        /**
+         * 启用2D物理
+         * @param gravity 定义场景物理世界的重力向量
+         * @param physicOption 物理选项
+         * @returns 启用成功？
+         */
         enable2DPhysics(gravity: math.vector2, physicOption: IEngine2DOP = null)
         {
             if (physics2D)
@@ -837,12 +902,8 @@ namespace m4m.framework
             }
         }
 
-        /** 
-         * 刷新 GpuInstancBatcher
-         * 被 batcher 条件[isStatic= true , visible = true , needGpuInstancBatcher = true , isGpuInstancing() = true]
-         */
         /**
-         * 刷新 GpuInstancBatcher
+         * 刷新 GpuInstanc合批
          * 被 batcher 条件[isStatic= true , visible = true , needGpuInstancBatcher = true , isGpuInstancing() = true]
          * @param rootNode 指定刷新节点（默认为 场景根节点）
          */
@@ -854,6 +915,11 @@ namespace m4m.framework
             this.fillGpuInsBatcher(rootNode , rootNode.gameObject.isStatic);
         }
 
+        /**
+         * 填充 GpuInstanc合批
+         * @param node 节点
+         * @param isStatic 是静态？
+         */
         private fillGpuInsBatcher(node : m4m.framework.transform , isStatic : boolean){
             if(!this.webgl.drawArraysInstanced)return;
             //检查渲染对象

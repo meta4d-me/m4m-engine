@@ -25,6 +25,9 @@ namespace m4m.framework
      */
     export class EnumUtil
     {
+        /**
+         * @deprecated [已弃用]
+         */
         static getEnumObjByType(enumType: string): any
         {
             let index = enumType.indexOf("m4m.framework.");

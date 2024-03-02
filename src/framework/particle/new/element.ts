@@ -25,7 +25,9 @@ namespace m4m.framework
         delayTime: number;
         mat: material;
         mesh: mesh;
+        /** 写成josn 数据 */
         writeToJson(obj: any): any;
+        /** 销毁 */
         dispose();
     }
 
@@ -73,7 +75,11 @@ namespace m4m.framework
 
         public rotationByEuler: math.quaternion = new math.quaternion();
         public localRotation: math.quaternion = new math.quaternion();
-
+        /**
+         * 特效元素
+         * @param sys test特效系统
+         * @param data 特效元素数据
+         */
         constructor(sys: TestEffectSystem,data:EffectElementData=null)
         {
             this.effectSys = sys;
@@ -86,22 +92,29 @@ namespace m4m.framework
                 this.initByDefData();
             }
         }
-
+        /**
+         * 初始化通过元素数据
+         * @param data 特效元素数据
+         */
         private initByElementdata(data:EffectElementData)
         {
             
         }
+        /**
+         * 初始化默认数据
+         */
         private initByDefData()
         {
             this.mesh = this.mgr.getDefaultMesh("quad");
             var shader = this.mgr.getShader("diffuse.shader.json");
             this.mat.setShader(shader);
         }
+
         writeToJson(obj: any): any
         {
 
         }
-
+        /** 更新 */
         update()
         {
             if (this.active)
@@ -119,7 +132,9 @@ namespace m4m.framework
                 this.curAttrData.resetMatrix();
             }
         }
-
+        /**
+         * 更新特效元素的旋转
+         */
         private updateElementRotation() 
         {
             let cameraTransform = m4m.framework.sceneMgr.app.getScene().mainCamera.gameObject.transform;
@@ -205,6 +220,7 @@ namespace m4m.framework
             m4m.math.pool.delete_quaternion(worldRotation);
 
         }
+        
         dispose()
         {
 

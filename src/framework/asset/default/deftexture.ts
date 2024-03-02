@@ -24,7 +24,10 @@ namespace m4m.framework
         static readonly normal = "normal";
         static readonly grid = "grid";
         static readonly particle = "particle";
-
+        /**
+         * 初始化默认纹理
+         * @param assetmgr 资源管理 
+         */
         static initDefaultTexture(assetmgr: assetMgr)
         {
             var t = new texture(this.white);
@@ -61,6 +64,10 @@ namespace m4m.framework
             defTexture.initDefaultCubeTexture(assetmgr);
         }
 
+        /**
+         * 初始化默认cube纹理
+         * @param assetmgr 资源管理
+         */
         private static initDefaultCubeTexture(assetmgr: assetMgr){
             let whiteTex = assetmgr.mapDefaultTexture[this.white];
             var t = new texture(this.white);

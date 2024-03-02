@@ -352,6 +352,10 @@ namespace m4m.framework
 
         }
 
+        /**
+         * 获取绘制纹理强度
+         * @returns 
+         */
         private _getDrawImageStrength()
         {
             var strengthX = 1;

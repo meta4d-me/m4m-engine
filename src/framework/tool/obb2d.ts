@@ -126,7 +126,13 @@ namespace m4m.framework
     
                 return true;
         }
-    
+        
+        /**
+         * 通过给定轴 计算 定向包围盒 在轴垂直平面上的 投影 标量区间范围
+         * @param axis 给定轴
+         * @param box 定向包围盒
+         * @returns 标量区间范围
+         */
         private computeBoxExtents(axis: m4m.math.vector2, box: obb2d)
         {
             var p = m4m.math.vec2Dot(box.center, axis);
@@ -140,14 +146,29 @@ namespace m4m.framework
             result.y = p + r;
             return result;
         }
-    
+        
+        /**
+         * 判断 两定向包围盒 在指定轴 垂直平面上投影是否重叠
+         * @param axis 指定轴
+         * @param box0 定向包围盒a
+         * @param box1 定向包围盒b
+         * @returns 重叠了？
+         */
         private axisOverlap(axis: m4m.math.vector2, box0: obb2d, box1: obb2d): boolean
         {
             let result0 = this.computeBoxExtents(axis, box0);
             let result1 = this.computeBoxExtents(axis, box1);
             return this.extentsOverlap(result0.x, result0.y, result1.x, result1.y);
         }
-    
+        
+        /**
+         * 判断 两标量区间范围 是否重叠
+         * @param min0 范围a小值
+         * @param max0 范围a大值
+         * @param min1 范围b小值
+         * @param max1 范围b大值
+         * @returns 重叠了？
+         */
         private extentsOverlap(min0: number, max0: number, min1: number, max1: number): boolean
         {
             return !(min0 > max1 || min1 > max0);

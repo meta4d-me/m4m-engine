@@ -48,7 +48,9 @@ limitations under the License.
         *  在发射时间内发射粒子个数
         */
         public count: number;
-
+        /**
+         * 发射数据
+         */
         constructor()
         {
 

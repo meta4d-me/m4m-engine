@@ -16,8 +16,7 @@ limitations under the License.
  */
 /// <reference path="../../../io/reflect.ts" />
 
-namespace m4m.framework
-{
+namespace m4m.framework {
     /**
      * @public
      * @language zh_CN
@@ -28,9 +27,8 @@ namespace m4m.framework
      */
     @reflect.node2DComponent
     @reflect.nodeRender
-    export class rawImage2D implements IRectRenderer
-    {
-        static readonly ClassName:string="rawImage2D";
+    export class rawImage2D implements IRectRenderer {
+        static readonly ClassName: string = "rawImage2D";
 
         private datar: number[] = [
             //3 pos  4 color  2 uv 4 color2
@@ -41,7 +39,7 @@ namespace m4m.framework
             0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,
             0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         ];
-        
+
         private _image: texture;
 
         private needRefreshImg = false;
@@ -53,21 +51,19 @@ namespace m4m.framework
          * @version m4m 1.0
          */
         @m4m.reflect.Field("texture")
-        public get image()
-        {
+        public get image() {
             return this._image;
         }
-        public set image(_image:texture)
-        {
-            if(this._image == _image) return;
+        public set image(_image: texture) {
+            if (this._image == _image) return;
             this.needRefreshImg = true;
-            if(this._image)
-            {
+            if (this._image) {
                 this._image.unuse();
             }
             this._image = _image;
-            if(_image){
+            if (_image) {
                 this._image.use();
+                this.updateTran();
             }
         }
 
@@ -82,6 +78,18 @@ namespace m4m.framework
         @reflect.UIStyle("vector4")
         color: math.color = new math.color(1.0, 1.0, 1.0, 1.0);
 
+        private _proportionalScalingMode: boolean = false;
+
+        /** 图 等比缩放居中显示模式 （默认false）*/
+        public get proportionalScalingMode() { return this._proportionalScalingMode; }
+        public set proportionalScalingMode(val: boolean) {
+            if (val == this._proportionalScalingMode) return;
+            this._proportionalScalingMode = val;
+            if (this._image) {
+                this.updateTran();
+            }
+        }
+
 
         private static readonly defUIShader = `shader/defui`;  //非mask 使用shader
         private static readonly defMaskUIShader = `shader/defmaskui`; //mask 使用shader
@@ -95,7 +103,7 @@ namespace m4m.framework
          * 设置rander Shader名字
          * @version m4m 1.0
          */
-        setShaderByName(shaderName:string){
+        setShaderByName(shaderName: string) {
             this._CustomShaderName = shaderName;
         }
 
@@ -105,15 +113,16 @@ namespace m4m.framework
          * @classdesc
          * 获取rander 的材质
          * @version m4m 1.0
+         * @returns 材质对象
          */
-        getMaterial(){
-            if(!this._uimat){
+        getMaterial() {
+            if (!this._uimat) {
                 return this.uimat;
             }
             return this._uimat;
         }
 
-        private _darwRect : m4m.math.rect;
+        private _darwRect: m4m.math.rect;
 
         /**
          * @public
@@ -121,9 +130,10 @@ namespace m4m.framework
          * @classdesc
          * 获取渲染绘制矩形边界
          * @version m4m 1.0
+         * @returns 矩形区域 Rect对象
          */
-        getDrawBounds(){
-            if(!this._darwRect){
+        getDrawBounds() {
+            if (!this._darwRect) {
                 this._darwRect = new math.rect();
                 this.calcDrawRect();
             }
@@ -135,31 +145,32 @@ namespace m4m.framework
          * ui默认材质
          */
         private _uimat: material;
-        private get uimat(){
-            if (this._image ){
+        private get uimat() {
+            if (this._image) {
                 let assetmgr = this.transform.canvas.assetmgr;
-                if(!assetmgr) return this._uimat;
+                if (!assetmgr) return this._uimat;
                 let pMask = this.transform.parentIsMask;
                 let mat = this._uimat;
                 let rectTag = "";
                 let uiTag = "_ui";
-                if(pMask){
+                if (pMask) {
                     // let prect = this.transform.maskRect;
                     // rectTag = `mask(${prect.x}_${prect.y}_${prect.w}_${prect.h})`; //when parentIsMask,can't multiplexing material , can be multiplexing when parent equal
-                    
+
                     let rId = this.transform.maskRectId;
                     rectTag = `mask(${rId})`;
                 }
-                let matName = this._image.getName() + uiTag + rectTag;
-                if(!mat || mat.getName() != matName){
-                    if(mat) mat.unuse(); 
+                let useShaderName = this._CustomShaderName ? this._CustomShaderName : pMask ? rawImage2D.defMaskUIShader : rawImage2D.defUIShader;
+                let matName = useShaderName + this._image.getName() + uiTag + rectTag;
+                if (!mat || mat.getName() != matName) {
+                    if (mat) mat.unuse();
                     mat = assetmgr.getAssetByName(matName) as m4m.framework.material;
-                    if(mat) mat.use();
+                    if (mat) mat.use();
                 }
-                if(!mat){
+                if (!mat) {
                     mat = new material(matName);
                     let sh = assetmgr.getShader(this._CustomShaderName);
-                    sh = sh? sh : assetmgr.getShader(pMask? rawImage2D.defMaskUIShader : rawImage2D.defUIShader);
+                    sh = sh ? sh : assetmgr.getShader(pMask ? rawImage2D.defMaskUIShader : rawImage2D.defUIShader);
                     mat.setShader(sh);
                     mat.use();
                     this.needRefreshImg = true;
@@ -196,62 +207,79 @@ namespace m4m.framework
         //     return this._uimat;
         // }
 
-        /**
-         * @private
-         */
-        render(canvas: canvas)
-        {
+        render(canvas: canvas) {
             let mat = this.uimat;
-            if(!mat) return;
+            if (!mat) return;
             let img = this.image;
             // if (img == null)
             // {
             //     var scene = this.transform.canvas.scene;
             //     img = scene.app.getAssetMgr().getDefaultTexture("grid");
             // }
-            if(img != null){
+            if (img != null) {
                 let needRMask = false;
-                if(this.needRefreshImg){
+                if (this.needRefreshImg) {
                     mat.setTexture("_MainTex", img);
                     this.needRefreshImg = false;
                     needRMask = true;
                 }
 
-                if(this.transform.parentIsMask){
-                    if(this._cacheMaskV4 == null) this._cacheMaskV4 = new math.vector4();
+                if (this.transform.parentIsMask) {
+                    if (this._cacheMaskV4 == null) this._cacheMaskV4 = new math.vector4();
                     let rect = this.transform.maskRect;
-                    if(this._cacheMaskV4.x != rect.x || this._cacheMaskV4.y != rect.y || this._cacheMaskV4.w != rect.w || this._cacheMaskV4.z != rect.h || needRMask){
-                        this._cacheMaskV4.x = rect.x; this._cacheMaskV4.y = rect.y;this._cacheMaskV4.z = rect.w;this._cacheMaskV4.w = rect.h;
-                        mat.setVector4("_maskRect",this._cacheMaskV4);
+                    if (this._cacheMaskV4.x != rect.x || this._cacheMaskV4.y != rect.y || this._cacheMaskV4.w != rect.w || this._cacheMaskV4.z != rect.h || needRMask) {
+                        this._cacheMaskV4.x = rect.x; this._cacheMaskV4.y = rect.y; this._cacheMaskV4.z = rect.w; this._cacheMaskV4.w = rect.h;
+                        mat.setVector4("_maskRect", this._cacheMaskV4);
                     }
                 }
 
-                canvas.pushRawData(mat , this.datar);
+                canvas.pushRawData(mat, this.datar);
             }
         }
-        
-        private _cacheMaskV4:math.vector4;
 
-        /**
-         * @private
-         */
-        updateTran()
-        {
-            var m = this.transform.getWorldMatrix();
+        private _cacheMaskV4: math.vector4;
 
-            var l = -this.transform.pivot.x * this.transform.width;
-            var r = this.transform.width + l;
-            var t = -this.transform.pivot.y * this.transform.height;
-            var b = this.transform.height + t;
+        updateTran() {
+            if(!this.transform) return;
+            let _w = this.transform.width;
+            let _h = this.transform.height;
+            let _l_offset = 0;
+            let _t_offset = 0;
+            let needCalcEqualRatio = this._image && this._proportionalScalingMode;
 
-            var x0 = l * m.rawData[0] + t * m.rawData[2] + m.rawData[4];
-            var y0 = l * m.rawData[1] + t * m.rawData[3] + m.rawData[5];
-            var x1 = r * m.rawData[0] + t * m.rawData[2] + m.rawData[4];
-            var y1 = r * m.rawData[1] + t * m.rawData[3] + m.rawData[5];
-            var x2 = l * m.rawData[0] + b * m.rawData[2] + m.rawData[4];
-            var y2 = l * m.rawData[1] + b * m.rawData[3] + m.rawData[5];
-            var x3 = r * m.rawData[0] + b * m.rawData[2] + m.rawData[4];
-            var y3 = r * m.rawData[1] + b * m.rawData[3] + m.rawData[5];
+            let m = this.transform.getWorldMatrix();
+
+            if (needCalcEqualRatio) {
+                let _imgW = this._image.glTexture.width;
+                let _imgH = this._image.glTexture.height;
+                let _defW = _w - _imgW;
+                let _defH = _h - _imgH;
+                let _asp = _imgH / _imgW;
+                let _wBigThanH = _defW > _defH;
+                if (_wBigThanH) {
+                    let _tW = _h / _asp;
+                    _l_offset = (_w - _tW) / 2;
+                    _w = _tW;
+                } else {
+                    let _tH = _w * _asp;
+                    _t_offset = (_h - _tH) / 2;
+                    _h = _tH;
+                }
+            }
+
+            let l = -this.transform.pivot.x * _w + _l_offset;
+            let r = _w + l;
+            let t = -this.transform.pivot.y * _h + _t_offset;
+            let b = _h + t;
+
+            let x0 = l * m.rawData[0] + t * m.rawData[2] + m.rawData[4];
+            let y0 = l * m.rawData[1] + t * m.rawData[3] + m.rawData[5];
+            let x1 = r * m.rawData[0] + t * m.rawData[2] + m.rawData[4];
+            let y1 = r * m.rawData[1] + t * m.rawData[3] + m.rawData[5];
+            let x2 = l * m.rawData[0] + b * m.rawData[2] + m.rawData[4];
+            let y2 = l * m.rawData[1] + b * m.rawData[3] + m.rawData[5];
+            let x3 = r * m.rawData[0] + b * m.rawData[2] + m.rawData[4];
+            let y3 = r * m.rawData[1] + b * m.rawData[3] + m.rawData[5];
 
             this.datar[0 * 13] = x0;
             this.datar[0 * 13 + 1] = y0;
@@ -266,8 +294,7 @@ namespace m4m.framework
             this.datar[5 * 13] = x3;
             this.datar[5 * 13 + 1] = y3;
             //主color
-            for (var i = 0; i < 6; i++)
-            {
+            for (let i = 0; i < 6; i++) {
                 this.datar[i * 13 + 3] = this.color.r;
                 this.datar[i * 13 + 4] = this.color.g;
                 this.datar[i * 13 + 5] = this.color.b;
@@ -275,33 +302,36 @@ namespace m4m.framework
             }
 
             //drawRect 
-            this.min_x = Math.min(x0,x1,x2,x3,this.min_x);
-            this.min_y = Math.min(y0,y1,y2,y3,this.min_y);
-            this.max_x = Math.max(x0,x1,x2,x3,this.max_x);
-            this.max_y = Math.max(y0,y1,y2,y3,this.max_y);
+            this.min_x = Math.min(x0, x1, x2, x3, this.min_x);
+            this.min_y = Math.min(y0, y1, y2, y3, this.min_y);
+            this.max_x = Math.max(x0, x1, x2, x3, this.max_x);
+            this.max_y = Math.max(y0, y1, y2, y3, this.max_y);
             this.calcDrawRect();
         }
 
 
-        private min_x : number = Number.MAX_VALUE;
-        private max_x : number = Number.MAX_VALUE * -1;
-        private min_y : number = Number.MAX_VALUE;
-        private max_y : number = Number.MAX_VALUE * -1;
-        /** 计算drawRect */
-        private calcDrawRect(){
-            if(!this._darwRect) return;
+        private min_x: number = Number.MAX_VALUE;
+        private max_x: number = Number.MAX_VALUE * -1;
+        private min_y: number = Number.MAX_VALUE;
+        private max_y: number = Number.MAX_VALUE * -1;
+        /**
+         * 计算 渲染绘制覆盖到的矩形范围 Rect
+         * @returns 
+         */
+        private calcDrawRect() {
+            if (!this._darwRect) return;
             //drawBounds (y 轴反向)
             let canvas = this.transform.canvas;
-            if(!canvas)return;
+            if (!canvas) return;
             let minPos = poolv2();
             minPos.x = this.min_x;
             minPos.y = this.max_y;
-            canvas.clipPosToCanvasPos(minPos,minPos);
+            canvas.clipPosToCanvasPos(minPos, minPos);
 
             let maxPos = poolv2();
             maxPos.x = this.max_x;
             maxPos.y = this.min_y;
-            canvas.clipPosToCanvasPos(maxPos,maxPos);
+            canvas.clipPosToCanvasPos(maxPos, maxPos);
 
             this._darwRect.x = minPos.x;
             this._darwRect.y = minPos.y;
@@ -314,24 +344,16 @@ namespace m4m.framework
             poolv2_del(minPos);
             poolv2_del(maxPos);
         }
-        
-        /**
-         * @private
-         */
-        start()
-        {
+
+        start() {
 
         }
 
-        onPlay(){
+        onPlay() {
 
         }
 
-        /**
-         * @private
-         */
-        update(delta: number)
-        {
+        update(delta: number) {
 
         }
 
@@ -344,15 +366,11 @@ namespace m4m.framework
          */
         transform: transform2D;
 
-        /**
-         * @private
-         */
-        remove()
-        {
-            if(this._image) this._image.unuse();
-            if(this._uimat) this._uimat.unuse();
-            this._image = null;   
-            this._cacheMaskV4 = null; 
+        remove() {
+            if (this._image) this._image.unuse();
+            if (this._uimat) this._uimat.unuse();
+            this._image = null;
+            this._cacheMaskV4 = null;
             this.transform = null;
             this.datar.length = 0;
         }

@@ -31,6 +31,11 @@ namespace m4m.framework
     
         public element:F14Element;
         public batch:F14Basebatch;
+        /**
+         * F14 层
+         * @param effect F14特效系统 
+         * @param data F14 层数据
+         */
         constructor(effect:f14EffectSystem,data:F14LayerData)
         {
             this.effect = effect;
@@ -53,6 +58,12 @@ namespace m4m.framework
         //         } 
         //     }
         // }
+        /**
+         * 添加帧
+         * @param index 帧索引
+         * @param framedata 帧数据
+         * @returns F14 帧
+         */
         public addFrame(index:number,framedata:F14FrameData):F14Frame
         {
             if (this.frames[index]) return this.frames[index];
@@ -72,6 +83,11 @@ namespace m4m.framework
             this.frames[index]=frame;
             return frame;
         }
+
+        /**
+         * 移除帧
+         * @param frame 帧索引
+         */
         public removeFrame(frame:number)
         {
             if (this.frames[frame])
@@ -91,6 +107,9 @@ namespace m4m.framework
     
         }
 
+        /**
+         * 销毁
+         */
         public dispose()
         {
             this.data=null;
@@ -107,6 +126,11 @@ namespace m4m.framework
         public layer:F14Layer;
         public data:F14FrameData;
         public attDic:{[name:string]:any};//自行设置的data 包含5种关键数据
+        /**
+         * F14 帧
+         * @param layer F14 层
+         * @param data F14 帧数据
+         */
         constructor(layer:F14Layer,data:F14FrameData)
         {
             this.layer = layer;
@@ -119,7 +143,12 @@ namespace m4m.framework
             }
 
         }
-    
+        
+        /**
+         * 设置数据
+         * @param name 数据名 
+         * @param obj 数据
+         */
         public setdata(name:string,obj)
         {
             if(this.layer.Attlines[name]==null)
@@ -138,6 +167,11 @@ namespace m4m.framework
             this.layer.Attlines[name].addNode(this.data.frameindex, obj);
             this.attDic[name]=obj;
         }
+
+        /**
+         * 移除数据
+         * @param name 数据名 
+         */
         public removedata(name:string)
         {
             delete this.attDic[name];
@@ -147,6 +181,11 @@ namespace m4m.framework
             }
         }
     
+        /**
+         * 获取数据
+         * @param name 数据名 
+         * @returns 
+         */
         public getdata(name:string)
         {
             return this.attDic[name];
@@ -157,7 +196,13 @@ namespace m4m.framework
     {
 
         public name:string;
+        /**
+         * 差值函数
+         */
         public lerpFunc:(from,to,lerp,out)=>void;
+        /**
+         * 克隆函数
+         */
         public cloneFunc:(from,to)=>void;
         constructor(name:string,lerpfunc:(from,to,lerp,out)=>void,clonefunc:(from,to)=>void)
         {
@@ -170,6 +215,11 @@ namespace m4m.framework
         public line:{[index:number]:any} ={};//记录了关键帧的帧索引和某一项值
     
         //public Dictionary<int, object> cacheData = new Dictionary<int, object>();
+        /**
+         * 添加节点
+         * @param frame  帧ID
+         * @param value 值
+         */
         public addNode(frame:number,value:any)
         {
             let index:number=this.frameList.indexOf(frame);
@@ -180,6 +230,11 @@ namespace m4m.framework
             }
             this.line[frame] = value;
         }
+
+        /**
+         * 移除
+         * @param frame 帧ID
+         */
         public remove(frame:number)
         {
             if(this.line[frame])
@@ -190,7 +245,13 @@ namespace m4m.framework
             }
 
         }
-    
+        
+        /**
+         * 获取值
+         * @param frame 帧ID
+         * @param basedate 数据
+         * @param out 返回值
+         */
         public getValue(frame:number, basedate:F14SingleMeshBaseData,out:any)
         {
             //if (this.frameList.Contains(frame)) return this.line[frame];

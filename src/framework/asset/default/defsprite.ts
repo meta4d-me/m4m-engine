@@ -21,6 +21,10 @@ namespace m4m.framework
         static readonly white_sprite = "white_sprite";
         static readonly gray_sprite = "gray_sprite";
         static readonly grid_sprite = "grid_sprite";
+        /**
+         * 初始化默认Sprite
+         * @param assetmgr 资源管理
+         */
         static initDefaultSprite(assetmgr: assetMgr)
         {
             let spt_white = new sprite(this.white_sprite);

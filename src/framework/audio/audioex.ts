@@ -28,6 +28,9 @@ limitations under the License.
         }
 
         public audioContext: AudioContext;
+        /**
+         * 音效Ex
+         */
         private constructor()
         {
             try

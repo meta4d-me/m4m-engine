@@ -44,9 +44,21 @@ namespace m4m.event
      */
     export class UIEvent extends AEvent
     {
+        /**
+         * 当接收事件
+         * @param event UI事件类型
+         * @param func 回调函数
+         * @param thisArg this对象
+         */
         OnEnum(event: UIEventEnum, func: (...args: Array<any>) => void , thisArg:any){
             this.On(UIEventEnum[event],func,thisArg);
         }
+
+        /**
+         * 发射事件
+         * @param event UI事件类型
+         * @param args 参数
+         */
         EmitEnum(event: UIEventEnum, ...args: Array<any>){
             super.Emit(UIEventEnum[event],args);
         }

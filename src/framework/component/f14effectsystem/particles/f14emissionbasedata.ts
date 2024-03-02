@@ -110,7 +110,12 @@ namespace m4m.framework
         public column: number;
         public count: number;
 
-
+        /**
+         *  解析
+         * @param json json数据
+         * @param assetmgr 资源管理器
+         * @param assetbundle assetbundle名
+         */
         parse(json: any, assetmgr: assetMgr, assetbundle: string)
         {
             switch (json.loopenum)
@@ -272,6 +277,12 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 获取发射数据的随机方向和位置
+         * @param emission 发射数据
+         * @param outDir 输出方向
+         * @param outPos 输出位置
+         */
         public static getRandomDirAndPosByZEmission(emission: F14EmissionBaseData, outDir: m4m.math.vector3, outPos: m4m.math.vector3)
         {
             var o, o1;
@@ -340,15 +351,29 @@ namespace m4m.framework
         public time: number = 0;
         public count: NumberData = new NumberData(10);
         private _beburst: boolean = false;
+        /**
+         * 是否射出
+         * @returns 
+         */
         public beburst(): boolean
         {
             return this._beburst;
         }
+
+        /**
+         * 设置射出状态
+         * @param bebusrt  是否射出
+         */
         public burst(bebusrt: boolean = true)
         {
             this._beburst = bebusrt;
         }
 
+        /**
+         * 创建通过JSON数据
+         * @param json json数据
+         * @returns busrtInfo对象
+         */
         static CreatformJson(json: any): busrtInfo
         {
             let info = new busrtInfo();

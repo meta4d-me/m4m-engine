@@ -50,7 +50,7 @@ namespace m4m.framework {
          */
         constructor() {
             this.canvas = new canvas();
-            sceneMgr.app.markNotify(this.canvas.getRoot(), NotifyType.AddChild);
+            // sceneMgr.app.markNotify(this.canvas.getRoot(), NotifyType.AddChild);
         }
 
         private _hasListenerEvent = false;
@@ -74,9 +74,6 @@ namespace m4m.framework {
         private app: application;
         private inputmgr: inputMgr;
 
-        /**
-         * @private
-         */
         start(camera: camera) {
             if (camera == this.camera) return;
             this.camera = camera;
@@ -90,6 +87,9 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 注册相关事件
+         */
         private regEvnets() {
             this._hasListenerEvent = true;
             let ipt = m4m.framework.sceneMgr.app.getInputMgr();
@@ -102,6 +102,9 @@ namespace m4m.framework {
             ipt.addHTMLElementListener("mouseup", this.refreshAndPointEvent, this);
         }
 
+        /**
+         * 注销所有注册的事件
+         */
         private unRegEvents() {
             if (!this._hasListenerEvent) return;
             let ipt = m4m.framework.sceneMgr.app.getInputMgr();
@@ -279,7 +282,7 @@ namespace m4m.framework {
 
             this.canvas.rootSizeAdjust();
 
-            if(!this._hasListenerEvent){
+            if (!this._hasListenerEvent) {
                 this.onPointEvent();
             }
 
@@ -310,7 +313,9 @@ namespace m4m.framework {
         private lastScreenMR = 0;
         private lastMR_width = 0;
         private lastMR_height = 0;
-        //检查缩放模式 改变
+        /**
+         * 检查缩放模式 改变
+         */
         private ckScaleMode() {
             if (!this.canvas.getRoot().visible || !this.camera) return;
             // this.camera.calcViewPortPixel(this.app, this.viewPixelrect);
@@ -501,6 +506,29 @@ namespace m4m.framework {
 
             outScreenPos.x = real_x + rect.x * this.app.width;
             outScreenPos.y = real_y + rect.y * this.app.height;
+        }
+        /**
+         * 获取高度的缩放值
+         * @returns 
+         */
+        getScaleHeight(): number {
+            if (this.scaleMode == m4m.framework.UIScaleMode.CONSTANT_PIXEL_SIZE)
+                return 1.0
+            else {
+                return this.app.webgl.canvas.height  / this.canvas.pixelHeight;
+            }
+        }
+        
+        /**
+         * 获取宽度的缩放值
+         * @returns 
+         */
+        getScaleWidth(): number {
+            if (this.scaleMode == m4m.framework.UIScaleMode.CONSTANT_PIXEL_SIZE)
+                return 1.0
+            else {
+                return this.app.webgl.canvas.width / this.canvas.pixelWidth;
+            }
         }
     }
 

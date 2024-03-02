@@ -17,6 +17,6 @@ limitations under the License.
 namespace m4m
 {
     export class version{
-        static readonly VERSION = "0.0.2";
+        static readonly VERSION = "1.0.0";
     } 
 }

@@ -21,10 +21,26 @@ namespace m4m.framework
         type:F14TypeEnum;
         effect:f14EffectSystem;
         //public F14Layer layer;
+        /**
+         * 渲染
+         * @param context 引擎渲染上下文 
+         * @param assetmgr 资源管理器
+         * @param camera 相机对象
+         * @param Effqueue 特效队列ID
+         */
         render(context: renderContext, assetmgr: assetMgr, camera: camera,Effqueue:number);
+        /**
+         * 取消渲染
+         */
         unRender();
-    
+        /**
+         * 销毁
+         */
         dispose();
+        /**
+         * 获取元素数量
+         * @returns 
+         */
         getElementCount():number;
     }
     
@@ -57,7 +73,11 @@ namespace m4m.framework
         curIndexCount:number=0;
 
         vertexLength:number=0;
-
+        /**
+         * f14 单mesh 合批
+         * @param mat 材质
+         * @param effect 特效系统
+         */
         public constructor(mat:material, effect:f14EffectSystem)
         {
             this.type=F14TypeEnum.SingleMeshType;
@@ -77,18 +97,18 @@ namespace m4m.framework
                 this.dataForVbo=this.meshlist[0].baseddata.mesh.data.genVertexDataArray(this.effect.VF);
                 
                 //this.dataForEbo=this.meshlist[0].dataforebo;
-                this.dataForEbo=this.meshlist[0].baseddata.mesh.data.genIndexDataArray();
+                this.dataForEbo=this.meshlist[0].baseddata.mesh.data.genIndexDataArray() as Uint16Array;
 
-                this.mesh.glMesh.initBuffer(this.effect.webgl,this.effect.VF,this.meshlist[0].baseddata.mesh.data.pos.length,render.MeshTypeEnum.Static);
+                this.mesh.glMesh.initBuffer(this.effect.webgl,this.effect.VF,this.meshlist[0].baseddata.mesh.data.getVertexCount(),render.MeshTypeEnum.Static);
                 this.mesh.glMesh.uploadVertexData(this.effect.webgl, this.dataForVbo);
                 this.mesh.glMesh.addIndex(this.effect.webgl, this.dataForEbo.length);
                 this.mesh.glMesh.uploadIndexData(this.effect.webgl, 0, this.dataForEbo);
+                this.mesh.glMesh.initVAO();
                 
                 this.mesh.submesh = [];
                 {
                     var sm = new subMeshInfo();
                     sm.matIndex = 0;
-                    sm.useVertexIndex = 0;
                     sm.start = 0;
                     sm.size = this.dataForEbo.length;
                     sm.line = false;
@@ -100,8 +120,8 @@ namespace m4m.framework
             let toltalIndexCount:number=0;
             for(let i=0,len=this.meshlist.length;i<len;i++)
             {
-                totalVertexCount+=this.meshlist[i].baseddata.mesh.data.pos.length;
-                toltalIndexCount+=this.meshlist[i].baseddata.mesh.data.trisindex.length;
+                totalVertexCount+=this.meshlist[i].baseddata.mesh.data.getVertexCount();
+                toltalIndexCount+=this.meshlist[i].baseddata.mesh.data.getTriIndexCount();
             }
             this.dataForVbo=new Float32Array(totalVertexCount*this.vertexLength);
             this.dataForEbo=new Uint16Array(toltalIndexCount);
@@ -112,12 +132,13 @@ namespace m4m.framework
             //this.mesh.glMesh.uploadVertexData(webgl, v32);
 
             this.mesh.glMesh.addIndex(this.effect.webgl, this.dataForEbo.length);
+            this.mesh.glMesh.initVAO();
+
             //this.mesh.glMesh.uploadIndexData(webgl, 0, i16);
             this.mesh.submesh = [];
             {
                 var sm = new subMeshInfo();
                 sm.matIndex = 0;
-                sm.useVertexIndex = 0;
                 sm.start = 0;
                 sm.size = this.dataForEbo.length;
                 sm.line = false;
@@ -192,12 +213,13 @@ namespace m4m.framework
                 if(singlemesh.updateByEffect==false)
                 {
                     let newglmesh=new m4m.render.glMesh();
-                    newglmesh.initBuffer(this.effect.webgl,this.effect.VF,singlemesh.data.pos.length,render.MeshTypeEnum.Static);
+                    newglmesh.initBuffer(this.effect.webgl,this.effect.VF,singlemesh.data.getVertexCount(),render.MeshTypeEnum.Static);
                     newglmesh.uploadVertexData(this.effect.webgl, this.activemeshlist[0].dataforvbo);
                     // newglmesh.addIndex(this.effect.webgl, this.activemeshlist[0].dataforebo.length);
                     // newglmesh.uploadIndexData(this.effect.webgl, 0, this.activemeshlist[0].dataforebo);
-                    newglmesh.ebos=singlemesh.glMesh.ebos;
-                    newglmesh.indexCounts=singlemesh.glMesh.indexCounts;
+                    newglmesh.ebo=singlemesh.glMesh.ebo;
+                    newglmesh.indexCount=singlemesh.glMesh.indexCount;
+                    newglmesh.initVAO();
 
                     singlemesh.glMesh=newglmesh;
                     singlemesh.submesh[0].size = this.activemeshlist[0].dataforebo.length;
@@ -212,7 +234,7 @@ namespace m4m.framework
                 // let basemesh=this.activemeshlist[0].baseddata.mesh;
                 this.ElementMat.setVector4("_Main_Color",this.temptColorv4);
                 this.ElementMat.setVector4("_Main_Tex_ST", this.activemeshlist[0].tex_ST);
-                singlemesh.glMesh.bindVboBuffer(context.webgl);
+                // singlemesh.glMesh.bindVboBuffer(context.webgl);
                 this.ElementMat.draw(context, singlemesh,singlemesh.submesh[0]);
 
             }

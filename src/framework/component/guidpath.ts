@@ -131,7 +131,9 @@ namespace m4m.framework
          */
         lookforward:boolean=false;
         private loopCount:number=1;
-
+        /**
+         * 当完成时回调函数
+         */
         private oncomplete:()=>void;
         /**
          * @public

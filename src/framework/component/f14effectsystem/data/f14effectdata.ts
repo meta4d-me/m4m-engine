@@ -21,7 +21,13 @@ namespace m4m.framework
         beloop: boolean = false;
         lifeTime: number = 100;
         layers: F14LayerData[] = [];
-
+        /**
+         * 解析 JSON数据
+         * @param json JSON数据
+         * @param assetmgr 资源管理器
+         * @param assetbundle bundle名
+         * @returns F14EffectData对象
+         */
         parsejson(json: any, assetmgr: assetMgr, assetbundle: string)
         {
              
@@ -65,11 +71,19 @@ namespace m4m.framework
 
         //frames:F14FrameData[]=[];
         frames: { [frame: number]: F14FrameData } = {};
-
+        /**
+         * F14 层数据
+         */
         constructor()
         {
         }
 
+        /**
+         * 解析
+         * @param json JSON数据
+         * @param assetmgr 资源管理器
+         * @param assetbundle bundle名
+         */
         parse(json: any, assetmgr: assetMgr, assetbundle: string)
         {
             // return new threading.gdPromise((resolve) =>
@@ -152,7 +166,11 @@ namespace m4m.framework
 
         singlemeshAttDic: { [name: string]: any };
         EmissionData: F14EmissionBaseData;
-
+        /**
+         * F14 帧数据
+         * @param index 索引 
+         * @param type F14类型
+         */
         constructor(index: number, type: F14TypeEnum)
         {
             this.frameindex = index;

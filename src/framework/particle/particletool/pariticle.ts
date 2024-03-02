@@ -69,7 +69,10 @@ namespace m4m.framework
         //在emission是在simulate in local space 时候，为动态的
         private emissionMatToWorld:m4m.math.matrix;
         private emissionWorldRotation:m4m.math.quaternion;
-        //根据发射器定义 初始化
+        /**
+         * 根据发射器定义 初始化
+         * @param batcher 发射器合批
+         */
         constructor(batcher: EmissionBatcher)//, _data: EmissionNew, startIndex: number, format: number
         {
             this.batcher = batcher;
@@ -83,7 +86,7 @@ namespace m4m.framework
             this.vertexCount = this.emisson.perVertexCount;
 
             this.dataForVbo = new Float32Array(this.vertexCount * this.vertexSize);
-            this.dataForEbo = this.data.mesh.data.genIndexDataArray();
+            this.dataForEbo = this.data.mesh.data.genIndexDataArray() as Uint16Array;
             this.dataForVbo.set(this.data.mesh.data.genVertexDataArray(this.vf), 0);
             this.sourceVbo = this.data.getVboData(this.vf);
 
@@ -91,10 +94,17 @@ namespace m4m.framework
             //计算得出初始vbo ebo
         }
 
+        /**
+         * 更新数据
+         * @param array 数据 
+         */
         public uploadData(array: Float32Array)
         {
             array.set(this.dataForVbo, this.vertexStartIndex * this.vertexSize);
         }
+        /**
+         * 初始化
+         */
         initByData()
         {
             this.totalLife=this.data.life.getValueRandom();
@@ -174,6 +184,10 @@ namespace m4m.framework
             }
         }
         actived:boolean=true;
+        /**
+         * 更新
+         * @param delta 
+         */
         update(delta: number)
         {
             if(!this.actived) return;
@@ -203,6 +217,10 @@ namespace m4m.framework
          * 在emission是在simulate in world space 时候，为matToWorld
          */
         private transformVertex:m4m.math.matrix=new m4m.math.matrix();
+        /**
+         * 更新本地矩阵
+         * @param delta 
+         */
         private _updateLocalMatrix(delta: number)
         {
             m4m.math.matrixMakeTransformRTS(this.localTranslate, this.localScale, this.localRotation, this.localMatrix);
@@ -218,6 +236,9 @@ namespace m4m.framework
         }
 
         private matToworld:m4m.math.matrix=new m4m.math.matrix();
+        /**
+         * 刷新粒子发射数据
+         */
         private refreshEmissionData()
         {
             if(this.emisson.simulateInLocalSpace)
@@ -227,12 +248,18 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 更新旋转
+         * @param delta 
+         */
         private _updateRotation(delta: number)
         {
             this._updateElementRotation();
         }
-        
 
+        /**
+         * 更新元素旋转
+         */
         private _updateElementRotation()
         {
             if (this.renderModel != RenderModel.Mesh)
@@ -338,6 +365,10 @@ namespace m4m.framework
 
 
         }
+        /**
+         * 更新位置
+         * @param delta 
+         */
         private _updatePos(delta: number)
         {
 
@@ -352,6 +383,11 @@ namespace m4m.framework
             m4m.math.vec3Add(this.localTranslate, currentTranslate, this.localTranslate);
 
         }
+        /**
+         * 更新欧拉旋转
+         * @param delta 
+         * @returns 
+         */
         private _updateEuler(delta: number)
         {
             let index = 0;
@@ -377,6 +413,10 @@ namespace m4m.framework
         }
         private _startNode: ParticleNode;
         private endNode: ParticleNode;
+        /**
+         * 更新缩放
+         * @param delta 
+         */
         private _updateScale(delta: number)
         {
             let index = 0;
@@ -398,6 +438,10 @@ namespace m4m.framework
                     this.localScale.z += this.data.scaleSpeed.z.getValue() * delta;
             }
         }
+        /**
+         * 更新颜色
+         * @param delta 
+         */
         private _updateColor(delta: number)
         {
             let index = 0;
@@ -422,6 +466,13 @@ namespace m4m.framework
 
         private tempStartNode: any;
         private tempEndNode: any;
+        /**
+         * 更新节点
+         * @param nodes 节点列表
+         * @param life 生命时长
+         * @param out 出书数据
+         * @param nodetype 节点类型
+         */
         private _updateNode(nodes: any, life: number, out: any, nodetype: nodeType = nodeType.none)
         {
             let index = 0;
@@ -486,7 +537,10 @@ namespace m4m.framework
 
         private _startNodeNum: ParticleNodeNumber;
         private _curNodeNum: ParticleNodeNumber;
-
+        /**
+         * 更新 半透值
+         * @param delta 
+         */
         private _updateAlpha(delta: number)
         {
             let index = 0;
@@ -506,6 +560,10 @@ namespace m4m.framework
         private _startUVSpeedNode: UVSpeedNode;
         private _curUVSpeedNode: UVSpeedNode;
         private spriteIndex: number;
+        /**
+         * 更新UV
+         * @param delta 
+         */
         private _updateUV(delta: number)
         {
             if (this.uv == undefined)
@@ -547,6 +605,9 @@ namespace m4m.framework
 
         }
         private tex_ST:m4m.math.vector4=new m4m.math.vector4(1,1,0,0);
+        /**
+         * 更新VBO
+         */
         private _updateVBO()
         {
             let vertexSize = this.vertexSize;
@@ -604,7 +665,9 @@ namespace m4m.framework
                 }
             }
         }
-
+        /**
+         * 销毁
+         */
         dispose()
         {
             this.dataForVbo = null;

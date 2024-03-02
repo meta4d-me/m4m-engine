@@ -28,6 +28,13 @@ namespace m4m.framework
         public endFrame: number;
 
         public effect: f14EffectSystem;
+        /**
+         * F14 引用元素
+         * @param effect 特效系统
+         * @param layer F14 层
+         * @param bundleName 资源包名
+         * @returns F14RefElement
+         */
         public constructor(effect: f14EffectSystem, layer: F14Layer, bundleName: string )
         {
 

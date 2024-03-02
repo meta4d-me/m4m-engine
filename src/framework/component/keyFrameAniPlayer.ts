@@ -125,7 +125,11 @@ namespace m4m.framework {
             }
         }
 
-        //播放到指定时间状态
+        /**
+         * 播放到指定时间状态
+         * @param clip 关键帧动画片段对象
+         * @param playTime 播放到指定时间
+         */
         private displayByTime(clip: keyFrameAniClip, playTime: number) {
             let curves = this.timeFilterCurves(clip, playTime);
             if (!curves || curves.length < 1) return;
@@ -144,12 +148,18 @@ namespace m4m.framework {
         private static rhquat = new m4m.math.quaternion();
         private static resvec = new m4m.math.vector3();
         private static resquat = new m4m.math.quaternion();
+        /**
+         * 计算vec3 差值函数
+         */
         private static vec3lerp(a: m4m.math.vector3, b: m4m.math.vector3, t: number, out: m4m.math.vector3) {
             out.x = a.x + t * (b.x - a.x);
             out.y = a.y + t * (b.y - a.y);
             out.z = a.z + t * (b.z - a.z);
             return out;
         }
+        /**
+         * 计算四元数 球形差值函数
+         */
         private static quatSlerp(a: m4m.math.quaternion, b: m4m.math.quaternion, t: number, out: m4m.math.quaternion) {
             let omega, cosom, sinom, scale0, scale1;
 
@@ -177,6 +187,12 @@ namespace m4m.framework {
 
             return out;
         }
+        /**
+         * 通过时间轴在曲线上计算数值
+         * @param curve 曲线
+         * @param playTime 时间轴上的时间
+         * @returns 返回的数据值
+         */
         private calcValueByTime(curve: AnimationCurve, playTime: number) {
             let kfs = curve.keyFrames;
             if (!kfs || kfs.length < 1) return 0;
@@ -232,7 +248,11 @@ namespace m4m.framework {
 
         private eulerStatusMap = {};
         private eulerMap = {};
-        //刷新curve 属性
+        /**
+         * 刷新curve 的属性
+         * @param curve 曲线
+         * @param playTime 时间轴上的时间
+         */
         private refrasCurveProperty(curve: AnimationCurve, playTime: number) {
             if (playTime < 0 || !curve || curve.keyFrames.length < 2 || StringUtil.isNullOrEmptyObject(curve.propertyName)) return;
             let path = curve.path;
@@ -313,7 +333,12 @@ namespace m4m.framework {
             }
         }
 
-        //按时间筛选需要播放的 curve
+        /**
+         * 按时间筛选需要播放的 curve
+         * @param clip 动画片段
+         * @param nowTime 时间
+         * @returns 曲线列表
+         */
         private timeFilterCurves(clip: keyFrameAniClip, nowTime: number) {
             if (!clip || clip.curves.length < 1) return;
             let result: AnimationCurve[] = [];
@@ -326,13 +351,20 @@ namespace m4m.framework {
             return result;
         }
 
-        //检查播放是否完毕
+        /**
+         * 检查播放是否完毕
+         * @param clip 动画片段
+         * @returns 是播放结束了？
+         */
         private checkPlayEnd(clip: keyFrameAniClip) {
             if (!clip) return true;
             if (clip._wrapMode == WrapMode.Loop || clip._wrapMode == WrapMode.PingPong) return false;
             if (this._nowTime >= clip.time * this.endNormalizedTime) return true;
         }
 
+        /**
+         * 初始化
+         */
         private init() {
             if (this.clips) {
                 let len = this.clips.length;
@@ -435,12 +467,20 @@ namespace m4m.framework {
             this._nowTime = 0;
         }
 
+        /**
+         * 添加片段
+         * @param clip 动画片段
+         */
         addClip(clip: keyFrameAniClip) {
             if (!this.clips) this.clips = [];
             this.clips.push(clip);
             this.clipMap[clip.getName()] = clip;
         }
 
+        /**
+         * 收集动画片段的属性
+         * @param clip 动画片段
+         */
         private collectPropertyObj(clip: keyFrameAniClip) {
             if (!clip) return;
             for (var i = 0; i < clip.curves.length; i++) {  //"gameobj_0/gameobj_1"
@@ -458,7 +498,11 @@ namespace m4m.framework {
             }
         }
 
-        //children对象收集路径
+        /**
+         * children对象收集路径
+         * @param clip 动画片段
+         * @param pathMap 路径字典容器
+         */
         private collectPathPropertyObj(clip: keyFrameAniClip, pathMap) {
             if (!clip || !pathMap) return;
             for (var i = 0; i < clip.curves.length; i++) {  //"gameobj_0/gameobj_1"
@@ -513,6 +557,13 @@ namespace m4m.framework {
     //贝塞尔计算工具
     class bezierCurveTool {
         private static cupV2 = new math.vector2();
+        /**
+         * 计算值
+         * @param kf_l 左边的关键帧
+         * @param kf_r 右边边的关键帧
+         * @param playTime 时间
+         * @returns 返回输出值
+         */
         static calcValue(kf_l: keyFrame, kf_r: keyFrame, playTime: number) {
             //是否 是常量
             if (kf_l.outTangent == Infinity || kf_r.inTangent == Infinity) return kf_l.value;
@@ -521,6 +572,17 @@ namespace m4m.framework {
             return v2.y;
         }
 
+        /**
+         * 转换计算
+         * @param inV 入值
+         * @param outV 出值
+         * @param inTime 入时间
+         * @param outTime 出时间
+         * @param inTangent 入切斜率
+         * @param outTangent 出切斜率
+         * @param t 单位化时间值（0-1）
+         * @returns 曲线值
+         */
         private static converCalc(inV: number, outV: number, inTime: number, outTime: number, inTangent: number, outTangent: number, t: number) {
             let p0 = math.pool.new_vector2(inTime, inV);
             let p1 = math.pool.new_vector2();
@@ -537,7 +599,7 @@ namespace m4m.framework {
             return bezierCurveTool.cupV2;
         }
 
-        //三阶 贝塞尔曲线
+        /** 三阶 贝塞尔曲线 */
         private static calcCurve(t: number, P0: math.vector2, P1: math.vector2, P2: math.vector2, P3: math.vector2, out: math.vector2) {
             var equation = (t: number, val0: number, val1: number, val2: number, val3: number) => {
                 var res = (1.0 - t) * (1.0 - t) * (1.0 - t) * val0 + 3.0 * t * (1.0 - t) * (1.0 - t) * val1 + 3.0 * t * t * (1.0 - t) * val2 + t * t * t * val3;

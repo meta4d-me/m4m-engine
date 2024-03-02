@@ -36,7 +36,7 @@ namespace m4m.framework
         static readonly ClassName:string="canvasRenderer";
 
         /**
-         * @private
+         * 3DUI的容器
          */
         constructor()
         {
@@ -80,17 +80,11 @@ namespace m4m.framework
          */
         subTran: transform;
 
-        /**
-         * @private
-         */
         getBound()
         {
             return null;
         }
 
-        /**
-         * @private
-         */
         intersectsTransform(tran: transform): boolean
         {
             return false;
@@ -117,9 +111,6 @@ namespace m4m.framework
         //绑定这个canvas 从哪个camera 响应事件
         cameraTouch: camera;
 
-        /**
-         * @private
-         */
         start()
         {
             this.canvas.scene = this.gameObject.getScene();
@@ -194,9 +185,7 @@ namespace m4m.framework
         }
 
         private m_lastAsp = -1;
-        /**
-         * @private
-         */
+  
         update(delta: number)
         {
             let asp = this.canvas.pixelWidth / this.canvas.pixelHeight;
@@ -359,15 +348,14 @@ namespace m4m.framework
             let ModelPos = math.pool.new_vector3();
             ModelPos.x = (from.x / this.canvas.pixelWidth) * 2 - 1;
             ModelPos.y = (from.y / this.canvas.pixelHeight) * -2 + 1;
+            ModelPos.z =this.gameObject.transform.localTranslate.z;
+
             let m_mtx = this.gameObject.transform.getWorldMatrix();
             math.matrixTransformVector3(ModelPos,m_mtx,out);
-            out.z = this.gameObject.transform.getWorldTranslate().z;
+            //out.z = this.gameObject.transform.getWorldTranslate().z;
             m4m.math.pool.delete_vector3(ModelPos);
         }
 
-        /**
-         * @private
-         */
         render(context: renderContext, assetmgr: assetMgr, camera: m4m.framework.camera)
         {
            // if (!(camera.CullingMask & this.renderLayer)) return;
@@ -375,14 +363,12 @@ namespace m4m.framework
             this.canvas.render(context, assetmgr);
         }
 
-        /**
-         * @private
-         */
         remove()
         {
 
         }
         /**
+         * [无效弃用接口]
          * @private
          */
         clone()

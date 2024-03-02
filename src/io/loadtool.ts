@@ -90,6 +90,15 @@ limitations under the License.
         // }
     }
 
+    /**
+     * 加载失败
+     * @param xhr XMLHttpRequest对象
+     * @param url 加载路径字符串
+     * @param fun 加载结果回调函数
+     * @param onprocess 进度中执行函数
+     * @param responseType 响应类型
+     * @param loadedFun 加载完毕函数
+     */
     function loadFail(xhr: XMLHttpRequest, url, fun, onprocess, responseType, loadedFun)
     {
         console.error(`下载失败: ${url}  status:${xhr.status}, ${retryTime}/ms 后重试`);
@@ -133,6 +142,12 @@ limitations under the License.
 
     var cachedMap = {};
     var checkClsTime = 0;
+    /**
+     * 获取Json对象
+     * @param url 加载路径
+     * @param text 
+     * @returns json 对象
+     */
     function GetJSON(url: string, text: string = undefined)
     {
         return new Promise<any>((r) =>
@@ -155,6 +170,11 @@ limitations under the License.
         // return JSONParse(text);
     }
 
+    /**
+     * 字符串信息 解析成 json 对象
+     * @param text 字符串信息
+     * @returns json 对象
+     */
     export function JSONParse(text: string)
     {
         return new Promise<any>((resolve, resaon) =>
@@ -170,6 +190,14 @@ limitations under the License.
             resolve(json);
         });
     }
+
+    /**
+     * 加载JSON 
+     * @param url 加载路径
+     * @param fun 加载完回调函数
+     * @param onprocess 加载中进度回调函数
+     * @returns Promise
+     */
     export function loadJSON(url: string, fun: (_txt: any, _err: Error, isloadFail?: boolean) => void, onprocess: (curLength: number, totalLength: number) => void = null) 
     {
 

@@ -25,10 +25,18 @@ class HdrParser
      * @version m4m 1.0
      */
     public textDecoder = new TextDecoder();
-
-    constructor(private gl: WebGLRenderingContext) {
+    /**
+     * hdr 纹理解析器
+     * @param gl webgl上下文
+     */
+    constructor(private gl: WebGL2RenderingContext) {
     }
 
+    /**
+     * 解析 RGBE
+     * @param raw 二进制数据
+     * @returns 
+     */
     public parseRGBE(raw: ArrayBuffer)
     {
         const data = new Uint8Array(raw);
@@ -107,6 +115,11 @@ class HdrParser
         }
     }
 
+    /**
+     * 获取纹理对象
+     * @param raw 二进制数据
+     * @returns 纹理对象
+     */
     get2DTexture(raw: ArrayBuffer) {
         const { width, height, buffer } = this.parseRGBE(raw);
         var t2d = new m4m.render.glTexture2D(this.gl);

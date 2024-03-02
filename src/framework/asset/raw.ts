@@ -28,10 +28,10 @@ namespace m4m.framework {
 
         /**
          * 
-         * @param gl WebGLRenderingContext
+         * @param gl WebGL2RenderingContext
          * @param arrayBuffer contents of the ASTC container file
          */
-        static parse(gl: WebGLRenderingContext, arrayBuffer: ArrayBuffer): render.glTexture2D {
+        static parse(gl: WebGL2RenderingContext, arrayBuffer: ArrayBuffer): render.glTexture2D {
             return this.parseByAtt(gl, arrayBuffer);
         }
 
@@ -45,33 +45,35 @@ namespace m4m.framework {
          * @param _repeat 
          * @returns 
          */
-        public static parseByAtt(gl: WebGLRenderingContext, arrayBuffer: ArrayBuffer, _mipmap = true, _linear = true, _premultiplyAlpha = false, _repeat = false) {
+        public static parseByAtt(gl: WebGL2RenderingContext, arrayBuffer: ArrayBuffer, _mipmap = true, _linear = true, _premultiplyAlpha = false, _repeat = false) {
             var reader = new io.binReader(arrayBuffer);
             var w = reader.readUInt16();
             var h = reader.readUInt16();
             var data = new ArrayBuffer(w * h * 8);
             var bts = new Uint8Array(data);
             var f16 = new Uint16Array(data);
-            reader.readBytes(bts,0,bts.length);
+            reader.readBytes(bts, 0, bts.length);
             let result: render.glTexture2D;
 
-            let ext = gl.getExtension("OES_texture_half_float");
-            if (!ext) {
-                console.error(`当前环境 不支持 float 16 texture 纹理`);
-                return;
-            }
+            //webgl2 默认支持
+            // let ext = gl.getExtension("OES_texture_half_float");
+            // if (!ext) {
+            //     console.error(`当前环境 不支持 float 16 texture 纹理`);
+            //     return;
+            // }
 
             // 初始化纹理
             let t2d = result = new m4m.render.glTexture2D(gl);
             t2d.width = this.pixelHeight;
             t2d.height = this.pixelWidth;
             t2d.format = render.TextureFormatEnum.FLOAT16;
+            t2d.mipmap = false;
             //额外处理
             let webgl = sceneMgr.app.webgl;
             webgl.bindTexture(webgl.TEXTURE_2D, t2d.texture);
             //纹理 Y 翻转
-            webgl.pixelStorei(webgl.UNPACK_FLIP_Y_WEBGL, 0 );
-            t2d.uploadByteArray(_mipmap, _linear, w, h, f16, _repeat, false, false, _premultiplyAlpha);
+            webgl.pixelStorei(webgl.UNPACK_FLIP_Y_WEBGL, 0);
+            t2d.uploadByteArray(_mipmap, _linear, w, h, f16, _repeat, false, false, _premultiplyAlpha, true, webgl.HALF_FLOAT);
             //结束
             webgl.bindTexture(webgl.TEXTURE_2D, null);
 

@@ -84,9 +84,6 @@ namespace m4m.framework
             this._cutPanel.markDirty();
         }
         
-        /**
-         * @private
-         */
         start()
         {
 
@@ -96,15 +93,15 @@ namespace m4m.framework
 
         }
 
-        /**
-         * @private
-         */
         update(delta: number)
         {
             this.adjustOverImg();
 
         }
 
+        /**
+         * 刷新调
+         */
         private refreshBar(){
             this.adjustOverImg();
             this.value = this._value;
@@ -131,9 +128,6 @@ namespace m4m.framework
          */
         transform: transform2D;
 
-        /**
-         * @private
-         */
         remove()
         {
             this._barBg = null;

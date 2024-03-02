@@ -18,6 +18,9 @@ namespace m4m.framework
 {
     export class textureutil
     {
+        /**
+         * @deprecated [已弃用]
+         */
         static loadUtil(path: string)
         {
             //插入textureutil的js代码

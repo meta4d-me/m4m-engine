@@ -51,12 +51,21 @@ namespace m4m.framework
         public srcradius:number;//collider定义的源半径
         private tempScale:m4m.math.vector3 = new m4m.math.vector3();
         private srcCenter : m4m.math.vector3 = new m4m.math.vector3();
+        /**
+         * 球形
+         * @param _center 中心点
+         * @param _r 半径
+         */
         constructor(_center:math.vector3, _r:number)
         {
             math.vec3Clone(_center,this.srcCenter);
             math.vec3Clone(_center,this.center);
             this.srcradius = _r;
         }
+        /**
+         * 更新
+         * @param worldmatrix 世界变换矩阵
+         */
         public update(worldmatrix:math.matrix)
         {
             m4m.math.matrixTransformVector3(this.srcCenter,worldmatrix,this.center);
@@ -269,8 +278,12 @@ namespace m4m.framework
                 this.subTran.gameObject.visible = this._colliderVisible;
             }
         }
-         /**
-         * @private
+        /**
+         * 判断一个平面在球内
+         * @param v0 面点0
+         * @param v1 面点1
+         * @param v2 面点2
+         * @returns 是在球内？
          */
         caclPlaneInDir(v0: math.vector3, v1:math.vector3, v2: math.vector3)
         {
@@ -347,6 +360,9 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 设置mesh 的 渲染器
+         */
         private setMeshRenderer(){
             let mesh = this.subTran.gameObject.addComponent("meshFilter") as m4m.framework.meshFilter;
             mesh.mesh = this.gameObject.getScene().app.getAssetMgr().getDefaultMesh("sphere");
@@ -399,7 +415,6 @@ namespace m4m.framework
             // {
             //     var sm = new subMeshInfo();
             //     sm.matIndex = 0;
-            //     sm.useVertexIndex = 0;
             //     sm.start = 0;
             //     sm.size = i16.length;
             //     sm.line = true;

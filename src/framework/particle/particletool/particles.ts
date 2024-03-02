@@ -25,16 +25,27 @@ namespace m4m.framework
         public emissionElements: EmissionElement[] = [];//一个特效系统可以有多个发射器元素
         public vf: number = m4m.render.VertexFormatMask.Position | render.VertexFormatMask.Color | render.VertexFormatMask.UV0;//法线切线不要
         public effectSys: effectSystem;
+        /**
+         * 粒子发射器
+         * @param sys 粒子系统
+         */
         constructor(sys: effectSystem)
         {
             this.effectSys = sys;
         }
+        /**
+         * 添加粒子发射
+         * @param _emissionNew 特效元素数据
+         */
         addEmission(_emissionNew: EffectElementData)
         {
             let _emissionElement = new EmissionElement(_emissionNew, this.effectSys, this);
             this.emissionElements.push(_emissionElement);
         }
-
+        /**
+         * 通过发射更新粒子
+         * @param delta 
+         */
         updateForEmission(delta: number)
         {
             for (let key in this.emissionElements)
@@ -42,6 +53,10 @@ namespace m4m.framework
                 this.emissionElements[key].updateForEmission(delta);
             }
         }
+        /**
+         * 更新
+         * @param delta 
+         */
         update(delta: number)
         {
             for (let key in this.emissionElements)
@@ -49,6 +64,12 @@ namespace m4m.framework
                 this.emissionElements[key].update(delta);
             }
         }
+        /**
+         * 执行渲染
+         * @param context   渲染上下文 
+         * @param assetmgr 资源管理器
+         * @param camera 相机
+         */
         render(context: renderContext, assetmgr: assetMgr, camera: m4m.framework.camera)
         {
             for (let key in this.emissionElements)
@@ -56,6 +77,9 @@ namespace m4m.framework
                 this.emissionElements[key].render(context, assetmgr, camera);
             }
         }
+        /**
+         * 销毁
+         */
         dispose()
         {
             for (let key in this.emissionElements)
@@ -71,7 +95,7 @@ namespace m4m.framework
      */
     export class EmissionElement
     {
-        public webgl: WebGLRenderingContext;
+        public webgl: WebGL2RenderingContext;
         public gameObject: gameObject;
         public effectSys: effectSystem;
         public ParticleMgr: Particles;
@@ -105,7 +129,12 @@ namespace m4m.framework
         private numcount: number;
         private isover: boolean = false;
         //-----------------------------------------------------------------
-
+        /**
+         * 粒子
+         * @param _emission 发射器数据
+         * @param sys 特效系统
+         * @param mgr 粒子管理器
+         */
         constructor(_emission: EffectElementData, sys: effectSystem, mgr: Particles)
         {
             this.webgl = m4m.framework.sceneMgr.app.webgl;
@@ -121,8 +150,8 @@ namespace m4m.framework
             // {
             //     this.delayFlag = true;
             // }
-            this.perVertexCount = this.emissionData.mesh.data.pos.length;
-            this.perIndexxCount = this.emissionData.mesh.data.trisindex.length;
+            this.perVertexCount = this.emissionData.mesh.data.getVertexCount();
+            this.perIndexxCount = this.emissionData.mesh.data.getTriIndexCount();
             this.simulateInLocalSpace = this.emissionData.simulateInLocalSpace;
             switch (this.emissionData.emissionType)
             {

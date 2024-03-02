@@ -41,6 +41,10 @@ namespace m4m.framework
          * @version m4m 1.0
          */
         defaultAsset: boolean = false;
+        /**
+         * 文本字符串资源
+         * @param assetName 资源名 
+         */
         constructor(assetName: string = null)
         {
             if (!assetName)

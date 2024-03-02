@@ -25,6 +25,10 @@ namespace Stats
      */
     export class Stats
     {
+        /**
+         * 状态面板
+         * @param app 
+         */
         constructor(app:m4m.framework.application)
         {
             this.app = app;
@@ -58,6 +62,9 @@ namespace Stats
             this.showPanel(0);
         }
 
+        /**
+         * 更新
+         */
         update()
         {
 
@@ -76,6 +83,10 @@ namespace Stats
         private memPanel: Panel;
         private ratePanel:Panel;
         private userratePanel:Panel;
+        /**
+         * 显示 状态监控Panel GUI
+         * @param id id
+         */
         private showPanel(id: number)
         {
 
@@ -88,12 +99,20 @@ namespace Stats
             this.mode = id;
         }
 
+        /**
+         * 添加监控Panel
+         * @param panel 监控Panel
+         * @returns 
+         */
         private addPanel(panel: Panel): Panel
         {
             this.container.appendChild(panel.canvas);
             return panel;
         }
 
+        /**
+         * 开始
+         */
         private begin()
         {
 
@@ -101,6 +120,10 @@ namespace Stats
 
         }
 
+        /**
+         * 结束
+         * @returns 
+         */
         private end(): number
         {
 
@@ -141,6 +164,12 @@ namespace Stats
      */
     class Panel
     {
+        /**
+         * 状态 面板
+         * @param name ming 
+         * @param fg 
+         * @param bg 
+         */
         constructor(name: string, fg: string, bg: string)
         {
             this.name = name;
@@ -197,6 +226,11 @@ namespace Stats
         GRAPH_WIDTH: number;
         GRAPH_HEIGHT: number;
 
+        /**
+         * 更新
+         * @param value 值
+         * @param maxValue 最大值
+         */
         update(value, maxValue)
         {
 

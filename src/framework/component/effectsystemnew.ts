@@ -90,7 +90,7 @@ limitations under the License.
 //         /**
 //         * @private
 //         */
-//         public webgl: WebGLRenderingContext;
+//         public webgl: WebGL2RenderingContext;
 //         // private time: number = 0;
 
 //         private parser = new m4m.framework.EffectParser();
@@ -667,7 +667,6 @@ limitations under the License.
 //             {
 //                 var sm = new subMeshInfo();
 //                 sm.matIndex = 0;
-//                 sm.useVertexIndex = 0;
 //                 sm.start = 0;
 //                 sm.size = 0;
 //                 sm.line = false;

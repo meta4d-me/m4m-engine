@@ -27,7 +27,7 @@ limitations under the License.
 //         drawMode: DrawModeEnum = DrawModeEnum.EboTri;
 //         drawbegin: number = 0;
 //         drawcount: number = -1;
-//         draw(webgl: WebGLRenderingContext)
+//         draw(webgl: WebGL2RenderingContext)
 //         {
 //             this.material.use(webgl);
 //             this.mesh.bind(webgl, this.material.program, this.eboIndex);
@@ -63,7 +63,7 @@ limitations under the License.
 //         eboCount: number = 0;
 //         dataForVbo: Float32Array;
 //         dataForEbo: Uint16Array;
-//         initBuffer(webgl: WebGLRenderingContext, vf: VertexFormatMask, drawMode: DrawModeEnum)
+//         initBuffer(webgl: WebGL2RenderingContext, vf: VertexFormatMask, drawMode: DrawModeEnum)
 //         {
 //             this.mesh = new glMesh();
 //             this.mesh.initBuffer(webgl, vf, 128, MeshTypeEnum.Dynamic);
@@ -75,14 +75,14 @@ limitations under the License.
 //                 this.dataForEbo = new Uint16Array(128);
 //             }
 //         }
-//         begin(webgl: WebGLRenderingContext, mat: glDrawPass)
+//         begin(webgl: WebGL2RenderingContext, mat: glDrawPass)
 //         {
 //             //if (mat == this.curmaterial) return;
 //             if (this.vboCount > 0)
 //                 this.end(webgl);
 //             this.curmaterial = mat;
 //         }
-//         push(webgl: WebGLRenderingContext, vbodata: number[], ebodata: number[])
+//         push(webgl: WebGL2RenderingContext, vbodata: number[], ebodata: number[])
 //         {
 //             if (this.vboCount + vbodata.length > 2048
 //                 ||
@@ -132,7 +132,7 @@ limitations under the License.
 
 
 //         }
-//         end(webgl: WebGLRenderingContext)
+//         end(webgl: WebGL2RenderingContext)
 //         {
 //             if (this.vboCount == 0) return;
 //             this.mesh.uploadVertexData(webgl, this.dataForVbo.slice(0, this.vboCount));

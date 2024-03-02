@@ -39,13 +39,13 @@ namespace m4m.framework {
         /**
          * kinematic
          */
-        kinematic?:boolean;
+        kinematic?: boolean;
         // radius?:number;
         // width?:number;
         // height?:number;
         // depth?:number;
-        heightFieldMatrix? : number[][];
-        heightFieldOptions? : {
+        heightFieldMatrix?: number[][];
+        heightFieldOptions?: {
             minValue?: number;
             maxValue?: number;
             elementSize?: number;
@@ -60,12 +60,24 @@ namespace m4m.framework {
         parent?: any;
         // getBoundingInfo(): BoundingInfo;
         // computeWorldMatrix(force: boolean): Matrix;
+        /**
+         * 获取世界矩阵
+         * @returns 矩阵
+         */
         getWorldMatrix?(): math.matrix;
         // getChildMeshes?(directDescendantsOnly?: boolean): Array<AbstractMesh>;
         // getVerticesData(kind: string): Array<number> | Float32Array;
         // getIndices?():IndicesArray;
         // getScene?(): Scene;
+        /**
+         * 获取绝对位置坐标
+         * @returns 位置坐标向量
+         */
         getAbsolutePosition(): math.vector3;
+        /**
+         * 获取绝对支点坐标
+         * @returns 支点坐标
+         */
         getAbsolutePivotPoint(): math.vector3;
         // rotate(axis: math.vector3, amount: number, space?: Space): TransformNode;
         // translate(axis: math.vector3, distance: number, space?: Space): TransformNode;
@@ -79,7 +91,7 @@ namespace m4m.framework {
 
         public static IDENTITY_QUATERNION = new math.quaternion();
 
-        private _physicsEngine:PhysicsEngine;
+        private _physicsEngine: PhysicsEngine;
         //The native cannon/oimo/energy physics body object.
         private _physicsBody: any;
         private _bodyUpdateRequired: boolean = false;
@@ -92,7 +104,7 @@ namespace m4m.framework {
         private _deltaRotation: math.quaternion;
         private _deltaRotationConjugated: math.quaternion;
         //If set, this is this impostor's parent
-        private _parent:PhysicsImpostor;
+        private _parent: PhysicsImpostor;
 
         private _isDisposed = false;
 
@@ -148,8 +160,8 @@ namespace m4m.framework {
          * @param _options Body Parameters
          */
         constructor(public object: transform, public type: ImpostorType, public _options: PhysicsImpostorParameters = { mass: 0 }) {
-            this._physicsEngine=physics;
-            if(!this.object){
+            this._physicsEngine = physics;
+            if (!this.object) {
                 console.error("No object was provided. A physics object is obligatory");
                 return;
             }
@@ -157,8 +169,8 @@ namespace m4m.framework {
             if (!this._physicsEngine) {
                 console.error("Physics not enabled. Please use scene.enablePhysics(...) before creating impostors.")
                 return;
-            } 
-            
+            }
+
             {
                 //set the object's quaternion, if not set
                 // if (!this.object.rotationQuaternion) {
@@ -174,16 +186,16 @@ namespace m4m.framework {
                 this._options.restitution = (_options.restitution === void 0) ? 0.2 : _options.restitution
 
                 this._joints = [];
-                
+
                 //If the mesh has a parent and parent is not the scene rootNode , don't initialize the physicsBody. Instead wait for the parent to do that.
-                if (!this.object.parent ||( this.object.scene && this.object.parent == this.object.scene.getRoot()) || this._options.ignoreParent) {
+                if (!this.object.parent || (this.object.scene && this.object.parent == this.object.scene.getRoot()) || this._options.ignoreParent) {
                     this._init();
                 } else if (this.object.parent && this.object.parent.physicsImpostor) {
                     console.warn("You must affect impostors to children before affecting impostor to parent.");
                 }
 
                 //引用到设置到 transform
-                if(this.object)
+                if (this.object)
                     this.object.physicsImpostor = this;
             }
         }
@@ -207,6 +219,10 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 获取物理体的父节点
+         * @returns 物理体的父节点
+         */
         private _getPhysicsParent(): PhysicsImpostor {
             if (this.object && this.object.parent) {
                 return this.object.parent.physicsImpostor;
@@ -221,6 +237,10 @@ namespace m4m.framework {
             return this._bodyUpdateRequired || !this._physicsBody;
         }
 
+        /**
+         * 设置缩放更新
+         * @param updated 是更新
+         */
         public setScalingUpdated(updated: boolean) {
             this.forceUpdate();
         }
@@ -258,7 +278,7 @@ namespace m4m.framework {
         /**
          * Sets the parent of the physics imposter
          */
-        public set parent(value:PhysicsImpostor) {
+        public set parent(value: PhysicsImpostor) {
             this._parent = value;
         }
 
@@ -273,27 +293,34 @@ namespace m4m.framework {
             this.resetUpdateFlags();
         }
 
+        /**
+         * 重置更新标记
+         */
         public resetUpdateFlags() {
             this._bodyUpdateRequired = false;
         }
 
-        private _obb : obb;
-        
-        private getObb():obb{
-            if(!this.object || !(this.object instanceof  transform)){
+        private _obb: obb;
+
+        /**
+         * 获取Obb 有向包围盒
+         * @returns Obb
+         */
+        private getObb(): obb {
+            if (!this.object || !(this.object instanceof transform)) {
                 return null;
             }
 
-            if(!this._obb){
+            if (!this._obb) {
                 let go = this.object.gameObject;
-                let mf = go.getComponent("meshFilter") as  meshFilter;
-                if(!mf) return null;
+                let mf = go.getComponent("meshFilter") as meshFilter;
+                if (!mf) return null;
                 let min = PhysicsImpostor.helpv3;
                 let max = PhysicsImpostor.helpv3_1;
-                mf.getMeshOutput().calcVectexMinMax(min,max);
+                mf.getMeshOutput().calcVectexMinMax(min, max);
                 //构建一个 obb
                 this._obb = new obb();
-                this._obb.buildByMaxMin(min,max);
+                this._obb.buildByMaxMin(min, max);
             }
             this._obb.update(this.object.getWorldMatrix());
 
@@ -302,24 +329,24 @@ namespace m4m.framework {
 
         private _cacheSizeWorld = new math.vector3();
         /**
-        * Gets the object extend size
-        * @returns the object extend size
+        * 获取对象扩展大小
+        * @returns 大小
         */
         getObjectExtendSize(): math.vector3 {
             let tempObb = this.getObb();
-            if(!tempObb) return PhysicsImpostor.DEFAULT_OBJECT_SIZE;
-            math.vec3Clone(tempObb.halfSizeWorld,this._cacheSizeWorld);
-            math.vec3ScaleByNum(this._cacheSizeWorld,2,this._cacheSizeWorld);
+            if (!tempObb) return PhysicsImpostor.DEFAULT_OBJECT_SIZE;
+            math.vec3Clone(tempObb.halfSizeWorld, this._cacheSizeWorld);
+            math.vec3ScaleByNum(this._cacheSizeWorld, 2, this._cacheSizeWorld);
             return this._cacheSizeWorld;
         }
 
         /**
-         * Gets the object center
-         * @returns The object center
+         * 获取对象的中心点
+         * @returns 中心点
          */
         public getObjectCenter(): math.vector3 {
             let tempObb = this.getObb();
-            if(!tempObb) return this.object.getWorldPosition();
+            if (!tempObb) return this.object.getWorldPosition();
             return tempObb.worldCenter;
         }
 
@@ -333,14 +360,17 @@ namespace m4m.framework {
         // }
 
         /**
-         * Get a specific parametes from the options parameter.
+         * 从选项参数中获取特定的参数。
+         * @param paramName 参数名
          */
         public getParam(paramName: string) {
             return (<any>this._options)[paramName];
         }
 
         /**
-         * Sets a specific parameter in the options given to the physics plugin
+         * 在物理插件的选项中设置特定参数
+         * @param paramName 参数名
+         * @param value 值
          */
         public setParam(paramName: string, value: number) {
             (<any>this._options)[paramName] = value;
@@ -359,25 +389,42 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 获取线性速度
+         * @returns 速度向量
+         */
         public getLinearVelocity(): math.vector3 {
             return this._physicsEngine.getPhysicsPlugin().getLinearVelocity(this)
         }
 
-        public setLinearVelocity(velocity:math.vector3) {
+        /**
+         * 设置线性速度
+         * @param velocity 速度向量
+         */
+        public setLinearVelocity(velocity: math.vector3) {
             this._physicsEngine.getPhysicsPlugin().setLinearVelocity(this, velocity);
         }
 
+        /**
+         * 设置角速度
+         * @returns 速度向量
+         */
         public getAngularVelocity(): math.vector3 {
             return this._physicsEngine.getPhysicsPlugin().getAngularVelocity(this);
         }
 
-        public setAngularVelocity(velocity:math.vector3) {
+        /**
+         * 设置角速度
+         * @param velocity 速度向量
+         */
+        public setAngularVelocity(velocity: math.vector3) {
             this._physicsEngine.getPhysicsPlugin().setAngularVelocity(this, velocity);
         }
 
         /**
-         * Execute a function with the physics plugin native code.
-         * Provide a function the will have two variables - the world object and the physics body object.
+         * 使用物理插件的本地代码执行函数。
+         * 提供一个函数，该函数将有两个变量-世界对象和物理体对象。
+         * @param func 执行函数
          */
         public executeNativeFunction(func: (world: any, physicsBody: any) => void) {
             if (this._physicsEngine) {
@@ -386,12 +433,17 @@ namespace m4m.framework {
         }
 
         /**
-         * Register a function that will be executed before the physics world is stepping forward.
+         * 注册一个函数，该函数将在物理世界执行一步之前执行。
+         * @param func 执行函数
          */
         public registerBeforePhysicsStep(func: (impostor: PhysicsImpostor) => void): void {
             this._onBeforePhysicsStepCallbacks.push(func);
         }
 
+        /**
+         * 注销，物理世界执行一步之前执行的函数
+         * @param func 执行函数
+         */
         public unregisterBeforePhysicsStep(func: (impostor: PhysicsImpostor) => void): void {
             var index = this._onBeforePhysicsStepCallbacks.indexOf(func);
 
@@ -403,12 +455,17 @@ namespace m4m.framework {
         }
 
         /**
-         * Register a function that will be executed after the physics step
+         * 注册将在物理执行一步骤后执行的函数
+         * @param func 执行函数
          */
         public registerAfterPhysicsStep(func: (impostor: PhysicsImpostor) => void): void {
             this._onAfterPhysicsStepCallbacks.push(func);
         }
 
+        /**
+         * 注销，物理世界执行一步之后执行的函数
+         * @param func 执行函数
+         */
         public unregisterAfterPhysicsStep(func: (impostor: PhysicsImpostor) => void): void {
             var index = this._onAfterPhysicsStepCallbacks.indexOf(func);
 
@@ -420,13 +477,20 @@ namespace m4m.framework {
         }
 
         /**
-         * register a function that will be executed when this impostor collides against a different body.
+         * 注册一个函数，该函数将在该物理代理与其他实体碰撞时执行。
+         * @param collideAgainst 物理代理
+         * @param func 执行函数
          */
         public registerOnPhysicsCollide(collideAgainst: PhysicsImpostor | Array<PhysicsImpostor>, func: (collider: PhysicsImpostor, collidedAgainst: PhysicsImpostor) => void): void {
             var collidedAgainstList: Array<PhysicsImpostor> = collideAgainst instanceof Array ? <Array<PhysicsImpostor>>collideAgainst : [<PhysicsImpostor>collideAgainst]
             this._onPhysicsCollideCallbacks.push({ callback: func, otherImpostors: collidedAgainstList });
         }
 
+        /**
+         * 注销，在该物理代理与其他实体碰撞时执行函数
+         * @param collideAgainst 物理代理
+         * @param func 执行函数
+         */
         public unregisterOnPhysicsCollide(collideAgainst: PhysicsImpostor | Array<PhysicsImpostor>, func: (collider: PhysicsImpostor, collidedAgainst: PhysicsImpostor | Array<PhysicsImpostor>) => void): void {
             var collidedAgainstList: Array<PhysicsImpostor> = collideAgainst instanceof Array ? <Array<PhysicsImpostor>>collideAgainst : [<PhysicsImpostor>collideAgainst]
             var index = -1;
@@ -454,7 +518,7 @@ namespace m4m.framework {
         private lastObjwPos = new m4m.math.vector3();
         private lastObjwRot = new m4m.math.quaternion();
         /**
-         * this function is executed by the physics engine.
+         * 之前执行步，该函数由物理引擎执行。
          */
         public beforeStep = () => {
             if (!this._physicsEngine) {
@@ -463,16 +527,16 @@ namespace m4m.framework {
 
             let wpos = this.object.getWorldPosition();
             let wrot = this.object.getWorldRotate();
-            
-            let hasDirty = !math.vec3Equal(wpos , this.lastObjwPos) || !math.quatEqual(wrot,this.lastObjwRot);
-            math.vec3Clone(wpos , this.lastObjwPos);
-            math.quatClone(wrot , this.lastObjwRot);
-            
+
+            let hasDirty = !math.vec3Equal(wpos, this.lastObjwPos) || !math.quatEqual(wrot, this.lastObjwRot);
+            math.vec3Clone(wpos, this.lastObjwPos);
+            math.quatClone(wrot, this.lastObjwRot);
+
             //处理 质心点 与 模型中心点 的偏移
             let offset_wpos = PhysicsImpostor.helpv3;
-            math.vec3Clone(this._deltaPosition,offset_wpos);
-            math.vec3ScaleByNum(offset_wpos,-1,offset_wpos);
-            math.vec3Add(wpos ,offset_wpos,offset_wpos);
+            math.vec3Clone(this._deltaPosition, offset_wpos);
+            math.vec3ScaleByNum(offset_wpos, -1, offset_wpos);
+            math.vec3Add(wpos, offset_wpos, offset_wpos);
 
             // this._deltaRotationConjugated && this.object.rotationQuaternion && this.object.rotationQuaternion.multiplyToRef(this._deltaRotationConjugated, this.object.rotationQuaternion);
             // this.object.computeWorldMatrix(false);
@@ -483,46 +547,46 @@ namespace m4m.framework {
             //     this._tmpQuat.copyFrom(this.object.rotationQuaternion || new Quaternion());
             // }
             if (hasDirty && !this._options.disableBidirectionalTransformation) {
-                this._physicsEngine.getPhysicsPlugin().setPhysicsBodyTransformation(this, /*bInfo.boundingBox.centerWorld*/offset_wpos , wrot);
+                this._physicsEngine.getPhysicsPlugin().setPhysicsBodyTransformation(this, /*bInfo.boundingBox.centerWorld*/offset_wpos, wrot);
             }
 
             this._onBeforePhysicsStepCallbacks.forEach((func) => {
                 func(this);
-         
+
             });
         }
 
 
-        private _freezeMask : number = 0; //位移和旋转冻结 mask
+        private _freezeMask: number = 0; //位移和旋转冻结 mask
         /**
          * 设置 位移、旋转 冻结选项
          * @param option 冻结类型
          * @param beSelect 是否选上
          */
-        setFreeze(option: FreezeType, beSelect : boolean ){
-            if(beSelect){
+        setFreeze(option: FreezeType, beSelect: boolean) {
+            if (beSelect) {
                 this._freezeMask |= option;
-            }else{
-                if(this._freezeMask & option ){
+            } else {
+                if (this._freezeMask & option) {
                     this._freezeMask ^= option;
                 }
             }
         }
-        
+
         /**
          * 获取 位移、旋转 冻结选项
          * @param option 冻结类型
          */
-        getFreeze(option: FreezeType){
+        getFreeze(option: FreezeType) {
             return this._freezeMask & option;
         }
 
         private lastbodywPos = new m4m.math.vector3();
         private lastbodywRot = new m4m.math.quaternion();
         private lastEuler = new m4m.math.vector3();
-        private lastRotMask : number = 0;
+        private lastRotMask: number = 0;
         /**
-         * this function is executed by the physics engine
+         * 之后执行步,该函数由物理引擎执行。
          */
         public afterStep = () => {
             if (!this._physicsEngine) {
@@ -535,85 +599,85 @@ namespace m4m.framework {
 
             let lwpos = this.lastbodywPos;
             let lwrot = this.lastbodywRot;
-            let posDirty = !physicTool.Ivec3Equal( this.physicsBody.position , lwpos);
+            let posDirty = !physicTool.Ivec3Equal(this.physicsBody.position, lwpos);
             let rotDirty = !physicTool.IQuatEqual(this.physicsBody.quaternion, lwrot);
             //冻结处理逻辑
-            if( this._freezeMask > 0){
-                if(posDirty){
+            if (this._freezeMask > 0) {
+                if (posDirty) {
                     //过滤掉 物理的 位移 影响
-                    let pPos : {x,y,z} = this._physicsBody.position;
+                    let pPos: { x, y, z } = this._physicsBody.position;
                     //清理 速度
-                    let linearVelocity : {x,y,z} = this._physicsBody.linearVelocity;
-                    if(this.getFreeze(FreezeType.Position_x)) {
+                    let linearVelocity: { x, y, z } = this._physicsBody.linearVelocity;
+                    if (this.getFreeze(FreezeType.Position_x)) {
                         pPos.x = lwpos.x;
                         linearVelocity.x = 0;
-                    } 
-                    if(this.getFreeze(FreezeType.Position_y)) {
+                    }
+                    if (this.getFreeze(FreezeType.Position_y)) {
                         pPos.y = lwpos.y;
                         linearVelocity.y = 0;
                     }
-                    if(this.getFreeze(FreezeType.Position_z)) {
+                    if (this.getFreeze(FreezeType.Position_z)) {
                         pPos.z = lwpos.z;
                         linearVelocity.z = 0;
                     }
                 }
 
-                if(rotDirty){
+                if (rotDirty) {
                     let l_x = this.getFreeze(FreezeType.Rotation_x);
                     let l_y = this.getFreeze(FreezeType.Rotation_y);
                     let l_z = this.getFreeze(FreezeType.Rotation_z);
 
-                    let pRot : {x,y,z,w} = this._physicsBody.quaternion;
-                    let angularVelocity : {x,y,z} = this._physicsBody.angularVelocity;
-                    if(!l_x || !l_y || !l_z ){
+                    let pRot: { x, y, z, w } = this._physicsBody.quaternion;
+                    let angularVelocity: { x, y, z } = this._physicsBody.angularVelocity;
+                    if (!l_x || !l_y || !l_z) {
                         //过滤掉 物理的 旋转 影响
                         //清理 速度
-                        let Euler : math.vector3 = PhysicsImpostor.helpv3;
+                        let Euler: math.vector3 = PhysicsImpostor.helpv3;
                         let tquat = PhysicsImpostor.helpquat;
-                        physicTool.IQuatCopy(pRot,tquat);
-                        math.quatToEulerAngles(tquat,Euler);  //物理结算当前 欧拉角
+                        physicTool.IQuatCopy(pRot, tquat);
+                        math.quatToEulerAngles(tquat, Euler);  //物理结算当前 欧拉角
                         let lEuler = this.lastEuler;
-                        let mask_ = l_x?1:0 | l_y?2:0 | l_z?4:0; //优化计算 量
-                        if(mask_ != this.lastRotMask){
-                            math.quatToEulerAngles(lwrot,lEuler);  //上一次的 欧拉角
+                        let mask_ = l_x ? 1 : 0 | l_y ? 2 : 0 | l_z ? 4 : 0; //优化计算 量
+                        if (mask_ != this.lastRotMask) {
+                            math.quatToEulerAngles(lwrot, lEuler);  //上一次的 欧拉角
                         }
                         this.lastRotMask = mask_;
                         //逐轴冻结判定                        
                         let t_x = lEuler.x;
                         let t_y = lEuler.y;
                         let t_z = lEuler.z;
-                        if(this.getFreeze(FreezeType.Rotation_x)) {
+                        if (this.getFreeze(FreezeType.Rotation_x)) {
                             angularVelocity.x = 0;
-                        }else{
+                        } else {
                             t_x = Euler.x;
                         }
-                        if(this.getFreeze(FreezeType.Rotation_y)) {
+                        if (this.getFreeze(FreezeType.Rotation_y)) {
                             angularVelocity.y = 0;
-                        }else{
+                        } else {
                             t_y = Euler.y;
                         }
-                        if(this.getFreeze(FreezeType.Rotation_z)) {
+                        if (this.getFreeze(FreezeType.Rotation_z)) {
                             angularVelocity.z = 0;
-                        }else{
+                        } else {
                             t_z = Euler.z;
                         }
 
-                        math.quatFromEulerAngles(t_x,t_y,t_z,tquat);
-                        physicTool.IQuatCopy(tquat,pRot);
-                    }else{
+                        math.quatFromEulerAngles(t_x, t_y, t_z, tquat);
+                        physicTool.IQuatCopy(tquat, pRot);
+                    } else {
                         //全部锁定 , 不用计算旋转
                         angularVelocity.x = angularVelocity.y = angularVelocity.z = 0;
-                        physicTool.IQuatCopy(lwrot,pRot);
+                        physicTool.IQuatCopy(lwrot, pRot);
                     }
                 }
             }
-            
-            physicTool.Ivec3Copy(this.physicsBody.position , lwpos);
-            physicTool.IQuatCopy(this.physicsBody.quaternion , lwrot);
-            if(!posDirty && !rotDirty) return;
+
+            physicTool.Ivec3Copy(this.physicsBody.position, lwpos);
+            physicTool.IQuatCopy(this.physicsBody.quaternion, lwrot);
+            if (!posDirty && !rotDirty) return;
 
             // object has now its world rotation. needs to be converted to local.
-            
+
             // if (this.object.parent && this.object.rotationQuaternion) {
             //     this.getParentsRotation();
             //     this._tmpQuat.conjugateInPlace();
@@ -621,24 +685,28 @@ namespace m4m.framework {
             // }
             // // take the position set and make it the absolute position of this object.
             // this.object.setAbsolutePosition(this.object.position);
-           
-            
+
+
             // this._deltaRotation && this.object.rotationQuaternion && this.object.rotationQuaternion.multiplyToRef(this._deltaRotation, this.object.rotationQuaternion);
-            
+
             //同步到transform
             this._physicsEngine.getPhysicsPlugin().setTransformationFromPhysicsBody(this);
             //处理 质心点 与 模型中心点 的偏移
             let tempv3 = PhysicsImpostor.helpv3;
-            math.vec3Add(this.object.getWorldPosition(),this._deltaPosition,tempv3);
+            math.vec3Add(this.object.getWorldPosition(), this._deltaPosition, tempv3);
             this.object.setWorldPosition(tempv3)
         }
 
         /**
-         * Legacy collision detection event support
+         * 当碰撞事件时触发
+         * 旧版碰撞检测事件支持
          */
-        public onCollideEvent:(collider: PhysicsImpostor, collidedWith: PhysicsImpostor) => void = null;
+        public onCollideEvent: (collider: PhysicsImpostor, collidedWith: PhysicsImpostor) => void = null;
 
-        //event and body object due to cannon's event-based architecture.
+        /**
+         * 当碰撞触发
+         * @param e 事件对象
+         */
         public onCollide = (e: { body: any }) => {
             if (!this._onPhysicsCollideCallbacks.length && !this.onCollideEvent) {
                 return;
@@ -663,7 +731,10 @@ namespace m4m.framework {
         }
 
         /**
-         * Apply a force 
+         * 应用施加力
+         * @param force 力向量
+         * @param contactPoint 施加位置点
+         * @returns 物理代理
          */
         public applyForce(force: math.vector3, contactPoint: math.vector3): PhysicsImpostor {
             if (this._physicsEngine) {
@@ -673,7 +744,10 @@ namespace m4m.framework {
         }
 
         /**
-         * Apply an impulse
+         * 应用施加一个冲量
+         * @param force 力向量
+         * @param contactPoint 施加位置点
+         * @returns 物理代理
          */
         public applyImpulse(force: math.vector3, contactPoint: math.vector3): PhysicsImpostor {
             if (this._physicsEngine) {
@@ -684,7 +758,11 @@ namespace m4m.framework {
         }
 
         /**
-         * A help function to create a joint.
+         * 创建一个关节
+         * @param otherImpostor 物理代理
+         * @param jointType 关节类型
+         * @param jointData 关节数据
+         * @returns 物理代理
          */
         public createJoint(otherImpostor: PhysicsImpostor, jointType: number, jointData: PhysicsJointData): PhysicsImpostor {
             var joint = new PhysicsJoint(jointType, jointData);
@@ -694,7 +772,10 @@ namespace m4m.framework {
         }
 
         /**
-         * Add a joint to this impostor with a different impostor.
+         * 添加一个关节
+         * @param otherImpostor 物理代理
+         * @param joint 关节
+         * @returns 物理代理
          */
         public addJoint(otherImpostor: PhysicsImpostor, joint: PhysicsJoint): PhysicsImpostor {
             this._joints.push({
@@ -710,7 +791,7 @@ namespace m4m.framework {
         }
 
         /**
-         * Will keep this body still, in a sleep mode.
+         * 保持身体静止，处于睡眠状态。
          */
         public sleep(): PhysicsImpostor {
             if (this._physicsEngine) {
@@ -721,9 +802,9 @@ namespace m4m.framework {
         }
 
         /**
-         * result body is sleeping
+         * 是睡眠状态？
          */
-        get isSleeping(){
+        get isSleeping() {
             if (this._physicsEngine) {
                 return this._physicsEngine.getPhysicsPlugin().isSleeping(this);
             }
@@ -731,7 +812,7 @@ namespace m4m.framework {
         }
 
         /**
-         * Wake the body up.
+         * 唤醒
          */
         public wakeUp(): PhysicsImpostor {
             if (this._physicsEngine) {
@@ -741,11 +822,17 @@ namespace m4m.framework {
             return this;
         }
 
-        public clone(newObject: transform):PhysicsImpostor {
+        /**
+         * 克隆
+         * @param newObject 引擎变换节点
+         * @returns 输出的克隆物理代理对象
+         */
+        public clone(newObject: transform): PhysicsImpostor {
             if (!newObject) return null;
             return new PhysicsImpostor(newObject, this.type, this._options);
         }
 
+        /** 销毁 */
         public dispose(/*disposeChildren: boolean = true*/) {
             //no dispose if no physics engine is available.
             if (!this._physicsEngine) {
@@ -775,27 +862,43 @@ namespace m4m.framework {
             this._isDisposed = true;
         }
 
+        /**
+         * 设置 变化的位置
+         * @param position 变化的位置向量
+         */
         public setDeltaPosition(position: math.vector3) {
-            math.vec3Clone(position,this._deltaPosition);
+            math.vec3Clone(position, this._deltaPosition);
             // this._deltaPosition.copyFrom(position);
         }
 
+        /**
+         * 设置 变化的旋转
+         * @param rotation 旋转四元数
+         */
         public setDeltaRotation(rotation: math.quaternion) {
             if (!this._deltaRotation) {
                 this._deltaRotation = new math.quaternion();
             }
             // this._deltaRotation.copyFrom(rotation);
-            math.quatClone(rotation,this._deltaRotation);
+            math.quatClone(rotation, this._deltaRotation);
 
             // this._deltaRotationConjugated = this._deltaRotation.conjugate();
         }
 
+        /**
+         * 获取 包围盒尺寸
+         * @param result 输出包围盒尺寸
+         */
         public getBoxSizeToRef(result: math.vector3): PhysicsImpostor {
             this._physicsEngine.getPhysicsPlugin().getBoxSizeToRef(this, result);
 
             return this;
         }
 
+        /**
+         * 获取半径
+         * @returns 
+         */
         public getRadius(): number {
             return this._physicsEngine.getPhysicsPlugin().getRadius(this);
         }
@@ -803,16 +906,16 @@ namespace m4m.framework {
         /**
          * 设置动力学的 位置
          */
-        public kinematicSetPosition(position: math.vector3){
-            if(!this._physicsBody || !position) return;
+        public kinematicSetPosition(position: math.vector3) {
+            if (!this._physicsBody || !position) return;
             this._physicsBody.setPosition(position);
         }
 
         /**
          * 设置动力学的 旋转 
          */
-        public kinematicSetRotation(rotation: math.quaternion){
-            if(!this._physicsBody || !rotation) return;
+        public kinematicSetRotation(rotation: math.quaternion) {
+            if (!this._physicsBody || !rotation) return;
             this._physicsBody.setQuaternion(rotation);
         }
 
@@ -924,7 +1027,7 @@ namespace m4m.framework {
     }
 
     /** Impostor types */
-    export enum ImpostorType  {
+    export enum ImpostorType {
         /** No-Imposter type */
         NoImpostor = 0,
         /** Sphere-Imposter type */
@@ -950,7 +1053,7 @@ namespace m4m.framework {
         /** Softbody-Imposter type */
         SoftbodyImpostor
     }
-    
+
     /**
      * physicImpostor 冻结类型
      */

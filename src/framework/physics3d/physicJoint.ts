@@ -52,7 +52,11 @@ namespace m4m.framework {
 
         private _physicsJoint: any;
         protected _physicsPlugin: IPhysicsEnginePlugin;
-
+        /**
+         * 关节
+         * @param type 类型
+         * @param jointData 关节数据
+         */
         constructor(public type: number, public jointData: PhysicsJointData) {
             jointData.nativeParams = jointData.nativeParams || {};
         }
@@ -75,9 +79,8 @@ namespace m4m.framework {
         }
         
         /**
-         * Execute a function that is physics-plugin specific.
-         * @param {Function} func the function that will be executed. 
-         *                        It accepts two parameters: the physics world and the physics joint.
+         * 执行物理插件特定的函数。
+         * @param  func 执行函数
          */
         public executeNativeFunction(func : (world: any, physicsJoint:any) => void) {
             func(this._physicsPlugin.world, this._physicsJoint)
@@ -141,12 +144,18 @@ namespace m4m.framework {
      * A class representing a physics distance joint.
      */
     export class DistanceJoint extends PhysicsJoint {
+        /**
+         * 距离关节
+         * @param jointData 关节数据
+         */
         constructor(jointData: DistanceJointData) {
             super(PhysicsJoint.DistanceJoint, jointData);
         }
 
         /**
-         * Update the predefined distance.
+         * 更新预定义的距离。
+         * @param maxDistance 最大距离
+         * @param minDistance 最小距离
          */
         public updateDistance(maxDistance: number, minDistance?: number) {
             this._physicsPlugin.updateDistanceJoint(this, maxDistance, minDistance);
@@ -157,25 +166,19 @@ namespace m4m.framework {
      * Represents a Motor-Enabled Joint
      */
     export class MotorEnabledJoint extends PhysicsJoint implements IMotorEnabledJoint {
-        
+        /**
+         * 马达关节
+         * @param type 类型
+         * @param jointData 关节数据
+         */
         constructor(type: number, jointData:PhysicsJointData) {
             super(type, jointData);
         }
         
-        /**
-         * Set the motor values.
-         * Attention, this function is plugin specific. Engines won't react 100% the same.
-         * @param {number} force the force to apply
-         * @param {number} maxForce max force for this motor.
-         */
         public setMotor(force?: number, maxForce?: number) {
             this._physicsPlugin.setMotor(this, force || 0, maxForce);
         }
         
-        /**
-         * Set the motor's limits.
-         * Attention, this function is plugin specific. Engines won't react 100% the same.
-         */
         public setLimit(upperLimit: number, lowerLimit?: number) {
             this._physicsPlugin.setLimit(this, upperLimit, lowerLimit);
         }
@@ -185,25 +188,18 @@ namespace m4m.framework {
      * This class represents a single hinge physics joint
      */
     export class HingeJoint extends MotorEnabledJoint {
-        
+        /**
+         * 铰链关节
+         * @param jointData 关节数据
+         */
         constructor(jointData:PhysicsJointData) {
             super(PhysicsJoint.HingeJoint, jointData);
         }
         
-        /**
-         * Set the motor values.
-         * Attention, this function is plugin specific. Engines won't react 100% the same.
-         * @param {number} force the force to apply
-         * @param {number} maxForce max force for this motor.
-         */
         public setMotor(force?: number, maxForce?: number) {
             this._physicsPlugin.setMotor(this, force || 0, maxForce);
         }
         
-        /**
-         * Set the motor's limits.
-         * Attention, this function is plugin specific. Engines won't react 100% the same.
-         */
         public setLimit(upperLimit: number, lowerLimit?: number) {
             this._physicsPlugin.setLimit(this, upperLimit, lowerLimit);
         }
@@ -213,28 +209,30 @@ namespace m4m.framework {
      * This class represents a dual hinge physics joint (same as wheel joint)
      */
     export class Hinge2Joint extends MotorEnabledJoint {
-        
+        /**
+         * 铰链2关节
+         * @param jointData 关节数据
+         */
         constructor(jointData:PhysicsJointData) {
             super(PhysicsJoint.Hinge2Joint, jointData);
         }
         
         /**
-         * Set the motor values.
-         * Attention, this function is plugin specific. Engines won't react 100% the same.
-         * @param {number} force the force to apply
-         * @param {number} maxForce max force for this motor.
-         * @param {motorIndex} the motor's index, 0 or 1.
+         * 设置马达
+         * 注意，此函数是特定于插件的。发动机的反应不会100%相同。
+         * @param force 设置力
+         * @param maxForce 马达的最大力
+         * @param motorIndex 马达索引
          */
         public setMotor(force?: number, maxForce?: number, motorIndex: number = 0) {
             this._physicsPlugin.setMotor(this, force || 0, maxForce, motorIndex);
         }
         
         /**
-         * Set the motor limits.
-         * Attention, this function is plugin specific. Engines won't react 100% the same.
-         * @param {number} upperLimit the upper limit
-         * @param {number} lowerLimit lower limit
-         * @param {motorIndex} the motor's index, 0 or 1.
+         * 设置马达的限制
+         * @param upperLimit 上限
+         * @param lowerLimit 下限
+         * @param motorIndex 马达索引
          */
         public setLimit(upperLimit: number, lowerLimit?: number, motorIndex: number = 0) {
             this._physicsPlugin.setLimit(this, upperLimit, lowerLimit, motorIndex);
@@ -246,7 +244,18 @@ namespace m4m.framework {
      */
     export interface IMotorEnabledJoint {
         physicsJoint: any;
+        /**
+         * 设置马达
+         * 注意，此函数是特定于插件的。发动机的反应不会100%相同。
+         * @param force 设置力
+         * @param maxForce 马达的最大力
+         */
         setMotor(force?: number, maxForce?: number, motorIndex?: number): void;
+        /**
+         * 设置马达的限制
+         * @param upperLimit 上限
+         * @param lowerLimit 下限
+         */
         setLimit(upperLimit: number, lowerLimit?: number, motorIndex?: number): void;
     }
 

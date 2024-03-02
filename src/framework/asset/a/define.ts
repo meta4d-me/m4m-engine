@@ -207,8 +207,12 @@ namespace m4m.framework
          * HDR贴图
          */
         HDR,
-        GLTF,
+        /** 二进制文件 */
         BIN,
+        /** gltf 模型资源 */
+        GLTF,
+        /** gltf 二进制 资源 */
+        GLB,
     }
 
     /**

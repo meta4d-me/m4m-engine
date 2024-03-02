@@ -16,16 +16,18 @@ limitations under the License.
  */
 ﻿//0.04
 //处理utf8 string 还是不能用encode decode，有些特殊情况没覆盖
-namespace m4m.io
-{
+namespace m4m.io {
     /**
      * @private
      */
-    export class binReader
-    {
+    export class binReader {
         private _data: DataView;
-        constructor(buf: ArrayBuffer, seek: number = 0)
-        {
+        /**
+         * 二进制阅读器
+         * @param buf 二进制数据
+         * @param seek 偏移
+         */
+        constructor(buf: ArrayBuffer, seek: number = 0) {
             this._seek = seek;
             if (!(buf instanceof ArrayBuffer))
                 throw new Error(`[binReader]Error buf is not Arraybuffer instance`);
@@ -34,47 +36,50 @@ namespace m4m.io
         }
         public _seek: number;
 
-
-        seek(seek: number)
-        {
+        /**
+         * seek值
+         * @param seek seek值
+         */
+        seek(seek: number) {
             this._seek = seek;
         }
-        peek(): number
-        {
+        /** 当前值（seek） */
+        peek(): number {
             return this._seek;
         }
-        length(): number
-        {
+        /** 数据长度 */
+        length(): number {
             return this._data.byteLength;
         }
-        canread(): number
-        {
+        /** 可读？ */
+        canread(): number {
             //LogManager.Warn(this._buf.byteLength + "  &&&&&&&&&&&   " + this._seek + "    " + this._buf.buffer.byteLength);
             return this._data.byteLength - this._seek;
         }
-        readStringAnsi(): string
-        {
+        /** 读取字符串Ansi*/
+        readStringAnsi(): string {
             var slen = this._data.getUint8(this._seek);
             this._seek++;
             var bs: string = "";
-            for (var i = 0; i < slen; i++)
-            {
+            for (var i = 0; i < slen; i++) {
                 bs += String.fromCharCode(this._data.getUint8(this._seek));
                 this._seek++;
             }
             return bs;
         }
-        static utf8ArrayToString(array: Uint8Array | number[]): string
-        {
+        /**
+         * utf8Array 转 字符串数据
+         * @param array utf8Array数据
+         * @returns 字符串数据
+         */
+        static utf8ArrayToString(array: Uint8Array | number[]): string {
             var ret: string[] = [];
-            for (var i = 0; i < array.length; i++)
-            {
+            for (var i = 0; i < array.length; i++) {
                 var cc = array[i];
                 if (cc == 0)
                     break;
                 var ct = 0;
-                if (cc > 0xE0)
-                {
+                if (cc > 0xE0) {
                     ct = (cc & 0x0F) << 12;
                     cc = array[++i];
                     ct |= (cc & 0x3F) << 6;
@@ -82,19 +87,16 @@ namespace m4m.io
                     ct |= cc & 0x3F;
                     ret.push(String.fromCharCode(ct));
                 }
-                else if (cc > 0xC0)
-                {
+                else if (cc > 0xC0) {
                     ct = (cc & 0x1F) << 6;
                     cc = array[++i];
                     ct |= (cc & 0x3F) << 6;
                     ret.push(String.fromCharCode(ct));
                 }
-                else if (cc > 0x80)
-                {
+                else if (cc > 0x80) {
                     throw new Error("InvalidCharacterError");
                 }
-                else
-                {
+                else {
                     ret.push(String.fromCharCode(array[i]));
                 }
             }
@@ -112,172 +114,241 @@ namespace m4m.io
             //}
             //return decodeURIComponent(uri);
         }
-        readStringUtf8(): string
-        {
+        /**
+         * 读取utf8 字符串
+         * @returns utf8 字符串
+         */
+        readStringUtf8(): string {
             var length = this._data.getInt8(this._seek);
             this._seek++;
             var arr = new Uint8Array(length);
             this.readUint8Array(arr);
             return binReader.utf8ArrayToString(arr);
         }
-        readStringUtf8FixLength(length: number): string
-        {
+        /**
+         * 读取 固定长度的 utf8 字符串
+         * @param length 长度
+         * @returns 固定长度的 utf8 字符串
+         */
+        readStringUtf8FixLength(length: number): string {
             var arr = new Uint8Array(length);
             this.readUint8Array(arr);
             return binReader.utf8ArrayToString(arr);
         }
-        readSingle(): number
-        {
+        /**
+         * 读取 Single值
+         * @returns Single值
+         */
+        readSingle(): number {
             var num = this._data.getFloat32(this._seek, true);
             this._seek += 4;
             return num;
         }
-        readDouble(): number
-        {
+        /**
+         * 读取 Double值
+         * @returns Double值
+         */
+        readDouble(): number {
             var num = this._data.getFloat64(this._seek, true);
             this._seek += 8;
             return num;
         }
-        readInt8(): number
-        {
+        /**
+         * 读取 Int8值
+         * @returns Int8值
+         */
+        readInt8(): number {
             var num = this._data.getInt8(this._seek);
             this._seek += 1;
             return num;
         }
-        readUInt8(): number
-        {
+        /**
+         * 读取 UInt8值
+         * @returns UInt8值
+         */
+        readUInt8(): number {
             //LogManager.Warn(this._data.byteLength + "  @@@@@@@@@@@@@@@@@  " + this._seek);
             var num = this._data.getUint8(this._seek);
             this._seek += 1;
             return num;
         }
-        readInt16(): number
-        {
+        /**
+         * 读取 Int16值
+         * @returns Int16值
+         */
+        readInt16(): number {
             //LogManager.Log(this._seek + "   " + this.length());
             var num = this._data.getInt16(this._seek, true);
             this._seek += 2;
             return num;
         }
-        readUInt16(): number
-        {
+        /**
+         * 读取 UInt16值
+         * @returns UInt16值
+         */
+        readUInt16(): number {
             var num = this._data.getUint16(this._seek, true);
             this._seek += 2;
             //LogManager.Warn("readUInt16 " + this._seek);
             return num;
         }
-        readInt32(): number
-        {
+        /**
+         * 读取 Int32值
+         * @returns Int32值
+         */
+        readInt32(): number {
             var num = this._data.getInt32(this._seek, true);
             this._seek += 4;
             return num;
         }
-        readUInt32(): number
-        {
+        /**
+         * 读取 UInt32值
+         * @returns UInt32值
+         */
+        readUInt32(): number {
             var num = this._data.getUint32(this._seek, true);
             this._seek += 4;
             return num;
         }
-        readUint8Array(target: Uint8Array = null, offset: number = 0, length: number = -1): Uint8Array
-        {
+        /**
+         * 从 Uint8Array 读取 部分Uint8Array
+         * @param target  Uint8Array
+         * @param length  数据长度
+         * @returns Uint8Array
+         */
+        readUint8Array(target: Uint8Array = null, offset: number = 0, length: number = -1): Uint8Array {
             if (length < 0) length = target.length;
-            for (var i = 0; i < length; i++)
-            {
+            for (var i = 0; i < length; i++) {
                 target[i] = this._data.getUint8(this._seek);
                 this._seek++;
             }
             return target;
         }
 
-        readUint8ArrayByOffset(target: Uint8Array, offset: number, length: number = 0): Uint8Array
-        {
+        /**
+         * 从 Uint8Array 读取 部分Uint8Array
+         * @param target  Uint8Array
+         * @param offset  偏移位置
+         * @param length  数据长度
+         * @returns Uint8Array
+         */
+        readUint8ArrayByOffset(target: Uint8Array, offset: number, length: number = 0): Uint8Array {
             if (length < 0) length = target.length;
-            for (var i = 0; i < length; i++)
-            {
+            for (var i = 0; i < length; i++) {
                 target[i] = this._data.getUint8(offset);
                 offset++;
             }
             return target;
         }
 
-
-        public set position(value: number)
-        {
+        public set position(value: number) {
             this.seek(value);
         }
-        public get position(): number
-        {
+        public get position(): number {
             return this.peek();
         }
-
-        readBoolean(): boolean
-        {
+        /**
+         * 读取 Boolean值
+         * @returns Boolean值
+         */
+        readBoolean(): boolean {
             return this.readUInt8() > 0;
         }
-        readByte(): number
-        {
+        /**
+         * 读取 Byte值
+         * @returns Byte值
+         */
+        readByte(): number {
             return this.readUInt8();
         }
-
-        readBytes(target: Uint8Array = null, offset: number = 0, length: number = -1): Uint8Array
-        {
+        /**
+         * 读取 Byte数组
+         * @param target  Uint8Array
+         * @param offset  偏移位置
+         * @param length  偏移长度
+         * @returns Byte数组
+         */
+        readBytes(target: Uint8Array = null, offset: number = 0, length: number = -1): Uint8Array {
             return this.readUint8Array(target, offset, length);
         }
-
-        readBytesRef(length: number = 0): Uint8Array
-        {
+        /**
+         * 读取 Uint8Array 引用
+         * @param length  长度
+         * @returns Uint8Array
+         */
+        readBytesRef(length: number = 0): Uint8Array {
             let bytes = new Uint8Array(this._data.buffer.slice(this._seek, this._seek + length));
             this._seek += length;
             return bytes;
         }
 
-        readUnsignedShort(): number
-        {
+        /**
+         * 读取 UnsignedShort值
+         * @returns UnsignedShort值
+         */
+        readUnsignedShort(): number {
             return this.readUInt16();
         }
 
-        readUnsignedInt(): number
-        {
+        /**
+         * 读取 UnsignedInt值
+         * @returns UnsignedInt值
+         */
+        readUnsignedInt(): number {
             return this.readUInt32();
         }
 
-        readFloat(): number
-        {
+        /**
+         * 读取 Float值
+         * @returns Float值
+         */
+        readFloat(): number {
             return this.readSingle();
         }
 
-        readUTFBytes(length: number): string
-        {
+        /**
+         * 读取 UTFBytes值
+         * @param length 长度
+         * @returns 字符串
+         */
+        readUTFBytes(length: number): string {
             var arry = new Uint8Array(length);
             return binReader.utf8ArrayToString(this.readUint8Array(arry));
         }
 
-        /// <summary>
-        /// 有符号 Byte
-        /// </summary>
-        readSymbolByte(): number
-        {
+        /**
+         * 读取 有符号 Byte
+         * @returns Byte值
+         */
+        readSymbolByte(): number {
             return this.readInt8();
         }
 
-        readShort(): number
-        {
+        /**
+         * 读取 Short值
+         * @returns Short值
+         */
+        readShort(): number {
             return this.readInt16();
         }
 
-        readInt(): number
-        {
+        /**
+         * 读取 Int值
+         * @returns Int值
+         */
+        readInt(): number {
             return this.readInt32();
         }
     }
-    export class binWriter
-    {
+    export class binWriter {
         _buf: Uint8Array;
         private _data: DataView;
         private _length: number;
         private _seek: number;
-
-        constructor()
-        {
+        /**
+         * 二进制写
+         */
+        constructor() {
             //if (buf == null)
             {
                 var buf = new ArrayBuffer(1024);
@@ -287,18 +358,18 @@ namespace m4m.io
             this._data = new DataView(this._buf.buffer);
             this._seek = 0;
         }
-        private sureData(addlen: number): void
-        {
+        /**
+         * 确定数据
+         * @param addlen 数据长度
+         */
+        private sureData(addlen: number): void {
             var nextlen = this._buf.byteLength;
-            while (nextlen < (this._length + addlen))
-            {
+            while (nextlen < (this._length + addlen)) {
                 nextlen += 1024;
             }
-            if (nextlen != this._buf.byteLength)
-            {
+            if (nextlen != this._buf.byteLength) {
                 var newbuf = new Uint8Array(nextlen);
-                for (var i = 0; i < this._length; i++)
-                {
+                for (var i = 0; i < this._length; i++) {
                     newbuf[i] = this._buf[i];
                 }
                 this._buf = newbuf;
@@ -306,193 +377,242 @@ namespace m4m.io
             }
             this._length += addlen;
         }
-        getLength(): number
-        {
+
+        /** 获取长度 */
+        getLength(): number {
             return length;
         }
-        getBuffer(): ArrayBuffer
-        {
+        /** 获取Buffer */
+        getBuffer(): ArrayBuffer {
             return this._buf.buffer.slice(0, this._length);
         }
-        seek(seek: number)
-        {
+        /**
+         * seek值
+         * @param seek seek值
+         */
+        seek(seek: number) {
             this._seek = seek;
         }
-        peek(): number
-        {
+        /** 查看  seek值*/
+        peek(): number {
             return this._seek;
         }
-        writeInt8(num: number): void
-        {
+        /**
+         * 写入 Int8值
+         * @param num Int8值
+         */
+        writeInt8(num: number): void {
             this.sureData(1);
             this._data.setInt8(this._seek, num);
             this._seek++;
 
         }
-        writeUInt8(num: number): void
-        {
+        /**
+         * 写入 UInt8值
+         * @param num UInt8值
+         */
+        writeUInt8(num: number): void {
             this.sureData(1);
             this._data.setUint8(this._seek, num);
             this._seek++;
         }
-        writeInt16(num: number): void
-        {
+        /**
+         * 写入 Int16值
+         * @param num Int16值
+         */
+        writeInt16(num: number): void {
             this.sureData(2);
             this._data.setInt16(this._seek, num, true);
             this._seek += 2;
         }
-        writeUInt16(num: number): void
-        {
+        /**
+         * 写入 UInt16值
+         * @param num UInt16值
+         */
+        writeUInt16(num: number): void {
             this.sureData(2);
             this._data.setUint16(this._seek, num, true);
             this._seek += 2;
         }
-        writeInt32(num: number): void
-        {
+        /**
+         * 写入 Int32值
+         * @param num Int32值
+         */
+        writeInt32(num: number): void {
             this.sureData(4);
             this._data.setInt32(this._seek, num, true);
             this._seek += 4;
         }
-        writeUInt32(num: number): void
-        {
+        /**
+         * 写入 UInt32值
+         * @param num UInt32值
+         */
+        writeUInt32(num: number): void {
             this.sureData(4);
             this._data.setUint32(this._seek, num, true);
             this._seek += 4;
         }
-        writeSingle(num: number): void
-        {
+        /**
+         * 写入 Single值
+         * @param num Single值
+         */
+        writeSingle(num: number): void {
             this.sureData(4);
             this._data.setFloat32(this._seek, num, true);
             this._seek += 4;
         }
-        writeDouble(num: number): void
-        {
+        /**
+         * 写入 Double值
+         * @param num Double值
+         */
+        writeDouble(num: number): void {
             this.sureData(8);
             this._data.setFloat64(this._seek, num, true);
             this._seek += 8;
         }
-        writeStringAnsi(str: string): void
-        {
+        /**
+         * 写入 Ansi字符串
+         * @param str Ansi字符串
+         */
+        writeStringAnsi(str: string): void {
             var slen = str.length;
             this.sureData(slen + 1);
             this._data.setUint8(this._seek, slen);
             this._seek++;
-            for (var i = 0; i < slen; i++)
-            {
+            for (var i = 0; i < slen; i++) {
                 this._data.setUint8(this._seek, str.charCodeAt(i));
                 this._seek++;
             }
         }
-        writeStringUtf8(str: string)
-        {
+        /**
+         * 写入 utf8字符串
+         * @param str utf8字符串
+         */
+        writeStringUtf8(str: string) {
             var bstr = binWriter.stringToUtf8Array(str);
             this.writeUInt8(bstr.length);
             this.writeUint8Array(bstr);
         }
-        static stringToUtf8Array(str: string): number[]
-        {
+        static stringToUtf8Array(str: string): number[] {
             var bstr: number[] = [];
-            for (var i = 0; i < str.length; i++)
-            {
+            for (var i = 0; i < str.length; i++) {
                 var c = str.charAt(i);
                 var cc = c.charCodeAt(0);
-                if (cc > 0xFFFF)
-                {
+                if (cc > 0xFFFF) {
                     throw new Error("InvalidCharacterError");
                 }
-                if (cc > 0x80)
-                {
-                    if (cc < 0x07FF)
-                    {
+                if (cc > 0x80) {
+                    if (cc < 0x07FF) {
                         var c1 = (cc >>> 6) | 0xC0;
                         var c2 = (cc & 0x3F) | 0x80;
                         bstr.push(c1, c2);
                     }
-                    else
-                    {
+                    else {
                         var c1 = (cc >>> 12) | 0xE0;
                         var c2 = ((cc >>> 6) & 0x3F) | 0x80;
                         var c3 = (cc & 0x3F) | 0x80;
                         bstr.push(c1, c2, c3);
                     }
                 }
-                else
-                {
+                else {
                     bstr.push(cc);
                 }
             }
             return bstr;
         }
-        writeStringUtf8DataOnly(str: string)
-        {
+        /**
+         * 写入 字符串仅utf8数据
+         * @param str utf8字符串
+         */
+        writeStringUtf8DataOnly(str: string) {
             var bstr = binWriter.stringToUtf8Array(str);
             this.writeUint8Array(bstr);
         }
-        writeUint8Array(array: Uint8Array | number[], offset: number = 0, length: number = -1)
-        {
+        /**
+         * 写入 Uint8Array数据
+         * @param array Uint8Array数据
+         * @param offset 偏移位置
+         * @param length 数据长度
+         */
+        writeUint8Array(array: Uint8Array | number[], offset: number = 0, length: number = -1) {
             if (length < 0) length = array.length;
             this.sureData(length);
-            for (var i = offset; i < offset + length; i++)
-            {
+            for (var i = offset; i < offset + length; i++) {
                 this._data.setUint8(this._seek, array[i]);
                 this._seek++;
             }
         }
 
-
-
-
-        public get length(): number
-        {
+        public get length(): number {
             return this._seek;
         }
 
-        writeByte(num: number): void
-        {
+        /**
+         * 写入 byte值
+         * @param num byte值
+         */
+        writeByte(num: number): void {
             this.writeUInt8(num);
         }
 
-        writeBytes(array: Uint8Array | number[], offset: number = 0, length: number = 0)
-        {
+        /**
+         * 写入 Byte数组
+         * @param array Byte数组
+         * @param offset 数据偏移
+         * @param length 数据长度
+         */
+        writeBytes(array: Uint8Array | number[], offset: number = 0, length: number = 0) {
             this.writeUint8Array(array, offset, length);
         }
-
-        writeUnsignedShort(num: number): void
-        {
+        /**
+        * 写入 UnsignedShort值
+        * @param num UnsignedShort值
+        */
+        writeUnsignedShort(num: number): void {
             this.writeUInt16(num);
         }
-
-        writeUnsignedInt(num: number): void
-        {
+        /**
+        * 写入 UnsignedInt值
+        * @param num UnsignedInt值
+        */
+        writeUnsignedInt(num: number): void {
             this.writeUInt32(num);
         }
-
-        writeFloat(num: number): void
-        {
+        /**
+         * 写入 Float值
+         * @param num Float值
+         */
+        writeFloat(num: number): void {
             this.writeSingle(num);
         }
-
-        writeUTFBytes(str: string): void
-        {
+        /**
+         * 写入 UTF字符串数据
+         * @param str UTF字符串数据
+         */
+        writeUTFBytes(str: string): void {
             var strArray = binWriter.stringToUtf8Array(str);
             this.writeUint8Array(strArray);
         }
 
-        /// <summary>
-        /// 写入有符号 Byte
-        /// </summary>
-        writeSymbolByte(num: number): void
-        {
+        /**
+        * 写入 有符号 Byte
+        * @param num 有符号 Byte
+        */
+        writeSymbolByte(num: number): void {
             this.writeInt8(num);
         }
-
-        writeShort(num: number): void
-        {
+        /**
+         * 写入 Short值
+         * @param num Short值
+         */
+        writeShort(num: number): void {
             this.writeInt16(num);
         }
-
-        writeInt(num: number): void
-        {
+        /**
+         * 写入 Int值
+         * @param num Int值
+         */
+        writeInt(num: number): void {
             this.writeInt32(num);
         }
     }

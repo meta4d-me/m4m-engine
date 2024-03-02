@@ -18,12 +18,23 @@ limitations under the License.
     export class Navigate {
         public navindexmap: { [id: number]: number };
         public navinfo: navMeshInfo
-
+        /**
+         * 导航器
+         * @param navinfo  导航信息
+         * @param navindexmap 导航索引字典
+         */
         constructor(navinfo: m4m.framework.navMeshInfo, navindexmap: any) {
             this.navinfo = navinfo;
             this.navindexmap = navindexmap;
         }
-
+        /**
+         * 通过指定 开始和结束位置 获取所有的路径点
+         * @param start 开始位置
+         * @param end 结束位置
+         * @param startIndex 开始的三角形面索引 
+         * @param endIndex 结束的三角形面索引
+         * @returns 所有的路径点
+         */
         public pathPoints(start: m4m.math.vector3, end: m4m.math.vector3, startIndex: number, endIndex: number): Array<m4m.math.vector3> {
 
             var startVec = new navVec3();
@@ -51,6 +62,7 @@ limitations under the License.
                 return null;
             }
         }
+        /** 销毁清理 */
         public dispose() {
 
             this.navinfo = null;

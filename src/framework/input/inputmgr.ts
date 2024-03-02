@@ -58,6 +58,10 @@ namespace m4m.framework {
 
         private rMtr_90 = new m4m.math.matrix3x2();
         private rMtr_n90 = new m4m.math.matrix3x2();
+        /**
+         * 输入管理器
+         * @param app 引擎app 
+         */
         constructor(app: application) {
             this.app = app;
             m4m.math.matrix3x2MakeRotate(Math.PI * 90 / 180, this.rMtr_90);
@@ -81,6 +85,10 @@ namespace m4m.framework {
             this.disableContextMenu();
         }
 
+        /**
+         * 附加到html元素
+         * @param element html元素
+         */
         private attach(element: HTMLElement) {
             if (this._element) {
                 this.detach();
@@ -92,6 +100,9 @@ namespace m4m.framework {
             });
         }
 
+        /**
+         * 解除所有 附加绑定
+         */
         private detach() {
             if (!this._element) return;
             this.handlers.forEach(handler => {
@@ -101,7 +112,10 @@ namespace m4m.framework {
             this._element = null;
         }
 
-        //mouse
+        /**
+         * 当鼠标点下
+         * @param ev 鼠标事件
+         */
         private _mousedown(ev: MouseEvent) {
 
             this.CalcuPoint(ev.offsetX, ev.offsetY, this._point);
@@ -110,6 +124,10 @@ namespace m4m.framework {
 
             this.HtmlNativeEventer.Emit("mousedown", ev);
         }
+        /**
+         * 当鼠标点弹起
+         * @param ev 鼠标事件
+         */
         private _mouseup(ev: MouseEvent) {
 
             this._buttons[ev.button] = false;
@@ -117,12 +135,20 @@ namespace m4m.framework {
 
             this.HtmlNativeEventer.Emit("mouseup", ev);
         }
+        /**
+         * 当鼠标移动
+         * @param ev 鼠标事件
+         */
         private _mousemove(ev: MouseEvent) {
 
             this.CalcuPoint(ev.offsetX, ev.offsetY, this._point);
 
             this.HtmlNativeEventer.Emit("mousemove", ev);
         }
+        /**
+         * 当鼠标滚轮滚动
+         * @param ev 鼠标事件
+         */
         private _mousewheel(ev: WheelEvent) {
 
             this.hasWheel = true;
@@ -141,6 +167,10 @@ namespace m4m.framework {
         }
 
         //touch
+        /**
+         * 尝试添加 触摸点
+         * @param id 触摸ID
+         */
         private tryAddTouchP(id: number) {
             if (!this._touches[id]) {
                 this._touches[id] = new pointinfo();
@@ -148,6 +178,9 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 通过所有的触摸状态 同步点
+         */
         private syncPointByTouches() {
             let count = 0;
             let xs = 0;
@@ -166,6 +199,10 @@ namespace m4m.framework {
             this._point.y = ys / count;
         }
 
+        /**
+         * 触摸开始
+         * @param ev    触摸事件
+         */
         private _touchstart(ev: TouchEvent) {
             ev.preventDefault();
 
@@ -173,12 +210,13 @@ namespace m4m.framework {
             this._point.touch = true;
             this._point.multiTouch = true;
             let lastTouche: pointinfo;
+            const rect = (this.app.webgl.canvas as any).getBoundingClientRect();
             for (var i = 0; i < ev.changedTouches.length; i++) {
                 var touch = ev.changedTouches[i];
                 var id = touch.identifier;
                 this.tryAddTouchP(id);
                 this._touches[id].touch = true;
-                this.CalcuPoint(touch.clientX, touch.clientY, this._touches[id]);
+                this.CalcuPoint(touch.clientX - rect.left, touch.clientY - rect.top, this._touches[id]);
 
                 // this._touches[id].x = touch.clientX;
                 // this._touches[id].y = touch.clientY;
@@ -196,18 +234,24 @@ namespace m4m.framework {
 
             this.HtmlNativeEventer.Emit("touchstart", ev);
         }
+
+        /**
+         * 触摸移动
+         * @param ev 触摸事件
+         */
         private _touchmove(ev: TouchEvent) {
             ev.preventDefault();    //避免 在触摸设备中，下拉 触发浏览器刷新监听。
 
             this._point.touch = true;
             this._point.multiTouch = true;
             let lastTouche: pointinfo;
+            const rect = (this.app.webgl.canvas as any).getBoundingClientRect();
             for (var i = 0; i < ev.changedTouches.length; i++) {
                 var touch = ev.changedTouches[i];
                 var id = touch.identifier;
                 this.tryAddTouchP(id);
                 this._touches[id].touch = true;
-                this.CalcuPoint(touch.clientX, touch.clientY, this._touches[id]);
+                this.CalcuPoint(touch.clientX - rect.left, touch.clientY - rect.top, this._touches[id]);
                 // this._touches[id].x = touch.clientX;
                 // this._touches[id].y = touch.clientY;
 
@@ -223,6 +267,10 @@ namespace m4m.framework {
 
             this.HtmlNativeEventer.Emit("touchmove", ev);
         }
+        /**
+         * 触摸结束
+         * @param ev 触摸事件
+         */
         private _touchend(ev: TouchEvent) {
             ev.preventDefault();
 
@@ -243,39 +291,55 @@ namespace m4m.framework {
 
             this.HtmlNativeEventer.Emit("touchend", ev);
         }
+        /**
+         * 触摸取消
+         * @param ev 触摸事件
+         */
         private _touchcancel(ev: TouchEvent) {
             ev.preventDefault();
-            
+
             this._touchend(ev);
 
             this.HtmlNativeEventer.Emit("touchcancel", ev);
         }
 
         //key
+        /**
+         * 键盘按下
+         * @param ev 键盘事件
+         */
         private _keydown(ev: KeyboardEvent) {
-            
+
             this.keyboardMap[ev.keyCode] = true;
             this.keyDownCode = ev.keyCode;
 
             this.HtmlNativeEventer.Emit("keydown", ev);
         }
+        /**
+         * 键盘弹起
+         * @param ev 键盘事件
+         */
         private _keyup(ev: KeyboardEvent) {
-            
+
             delete this.keyboardMap[ev.keyCode];
             this.keyUpCode = ev.keyCode;
 
             this.HtmlNativeEventer.Emit("keyup", ev);
         }
         //
+        /**
+         * 事件失焦
+         * @param ev 事件对象
+         */
         private _blur(ev) {
-            
+
             this._point.touch = false;
             //清理 keys 状态
             let _map = this.keyboardMap;
             for (let key in _map) {
                 _map[key] = false;
             }
-            
+
             this.HtmlNativeEventer.Emit("blur", ev);
         }
 
@@ -287,6 +351,10 @@ namespace m4m.framework {
         private hasPointMove = false;
         private downPoint = new m4m.math.vector2();
         private lastPoint = new m4m.math.vector2();
+        /**
+         * 执行更新
+         * @param delta dtime
+         */
         update(delta) {
             this._lastbuttons[0] = this._buttons[0];
             this._lastbuttons[1] = this._buttons[1];
@@ -343,6 +411,9 @@ namespace m4m.framework {
 
         private keyDownCode: number = -1;
         private keyUpCode: number = -1;
+        /**
+         * 按键码检查
+         */
         private keyCodeCk() {
             if (this.keyDownCode != -1)
                 this.eventer.EmitEnum_key(event.KeyEventEnum.KeyDown, this.keyDownCode);
@@ -354,6 +425,9 @@ namespace m4m.framework {
 
         private hasWheel = false;
         private lastWheel = 0;
+        /**
+         * 鼠标滚动检查
+         */
         private mouseWheelCk() {
             if (this.hasWheel) {
                 this._wheel = this.lastWheel;
@@ -380,6 +454,10 @@ namespace m4m.framework {
             return (this._buttons[button] && !this._lastbuttons[button]);
         }
 
+        /**
+         * 上下文枚举
+         * @param ev 
+         */
         private _contextMenu = (ev) => { ev.preventDefault() };
         /**
          * 禁用右键菜单
@@ -529,14 +607,14 @@ namespace m4m.framework {
         private devicePixelRatio = window.devicePixelRatio || 1;
         /**
          * 计算校准html 输入坐标点
-         * @param clientX 输入x
-         * @param clientY 输入y
+         * @param offsetX 输入x
+         * @param offsetY 输入y
          * @param out 返回pointinfo 
          */
-        CalcuPoint(clientX: number, clientY: number, out: pointinfo) {
-            if (!out || !this.app || isNaN(clientX) || isNaN(clientY)) return;
-            this.tempV2_0.x = clientX * this.devicePixelRatio / this.app.scaleFromPandding;
-            this.tempV2_0.y = clientY * this.devicePixelRatio / this.app.scaleFromPandding;
+        CalcuPoint(offsetX: number, offsetY: number, out: pointinfo) {
+            if (!out || !this.app || isNaN(offsetX) || isNaN(offsetY)) return;
+            this.tempV2_0.x = offsetX * this.devicePixelRatio / this.app.scaleFromPandding;
+            this.tempV2_0.y = offsetY * this.devicePixelRatio / this.app.scaleFromPandding;
             m4m.math.vec2Clone(this.tempV2_0, this.tempV2_1);
 
             if (this.app.shouldRotate) {

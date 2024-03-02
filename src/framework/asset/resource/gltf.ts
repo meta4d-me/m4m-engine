@@ -26,7 +26,14 @@ namespace m4m.framework {
      */
     @m4m.reflect.SerializeType
     export class gltf implements IAsset {
-        static readonly ClassName: string = "json";
+        static readonly ClassName: string = "gltf";
+        /** 必要依赖 已支持 记录字典容器 */
+        static readonly requiredSupportedMap: { [key: string]: boolean } = {
+            "KHR_texture_transform": true,
+            "gd_realtime_lights": true,
+            "gd_linfo": true,
+            "gd_linfo_scene": true,
+        };
 
         @m4m.reflect.Field("constText")
         private name: constText;
@@ -39,7 +46,12 @@ namespace m4m.framework {
          * @version m4m 1.0
          */
         defaultAsset: boolean = false;
-        constructor(assetName: string = null, public data) {
+        /**
+         * gltf 资源
+         * @param assetName 资源名 
+         * @param data 数据
+         */
+        constructor(assetName: string = null, public data: any) {
             if (!assetName) {
                 assetName = "json_" + this.getGUID();
             }
@@ -129,6 +141,22 @@ namespace m4m.framework {
             this._realName = name;
         }
 
+
+        static dumpmem(): void {
+            var meminfo = window.performance["memory"];
+            var memsize = meminfo.usedJSHeapSize / 1024 / 1024 | 0;
+
+            console.log("====gltf mem= " + memsize + " MB");
+
+            //if (memsize > 2048)
+            //throw "use too mush memory";
+        }
+
+        /**
+         * 颜色编码 hex 转RGB
+         * @param hex hex Color 
+         * @returns RGB color
+         */
         hexToRgb = hex =>
             hex?.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i
                 , (m, r, g, b) => '#' + r + r + g + g + b + b)
@@ -136,11 +164,30 @@ namespace m4m.framework {
                 .map(x => parseInt(x, 16) / 255);
 
         buffers: bin[];
-        async load(mgr: assetMgr, ctx: WebGLRenderingContext, folder: string, brdf: texture, env: texture, irrSH: texture, exposure?, specFactor = 1, irrFactor = 1, uvChecker?: texture) {
+        
+        /**
+         * 异步加载 glft资源
+         * @param mgr 资源管理器
+         * @param ctx webgl 上下文对象
+         * @param folder 文件目录路径
+         * @param brdf brdf 纹理
+         * @param env 间接光环境纹理（高频信息）
+         * @param irrSH 间接光环境纹理（低频信息）
+         * @param exposure HDR曝光度
+         * @param specFactor 镜面反射系数
+         * @param irrFactor 漫反射系数
+         * @param uvChecker 基础纹理
+         * @returns 引擎场景节点对象（异步） 
+         */
+        async load(mgr: assetMgr, ctx: WebGL2RenderingContext, folder: string, brdf: texture, env: texture, irrSH: texture, exposure?, specFactor = 1, irrFactor = 1, uvChecker?: texture) {
             if (!this.data) {
                 console.error(`load fail , data is Null.`);
                 return;
             }
+
+            console.log("====gltf begin log==");
+            gltf.dumpmem();
+
             const load = (uri) => new Promise((res) => {
                 mgr.load(folder + uri, AssetTypeEnum.Auto, () => {
                     res(mgr.getAssetByName(uri.split('/').pop()));
@@ -149,19 +196,90 @@ namespace m4m.framework {
             const defaltScene = this.data.scene ?? 0;
             const extensionsUsed = this.data.extensionsUsed as string[] ?? [];
             const hasKHR_texture_transform = extensionsUsed.indexOf("KHR_texture_transform") != -1;
+            //检查 extensionsRequired
+            const extensionsRequired: string[] = this.data.extensionsRequired ?? [];
+            for (let i = 0, len = extensionsRequired.length; i < len; i++) {
+                let key = extensionsRequired[i];
+                if (!gltf.requiredSupportedMap[key]) {
+                    console.warn(`extensionsRequired of "${key}" not suppered!`);
+                }
+            }
 
-            const loadImg = (url) => new Promise((res) => {
+            const loadImg = (url) => new Promise<HTMLImageElement>((res) => {
                 m4m.io.loadImg(folder + url, (img, err) => {
                     if (!err) res(img);
                 });
             });
+
+            const getImgByBin = (view, mimeType: string) => {
+                const bufferView = new Uint8Array(view.rawBuffer, view.byteOffset ?? 0, view.byteLength);
+                const blob = new Blob([bufferView], {
+                    type: mimeType
+                });
+                let sourceURI = URL.createObjectURL(blob);
+
+                return new Promise<HTMLImageElement>((res) => {
+                    m4m.io.loadImg(sourceURI, (img, err) => {
+                        if (!err) res(img);
+                    });
+                });
+            }
+            console.log("====gltf begin buffers==");
+            gltf.dumpmem();
+
+
             const samplers = this.data.samplers ?? [];
-            this.buffers = await Promise.all(this.data?.buffers?.map(({ uri }) => load(uri)) ?? []);
-            const images: HTMLImageElement[] = await Promise.all(this.data?.images?.map(({ uri }) => loadImg(uri)) ?? []);
+            //buffers
+            let currBufLen = 0;
+            let glbBin = this.buffers ? this.buffers[0] : null;
+            let bufCount = 0;
+            this.buffers = await Promise.all(this.data.buffers?.map(({ byteLength, uri }) => {
+                if (uri) { return load(uri); }
+                else if (glbBin) {
+                    const buf = glbBin.data.slice(currBufLen, currBufLen + byteLength);
+                    currBufLen += byteLength;
+                    const _bin = new bin(`${glbBin.getName()}_${bufCount}`, buf);
+                    bufCount++;
+                    return _bin;
+                }
+            }) ?? []);
+
+
+            console.log("====gltf begin accessor==");
+            gltf.dumpmem();
+
+            //bufferView
+            const views = this.data.bufferViews?.map(({ buffer = 0, byteOffset = 0, byteLength = 0, byteStride = 0 }) => {
+                // return {byteStride ,dv: new DataView(this.buffers[buffer].data, byteOffset, byteLength)};
+                return { byteOffset, byteLength, byteStride, rawBuffer: this.buffers[buffer].data };
+            });
+            //accessors
+            const accessors = this.data?.accessors?.map(acc => {
+                return {
+                    ...acc,
+                    bufferView: views[acc.bufferView],
+                }
+            });
+            console.log("====gltf begin loadimage==");
+            gltf.dumpmem();
+            //images
+            const images: HTMLImageElement[] = await Promise.all(this.data?.images?.map(({ uri, mimeType, bufferView }) => {
+                if (uri) { return loadImg(uri); }
+                else {
+                    const view = views[bufferView];
+                    return getImgByBin(view, mimeType);
+                }
+            }) ?? []);
+            console.log("====gltf begin loadtexture==");
+            gltf.dumpmem();
             const textures: texture[] = await Promise.all(this.data.textures?.map(({ sampler, source }) => {
                 const img = images[source];
                 const tex = new m4m.framework.texture(img.src);
-                const glt = new m4m.render.glTexture2D(ctx, m4m.render.TextureFormatEnum.RGB);
+                let format = m4m.render.TextureFormatEnum.RGBA;
+                if (img.src.length > 4 && img.src.substr(img.src.length - 4) == ".jpg") {
+                    format = m4m.render.TextureFormatEnum.RGB;
+                }
+                const glt = new m4m.render.glTexture2D(ctx, format);
                 const samp = {
                     minFilter: ctx.NEAREST,
                     magFilter: ctx.LINEAR,
@@ -184,7 +302,8 @@ namespace m4m.framework {
                 tex.use();
                 return tex;
             }) ?? []);
-
+            console.log("====gltf begin load lightmap==");
+            gltf.dumpmem();
             //lightMap 处理
             let sceneExtensions = this.data.scenes[defaltScene].extensions;
             let gd_linfo_scene: { mode: string, maps: string[] };
@@ -195,16 +314,52 @@ namespace m4m.framework {
             if (hasLightMap) {
                 //加载lightmap 纹理
                 let maps = gd_linfo_scene.maps;
-                lightMapTexs = await Promise.all(maps.map((path) => { return load(path) as Promise<texture>; }));
+                lightMapTexs = await Promise.all(maps.map((path) => {
+                    const bufferViewIdx = Number.parseInt(path);
+                    if (isNaN(bufferViewIdx)) {
+                        return load(path) as Promise<texture>;
+                    } else {
+                        const view = views[bufferViewIdx];
+                        const bOffset = view.byteOffset ?? 0;
+                        const buffer = (view.rawBuffer as ArrayBuffer).slice(bOffset, bOffset + view.byteLength);
+                        // const bufferView = new Uint8Array(view.rawBuffer, view.byteOffset ?? 0, view.byteLength);
+                        let _texture = new texture(`Lightmap-${bufferViewIdx}_comp_light.raw`);
+                        _texture.glTexture = RAWParse.parse(ctx, buffer);
+                        return _texture;
+                    }
+                }));
             }
-
+            console.log("====gltf begin load material==");
+            gltf.dumpmem();
             const extrasCfg = this.data.extras?.clayViewerConfig?.materials as any[];
             const materials: material[] = this.data.materials?.map(m => {
                 const mat = new material(m.name);
                 let matCfg;
                 let cfgs = extrasCfg?.filter(e => e.name === m.name);
                 if (cfgs?.length > 0) matCfg = cfgs[0];
-                mat.setShader(mgr.getShader("pbr.shader.json"));
+                let pbrSH: shader;
+                let alphaMode = m.alphaMode ?? "OPAQUE";
+                let alphaCutoff = m.alphaCutoff ?? 0.5;
+                let doubleSided = m.doubleSided ?? false;
+                let shaderRes = "pbr";
+                switch (alphaMode) {
+                    case "OPAQUE": alphaCutoff = 0; break;
+                    case "MASK": break;
+                    case "BLEND": shaderRes += `_blend`; break;
+                }
+
+                if (doubleSided) {
+                    shaderRes += `_2sided`;
+                }
+                // //-------test
+                // shaderRes = `shader/def`;
+                // //----------
+
+                shaderRes += `.shader.json`;
+                pbrSH = mgr.getShader(shaderRes);
+                mat.setShader(pbrSH);
+                mat.setFloat("alphaCutoff", alphaCutoff);
+
                 if (brdf) {
                     mat.setTexture('brdf', brdf);
                 }
@@ -236,9 +391,17 @@ namespace m4m.framework {
                     _bColor[1] = _clayViewerColor[1];
                     _bColor[2] = _clayViewerColor[2];
                 }
+                let _eColor = m.emissiveFactor ?? [0, 0, 0];
+                // //test--------
+                // _eColor[0] = 3;
+                // _eColor[1] = 0;
+                // _eColor[2] = 0;
+                // //------------
+                //
                 mat.setVector4('CustomBasecolor', new math.vector4(_bColor[0], _bColor[1], _bColor[2], _bColor[3]));
                 mat.setFloat('CustomMetallic', matCfg?.metalness ?? m.pbrMetallicRoughness?.metallicFactor ?? 1);
                 mat.setFloat('CustomRoughness', matCfg?.roughness ?? m.pbrMetallicRoughness?.roughnessFactor ?? 1);
+                mat.setVector4('CustomEmissiveColor', new math.vector4(_eColor[0], _eColor[1], _eColor[2], 1));
                 // console.log(matCfg.name);
                 // console.table({...m.pbrMetallicRoughness});
                 // console.table(matCfg);
@@ -269,22 +432,26 @@ namespace m4m.framework {
                     mat.setTexture("uv_AO", textures[m.occlusionTexture.index]);
                 }
 
+                if (m.emissiveTexture) {
+                    mat.setTexture("uv_Emissive", textures[m.emissiveTexture.index]);
+                }
+
                 //tex transfrom
-                let tex_ST = new math.vector4(1 , 1 , 0, 0);
+                let tex_ST = new math.vector4(1, 1, 0, 0);
                 // clay-viewer 的配置优先
                 let cViewScale = matCfg?.uvRepeat[0] ?? 1;
-                if(cViewScale != 1){
+                if (cViewScale != 1) {
                     tex_ST.x = cViewScale;
                     tex_ST.y = cViewScale;
-                }else{
-                    if(extenKHR_tex_t){
-                        if(extenKHR_tex_t.scale){
-                            tex_ST.x *= extenKHR_tex_t.scale[0] ?? 1; 
-                            tex_ST.y *= extenKHR_tex_t.scale[1] ?? 1; 
+                } else {
+                    if (extenKHR_tex_t) {
+                        if (extenKHR_tex_t.scale) {
+                            tex_ST.x *= extenKHR_tex_t.scale[0] ?? 1;
+                            tex_ST.y *= extenKHR_tex_t.scale[1] ?? 1;
                         }
-                        if(extenKHR_tex_t.offset){
-                            tex_ST.z = extenKHR_tex_t.offset[0] ?? 0; 
-                            tex_ST.w = extenKHR_tex_t.offset[1] ?? 0; 
+                        if (extenKHR_tex_t.offset) {
+                            tex_ST.z = extenKHR_tex_t.offset[0] ?? 0;
+                            tex_ST.w = extenKHR_tex_t.offset[1] ?? 0;
                         }
                     }
                 }
@@ -293,151 +460,79 @@ namespace m4m.framework {
 
                 return mat;
             });
-            const views = this.data.bufferViews?.map(({ buffer = 0, byteOffset = 0, byteLength = 0, byteStride = 0 }) => {
-                // return {byteStride ,dv: new DataView(this.buffers[buffer].data, byteOffset, byteLength)};
-                return { byteOffset, byteLength, byteStride, rawBuffer: this.buffers[buffer].data };
-            });
-            const accessors = this.data?.accessors?.map(acc => {
-                return {
-                    ...acc,
-                    bufferView: views[acc.bufferView],
-                }
-            });
 
+            console.log("====gltf begin load mesh==");
+            gltf.dumpmem();
+
+            //问题1
+            //ebo count 远远小于vbo 且大量vbo长度相同，这说明有大量mesh公用一个vbo的情况
+            //如何识别
             const meshes = this.data.meshes?.map(({ name, primitives }) => {
-                return primitives.map(({ attributes, indices, material, extensions }) => {
-                    const mf = new mesh(folder + name);
-                    const mdata = mf.data = new m4m.render.meshData();
-                    const vert = mdata.pos = [];
-                    const uv1 = mdata.uv = [];
-                    const normal = mdata.normal = [];
-                    const tangent = mdata.tangent = [];
-                    // const colors = mdata.color = [];
-                    const attr: any = {};
-                    for (let k in attributes) {
-                        attr[k] = new Accessor(accessors[attributes[k]], k);
+                //二了呀，一个mesh的primitives基本上就是 同一个vbo
+                //结果未必，不一定是同一个，要检查
+
+                let samevbo = true;
+                for (var i = 1; i < primitives.length; i++) {
+                    if (primitives[i].attributes != primitives[0].attributes) {
+                        samevbo = false;
+                        break;
                     }
+                }
+                console.log("====same vbo?" + samevbo);
 
-                    const vcount = attr.POSITION.count;
-                    const bs =
-                        + (attr.POSITION?.size ?? 0)
-                        + (attr.NORMAL?.size ?? 0)
-                        // + (attr.COLOR?.size ?? 0)
-                        + (attr.TANGENT?.size ? 3 : 0) // 引擎里的Tangent是vec3，而不是vec4
-                        + (attr.TEXCOORD_0?.size ?? 0)
-                        + (attr.TEXCOORD_1?.size ?? 0);
-                    const vbo = new Float32Array(vcount * bs);
+                if (samevbo) {
+                    //这是为大型gltf优化的,有些大型gltf文件会公用vbo
+                    console.log("====gltf begin load one mesh " + name);
+                    gltf.dumpmem();
 
-                    mf.glMesh = new m4m.render.glMesh();
-                    let vf
-                    if (attr.POSITION?.size)
-                        vf |= m4m.render.VertexFormatMask.Position;
-                    if (attr.NORMAL?.size)
-                        vf |= m4m.render.VertexFormatMask.Normal;
-                    // | m4m.render.VertexFormatMask.Color
-                    if (attr.TANGENT?.size)
-                        vf |= m4m.render.VertexFormatMask.Tangent;
-                    if (attr.TEXCOORD_0?.size)
-                        vf |= m4m.render.VertexFormatMask.UV0;
-                    if (attr.TEXCOORD_1?.size)
-                        vf |= m4m.render.VertexFormatMask.UV1;
-                    // | m4m.render.VertexFormatMask.BlendIndex4
-                    // | m4m.render.VertexFormatMask.BlendWeight4;
-                    mf.glMesh.initBuffer(ctx, vf, vcount, m4m.render.MeshTypeEnum.Dynamic);
 
-                    const eboAcc = new Accessor(accessors[indices], "indices");
-                    const ebo = eboAcc.data;
-                    mdata.trisindex = Array.from(ebo);
+                    let mf = new mesh(folder + name);
+                    gltf.loadgltfvbo(ctx, mf, primitives[0], accessors);
+                    let info = new meshinfo();
+                    info.mesh = mf;
+                    info.lightMapTexST = [];
+                    info.outmats = [];
 
-                    for (let i = 0; i < vcount; i++) {
-                        let uvFliped0;
-                        if (attr.TEXCOORD_0?.size != null) {
-                            uvFliped0 = [...attr.TEXCOORD_0.data[i]];
-                            uvFliped0[1] = uvFliped0[1] * -1 + 1;
-                            uv1[i] = new m4m.math.vector2(...uvFliped0);
-                        }
+                    console.log("after uploadVertexData");
+                    gltf.dumpmem();
 
-                        let uvFliped1;
-                        if (attr.TEXCOORD_1?.size != null) {
-                            uvFliped1 = [...attr.TEXCOORD_1.data[i]];
-                            uvFliped1[1] = uvFliped1[1] * -1 + 1;
-                            uv1[i] = new m4m.math.vector2(...uvFliped1);
-                        }
 
-                        if (attr.POSITION?.size != null)
-                            vert[i] = new m4m.math.vector3(...attr.POSITION.data[i]);
 
-                        if (attr.NORMAL?.size != null)
-                            normal[i] = new m4m.math.vector3(...attr.NORMAL.data[i]);
+                    gltf.loadgltfebo_mix(ctx, mf, primitives, accessors, materials, hasLightMap, lightMapTexs, info);
 
-                        if (attr.TANGENT?.size != null)
-                            tangent[i] = new m4m.math.vector3(...attr.TANGENT.data[i]);
 
-                        const cur = vbo.subarray(i * bs); // offset
-                        let bit = 0;
-                        if (attr.POSITION?.size != null) {
-                            const position = cur.subarray(bit, bit += 3);
-                            position.set(attr.POSITION.data[i]);
-                        }
+                    console.log("====gltf end load mesh " + name);
+                    gltf.dumpmem();
 
-                        // const color = cur.subarray(3, 7);
-                        if (attr.NORMAL?.size != null) {
-                            const n = cur.subarray(bit, bit += 3);
-                            n.set(attr.NORMAL.data[i]);
-                        }
+                    return [info];
+                }
+                else {
+                    console.log("====gltf begin load one mesh " + name);
+                    gltf.dumpmem();
 
-                        if (attr.TANGENT?.size != null) {
-                            const tan = cur.subarray(bit, bit += 3);
-                            tan.set(attr.TANGENT.data[i].slice(0, 3));
-                        }
+                    let infos: meshinfo[] = [];
+                    for (var i = 0; i < primitives.length; i++) {
+                        let mf = new mesh(folder + name);
+                        gltf.loadgltfvbo(ctx, mf, primitives[i], accessors);
+                        let info = new meshinfo();
+                        info.mesh = mf;
+                        info.lightMapTexST = [];
+                        info.outmats = [];
 
-                        if (attr.TEXCOORD_0?.size != null) {
-                            const uv = cur.subarray(bit, bit += 2);
-                            uv.set(uvFliped0);
-                        }
 
-                        if (attr.TEXCOORD_1?.size != null) {
-                            const uv = cur.subarray(bit, bit += 2);
-                            uv.set(uvFliped1);
-                        }
+                        gltf.loadgltfebo_one(ctx, mf, primitives[i], accessors, materials, hasLightMap, lightMapTexs, info);
 
-                        // const tangent = cur.subarray(7, 9);
+                        infos.push(info);
 
-                        // colors[i] = new m4m.math.vector4();
                     }
-                    mf.glMesh.uploadVertexData(ctx, vbo);
-                    mf.glMesh.addIndex(ctx, ebo.length);
-                    mf.glMesh.uploadIndexData(ctx, 0, ebo, eboAcc.componentType);
-                    mf.submesh = [];
-                    const sm = new m4m.framework.subMeshInfo();
-                    sm.matIndex = 0;
-                    sm.useVertexIndex = 0;
-                    sm.start = 0;
-                    sm.size = ebo.length;
-                    sm.line = false;
-                    mf.submesh.push(sm);
-                    mf.glMesh.uploadIndexSubData(ctx, 0, ebo);
-                    //light Map
-                    let lightMapTexST = null;
-                    let outMat: material = materials[material];
-                    if (hasLightMap && extensions && extensions.gd_linfo) {
-                        if (extensions.gd_linfo.so) {
-                            lightMapTexST = extensions.gd_linfo.so;
-                        } else {
-                            lightMapTexST = [1, 1, 0, 0];
-                        }
-                        let texIdx = extensions.gd_linfo.index ?? 0;
-                        let lightMapTex = lightMapTexs[texIdx];
-                        if (lightMapTex) {
-                            if (outMat.statedMapUniforms["_LightmapTex"]) {
-                                outMat = outMat.clone();      //公用材质但lightmap 不同，需要clone一个新材质
-                            }
-                            outMat.setTexture("_LightmapTex", lightMapTex);
-                            outMat = outMat;
-                        }
-                    }
-                    return { m: mf, mat: outMat, lTexST: lightMapTexST };
-                });
+                    console.log("====gltf end load mesh " + name);
+                    gltf.dumpmem();
+
+
+                    return infos;
+                }
+
+
             });
 
             const nodes = this.data.nodes?.map(({ name, mesh, matrix, rotation, scale, translation, skin, camera, children }) => {
@@ -460,25 +555,43 @@ namespace m4m.framework {
                 }
                 n.markDirty();
                 if (mesh != null) {
-                    const child = meshes[mesh].map(({ m, mat, lTexST }) => {
-                        const texST: number[] = lTexST;
-                        const submesh = new m4m.framework.transform();
-
-                        const mf = submesh.gameObject.addComponent("meshFilter") as meshFilter;
-                        mf.mesh = m;
+                    let realmeshs = meshes[mesh] as meshinfo[];
+                    for (var imesh = 0; imesh < realmeshs.length; imesh++) {
+                        let realmesh = realmeshs[imesh];
+                        let submesh = new m4m.framework.transform();
+                        let mfit = submesh.gameObject.addComponent("meshFilter") as meshFilter;
+                        mfit.mesh = realmesh.mesh;
                         const renderer = submesh.gameObject.addComponent("meshRenderer") as meshRenderer;
-                        renderer.materials = [mat];
-                        if (texST) {
-                            renderer.lightmapIndex = -2;    //标记该节点使用非全局lightmap
-                            math.vec4Set(renderer.lightmapScaleOffset, texST[0], texST[1], texST[2], texST[3]);
+                        renderer.materials = realmesh.outmats;
+                        for (var i = 0; i < realmesh.outmats.length; i++) {
+                            if (realmesh.lightMapTexST[i] != null) {
+                                renderer.lightmapIndex = -2;    //标记该节点使用非全局lightmap
+                                math.vec4Set(renderer.lightmapScaleOffset, realmesh.lightMapTexST[i][0], realmesh.lightMapTexST[i][1], realmesh.lightMapTexST[i][2], realmesh.lightMapTexST[i][3]);
+                            }
                         }
-                        // renderer.materials.push(mat);
-                        // renderer.materials.push(new framework.material());
-                        // renderer.materials[0].setShader(mgr.getShader("shader/def"));
-                        // renderer.materials[0].setShader(mgr.getShader("simple.shader.json"));
-                        return submesh;
-                    });
-                    child.forEach(c => n.addChild(c));
+                        n.addChild(submesh);
+                    }
+
+                    // const child = meshes[mesh].map(({ m, mat, lTexST }) => {
+                    //     const texST: number[] = lTexST;
+                    //     const submesh = new m4m.framework.transform();
+
+                    //     const mf = submesh.gameObject.addComponent("meshFilter") as meshFilter;
+                    //     mf.mesh = m;
+                    //     const renderer = submesh.gameObject.addComponent("meshRenderer") as meshRenderer;
+                    //     renderer.materials = [mat];
+                    //     if (texST) {
+                    //         renderer.lightmapIndex = -2;    //标记该节点使用非全局lightmap
+                    //         math.vec4Set(renderer.lightmapScaleOffset, texST[0], texST[1], texST[2], texST[3]);
+                    //     }
+                    //     // renderer.materials.push(mat);
+                    //     // renderer.materials.push(new framework.material());
+                    //     // renderer.materials[0].setShader(mgr.getShader("shader/def"));
+                    //     // renderer.materials[0].setShader(mgr.getShader("simple.shader.json"));
+                    //     return submesh;
+                    // });
+                    // child.forEach(c => n.addChild(c));
+
                 }
                 return { n, children };
             });
@@ -494,8 +607,357 @@ namespace m4m.framework {
             roots.forEach(r => scene.addChild(r));
             return scene;
         }
+        
+        /**
+         * 解析gltf mesh 的 ebo部分
+         * @param ctx webgl上下文
+         * @param mf mesh对象
+         * @param primitives gltf primitives数据
+         * @param accessors gltf accessors数据
+         * @param materials 使用渲染材质
+         * @param hasLightMap 是否有LightMap
+         * @param lightMapTexs LightMap的纹理索引
+         * @param info mesh附信息
+         */
+        static loadgltfebo_mix(ctx: WebGL2RenderingContext, mf: mesh, primitives: any[], accessors: any[], materials: material[],
+            hasLightMap: boolean, lightMapTexs: texture[], info: meshinfo): void {
+            let mdata = mf.data;
+            mdata.trisindex = [];
+            mf.submesh = [];
+
+            //let { attributes, indices, material, extensions } =primitive;    
+            primitives.map(({ attributes, indices, material, extensions }) => {
+                let eboacc = accessors[indices] as GltfAttr;
+                gltf.loadgltfebo(eboacc, mf, materials[material], hasLightMap, lightMapTexs, info, extensions)
+            });
+            mf.glMesh.addIndex(ctx, mdata.trisindex.length);
+            mf.glMesh.uploadIndexData(ctx, 0, mdata.genIndexDataArray());
+
+            mf.glMesh.initVAO();
+        }
+        /**
+         * 解析gltf mesh 的 ebo 独立的(不共享vbo)
+         * @param ctx webgl上下文
+         * @param mf mesh对象
+         * @param primitive gltf primitives数据
+         * @param accessors gltf accessors数据
+         * @param materials 使用渲染材质
+         * @param hasLightMap 是否有LightMap
+         * @param lightMapTexs LightMap的纹理索引
+         * @param info mesh附信息
+         */
+        static loadgltfebo_one(ctx: WebGL2RenderingContext, mf: mesh, primitive: any, accessors: any[], materials: material[],
+            hasLightMap: boolean, lightMapTexs: texture[], info: meshinfo): void {
+            let mdata = mf.data;
+            mdata.trisindex = [];
+            mf.submesh = [];
+
+            let { attributes, indices, material, extensions } = primitive;
+            //primitives.map(({ attributes, indices, material, extensions }) => {
+            let eboacc = accessors[indices] as GltfAttr;
+            gltf.loadgltfebo(eboacc, mf, materials[material], hasLightMap, lightMapTexs, info, extensions)
+            //});
+            mf.glMesh.addIndex(ctx, mdata.trisindex.length);
+            mf.glMesh.uploadIndexData(ctx, 0, mdata.genIndexDataArray());
+
+            mf.glMesh.initVAO();
+        }
+        /**
+         * 解析gltf mesh 的 ebo
+         * @param eboacc 
+         * @param mf mesh对象
+         * @param outMat 使用渲染材质
+         * @param hasLightMap 是否有LightMap
+         * @param lightMapTexs LightMap的纹理索引
+         * @param info mesh附信息
+         * @param extensions gltf 拓展信息
+         */
+        static loadgltfebo(eboacc: GltfAttr, mf: mesh, outMat: material, hasLightMap: boolean, lightMapTexs: texture[], info: meshinfo, extensions: any): void {
+            //let eboacc = accessors[indices] as GltfAttr;
+            //let eboAcc = new Accessor(accessors[indices], "indices");
+            //let ebo = eboAcc.data as Uint32Array;
+            let ebo: any;
+            const byteOffset = (eboacc.bufferView.byteOffset ?? 0) + (eboacc.byteOffset ?? 0);
+            if (eboacc.componentType == 5125)
+                ebo = new Uint32Array(eboacc.bufferView.rawBuffer, byteOffset, eboacc.count);
+            if (eboacc.componentType == 5123)
+                ebo = new Uint16Array(eboacc.bufferView.rawBuffer, byteOffset, eboacc.count);
+            if (eboacc.componentType == 5121)
+                ebo = new Uint8Array(eboacc.bufferView.rawBuffer, byteOffset, eboacc.count);
+            console.log("ebo count=" + ebo.length);
+
+            let indexbegin = mf.data.trisindex.length;
+            let mdata = mf.data;
+            for (var i = 0; i < ebo.length / 3; i++) {
+                var i0 = ebo[i * 3 + 0];
+                var i1 = ebo[i * 3 + 1];
+                var i2 = ebo[i * 3 + 2];
+                mdata.trisindex.push(i0);
+                mdata.trisindex.push(i1);
+                mdata.trisindex.push(i2);
+            }
+            //mdata.trisindex = Array.from(ebo);
+            // mf.glMesh.addIndex(ctx, ebo.length);
+            // mf.glMesh.uploadIndexData(ctx, 0, ebo, eboAcc.componentType);
+            //mf.submesh = [];
+            const sm = new m4m.framework.subMeshInfo();
+            sm.matIndex = mf.submesh.length;
+            sm.useVertexIndex = 0;
+            sm.start = indexbegin;
+            sm.size = ebo.length;
+            sm.line = false;
+            mf.submesh.push(sm);
+            // mf.glMesh.uploadIndexSubData(ctx, 0, ebo);
+
+            //light Map
+            let lightMapTexST = null;
+            //let outMat: material = materials[matid];
+            if (hasLightMap && extensions && extensions.gd_linfo) {
+                if (extensions.gd_linfo.so) {
+                    lightMapTexST = extensions.gd_linfo.so;
+                } else {
+                    lightMapTexST = [1, 1, 0, 0];
+                }
+                let texIdx = extensions.gd_linfo.index ?? 0;
+                let lightMapTex = lightMapTexs[texIdx];
+                if (lightMapTex) {
+                    if (outMat.statedMapUniforms["_LightmapTex"]) {
+                        outMat = outMat.clone();      //公用材质但lightmap 不同，需要clone一个新材质
+                    }
+                    outMat.setTexture("_LightmapTex", lightMapTex);
+                    outMat = outMat;
+                }
+            }
+            info.outmats.push(outMat);
+            info.lightMapTexST.push(lightMapTexST);
+        }
+
+        /**
+         * 解析gltf mesh 的 vbo
+         * @param ctx webgl上下文
+         * @param mf mesh对象
+         * @param primitive gltf primitives数据
+         * @param accessors gltf accessors数据
+         */
+        static loadgltfvbo(ctx: WebGL2RenderingContext, mf: mesh, primitive: any, accessors: any[]): void {
+
+            let mdata = mf.data = new m4m.render.meshData();
+            mdata.triIndexUint32Mode = true;
+
+            const vert: m4m.math.vector3[] = mdata.pos = [];
+            const uv1: m4m.math.vector2[] = mdata.uv = [];
+            const uv2: m4m.math.vector2[] = mdata.uv2 = [];
+            const normal: m4m.math.vector3[] = mdata.normal = [];
+            const tangent: m4m.math.vector3[] = mdata.tangent = [];
+
+
+
+            const attr: { [k: string]: GltfAttr } = {};
+            for (let k in primitive.attributes) {
+                let attrview = accessors[primitive.attributes[k]];
+                attr[k] = attrview;
+            }
+
+            const vcount = attr.POSITION.count;
+            const bs =
+                + (attr.POSITION ? 3 : 0)
+                + (attr.NORMAL ? 3 : 0)
+                + (attr.COLOR ? 4 : 0)
+                + (attr.TANGENT ? 3 : 0) // 引擎里的Tangent是vec3，而不是vec4
+                + (attr.TEXCOORD_0 ? 2 : 0)
+                + (attr.TEXCOORD_1 ? 2 : 0);
+            const vbo = new Float32Array(vcount * bs);
+
+            console.log("vcount=" + vcount);
+
+            mf.glMesh = new m4m.render.glMesh();
+            let vf
+            if (attr.POSITION)
+                vf |= m4m.render.VertexFormatMask.Position;
+            if (attr.NORMAL)
+                vf |= m4m.render.VertexFormatMask.Normal;
+            if (attr.COLOR)
+                vf |= m4m.render.VertexFormatMask.Color
+            if (attr.TANGENT)
+                vf |= m4m.render.VertexFormatMask.Tangent;
+            if (attr.TEXCOORD_0)
+                vf |= m4m.render.VertexFormatMask.UV0;
+            if (attr.TEXCOORD_1)
+                vf |= m4m.render.VertexFormatMask.UV1;
+            // | m4m.render.VertexFormatMask.BlendIndex4
+            // | m4m.render.VertexFormatMask.BlendWeight4;
+            console.log("before initBuffer");
+            gltf.dumpmem();
+
+            mf.glMesh.initBuffer(ctx, vf, vcount, m4m.render.MeshTypeEnum.Static);
+
+            let uv0data: Float32Array = null;
+            let uv1data: Float32Array = null;
+            let posdata: Float32Array = null;
+            let nordata: Float32Array = null;
+            let tandata: Float32Array = null;
+            if (attr.TEXCOORD_0 != null) {
+                uv0data = new Float32Array(attr.TEXCOORD_0.bufferView.rawBuffer, (attr.TEXCOORD_0.bufferView.byteOffset ?? 0) + (attr.TEXCOORD_0.byteOffset ?? 0));
+
+                console.log("attr uv0");
+                gltf.dumpmem();
+            }
+            if (attr.TEXCOORD_1 != null) {
+                uv1data = new Float32Array(attr.TEXCOORD_1.bufferView.rawBuffer, (attr.TEXCOORD_1.bufferView.byteOffset ?? 0) + (attr.TEXCOORD_1.byteOffset ?? 0));
+
+                console.log("attr uv1");
+                gltf.dumpmem();
+            }
+
+            if (attr.POSITION != null) {
+                posdata = new Float32Array(attr.POSITION.bufferView.rawBuffer, (attr.POSITION.bufferView.byteOffset ?? 0) + (attr.POSITION.byteOffset ?? 0));
+
+                console.log("attr pos");
+                gltf.dumpmem();
+            }
+            if (attr.NORMAL != null) {
+                nordata = new Float32Array(attr.NORMAL.bufferView.rawBuffer, (attr.NORMAL.bufferView.byteOffset ?? 0) + (attr.NORMAL.byteOffset ?? 0));
+
+                console.log("attr nor");
+                gltf.dumpmem();
+            }
+            if (attr.TANGENT != null) {
+                tandata = new Float32Array(attr.TANGENT.bufferView.rawBuffer, (attr.TANGENT.bufferView.byteOffset ?? 0) + (attr.TANGENT.byteOffset ?? 0));
+
+
+                console.log("attr tan");
+                gltf.dumpmem();
+            }
+            console.log("after initBuffer");
+            gltf.dumpmem();
+            for (let i = 0; i < vcount; i++) {
+                if (uv0data != null) {
+                    let uvFliped0 = uv0data[i * 2 + 0];
+                    let uvFliped1 = uv0data[i * 2 + 1];
+                    uv1[i] = new m4m.math.vector2(uvFliped0, uvFliped1 * -1 + 1);
+                }
+
+                if (uv1data != null) {
+                    let uvFliped0 = uv1data[i * 2 + 0];
+                    let uvFliped1 = uv1data[i * 2 + 1];
+                    uv2[i] = new m4m.math.vector2(uvFliped0, uvFliped1 * -1 + 1);
+                }
+
+                if (posdata != null) {
+                    let _pos0 = posdata[i * 3 + 0];
+                    let _pos1 = posdata[i * 3 + 1];
+                    let _pos2 = posdata[i * 3 + 2];
+                    vert[i] = new m4m.math.vector3(_pos0, _pos1, _pos2);
+                }
+
+                if (nordata != null) {
+                    let _pos0 = nordata[i * 3 + 0];
+                    let _pos1 = nordata[i * 3 + 1];
+                    let _pos2 = nordata[i * 3 + 2];
+                    normal[i] = new m4m.math.vector3(_pos0, _pos1, _pos2);
+                }
+
+                if (tandata != null) {
+
+                    let t = new m4m.math.vector3(tandata[i * 4 + 0], tandata[i * 4 + 1], tandata[i * 4 + 2]);
+                    //处理 w 分量 , w 存入 xyz 中, w 只因为为1 或 -1 ,表示为切向方向性。
+                    //将w 平移2 , 映射为 -1 -> 1 , 1 -> 3 ，这样保障 normalize 后 xyz 一致                                                                                                                                                                                                                                      
+                    let w = tandata[i * 4 + 3] + 2;
+                    //将w 乘入 xyz , x = x * w , y = y * w , y = y * w 
+                    m4m.math.vec3ScaleByNum(t, w, t);
+                    tangent[i] = t;
+                }
+
+                const cur = vbo.subarray(i * bs); // offset
+                let bit = 0;
+                if (attr.POSITION != null) {
+                    const position = cur.subarray(bit, bit += 3);
+                    position[0] = vert[i].x;
+                    position[1] = vert[i].y;
+                    position[2] = vert[i].z;
+                }
+
+                // const color = cur.subarray(3, 7);
+                if (attr.NORMAL != null) {
+                    const n = cur.subarray(bit, bit += 3);
+                    n[0] = normal[i].x;
+                    n[1] = normal[i].y;
+                    n[2] = normal[i].z;
+                }
+
+                if (attr.TANGENT != null) {
+                    const tan = cur.subarray(bit, bit += 3);
+                    const t = tangent[i];
+                    tan[0] = t.x;
+                    tan[1] = t.y;
+                    tan[2] = t.z;
+                }
+
+                if (attr.TEXCOORD_0 != null) {
+                    const _uv = cur.subarray(bit, bit += 2);
+                    let u = uv1[i];
+                    _uv[0] = u.x;
+                    _uv[1] = u.y;
+                }
+
+                if (attr.TEXCOORD_1 != null) {
+                    const _uv2 = cur.subarray(bit, bit += 2);
+                    let u = uv2[i];
+                    _uv2[0] = u.x;
+                    _uv2[1] = u.y;
+                }
+
+                // const tangent = cur.subarray(7, 9);
+
+                // colors[i] = new m4m.math.vector4();
+            }
+            mf.glMesh.uploadVertexData(ctx, vbo);
+
+
+        }
+        /**
+         * 获取实时灯光列表详细
+         */
+        getRealtimeLights(): gltfRealtimeLight[] {
+            let extUsed = this.data.extensionsUsed as string[];
+            if (!extUsed || extUsed.indexOf("gd_realtime_lights") == -1) return;
+            let scenes = this.data.scenes;
+            if (!scenes || !scenes[0].extensions) return;
+            let gd_realtime_lights = scenes[0].extensions.gd_realtime_lights;
+            if (!gd_realtime_lights || !gd_realtime_lights.lightInfos) return;
+            return gd_realtime_lights.lightInfos;
+        }
     }
 
+    /** 灯光阴影质量 */
+    export enum ShadowQualityType {
+        None,
+        Low,
+        Medium,
+        High,
+    }
+
+    /** gltf 实时灯光 */
+    export type gltfRealtimeLight = {
+        /** 光灯类型 */
+        type: LightTypeEnum,
+        /** 影响范围 */
+        range: number,
+        /** 聚光灯张角度 */
+        spotAngle: number,
+        /** 阴影质量 */
+        shadowQuality: ShadowQualityType,
+        /** 光照强度 */
+        intensity: number,
+        /** 灯光颜色 */
+        color: number[],
+        /** 灯光角度 [x,y] */
+        angles: number[],
+        /** 灯光位置 [x,y,z] */
+        pos: number[],
+    };
+
+    type AccTypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Array | Float32Array;
     export class Accessor {
         static types = {
             "SCALAR": 1,
@@ -516,7 +978,12 @@ namespace m4m.framework {
         max: number[];
         min: number[];
         size: number;
-        private _data: any;
+        private _data: AccTypedArray | AccTypedArray[];
+        /**
+         * gltf 内存访问器
+         * @param param0 参数0
+         * @param name 名
+         */
         constructor({ bufferView, byteOffset = 0, componentType, normalized = false, count, type, max = [], min = [] }, name = '') {
             this.attribute = name;
             this.bufferView = bufferView;
@@ -536,8 +1003,8 @@ namespace m4m.framework {
         static newFloat32Array(acc: Accessor) {
             return new Float32Array(acc.bufferView.rawBuffer, acc.byteOffset + acc.bufferView.byteOffset, acc.size * acc.count);
         }
-        static getSubChunks(acc, data) {
-            let blocks = [];
+        static getSubChunks(acc: Accessor, data: AccTypedArray) {
+            let blocks: AccTypedArray[] = [];
             for (let i = 0; i < acc.count; i++) {
                 let offset = i * acc.size;
                 blocks.push(data.subarray(offset, offset + acc.size));
@@ -571,5 +1038,26 @@ namespace m4m.framework {
             }
             return this.newTypedArray(acc);
         }
+    }
+    class meshinfo {
+        mesh: mesh;
+        outmats: material[];
+        lightMapTexST: number[][];
+    }
+
+
+    class GltfAttr {
+        bufferView: {
+            rawBuffer: ArrayBuffer;
+            byteOffset: number;
+            byteLength: number;
+            byteStride: number;
+        };
+        byteOffset?: number;
+        componentType: number;//5126 ==float //5125 =uint32 5123 ==uint16
+        count: number;
+        name: string;
+        type: string;
+        normalized: boolean;
     }
 }

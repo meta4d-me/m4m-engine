@@ -48,6 +48,9 @@ namespace m4m.framework
 
 
         private _init = false;
+        /**
+         * 初始化
+         */
         private init(){
             let sh = this.scene.app.getAssetMgr().getShader("vignetting.shader.json");
             if (!sh) {

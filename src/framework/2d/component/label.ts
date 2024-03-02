@@ -18,6 +18,163 @@ limitations under the License.
 
 namespace m4m.framework {
     /**
+     * 字体选择器接口
+     */
+    export interface IFontSelector {
+        /**
+         * 更新
+         * @param label label对象
+         */
+        Update(label: label): void
+        get pixelPerfact(): boolean
+        /**
+         * 计算屏幕高度
+         * @param label  label对象
+         */
+        calcScreenHeight(label: label): number
+        /**
+         * 辅助将顶点对齐到屏幕坐标，能改善清晰度
+         * @param label label对象
+         * @param vec2 坐标
+         * @param screenAddX 屏幕空间坐标增量 X
+         * @param screenAddY 屏幕空间坐标增量 Y
+         */
+        pixelFit(label: label, vec2: m4m.math.vector2, screenAddX: number, screenAddY: number): void;
+        /**
+         * 像素宽度
+         * @param label  label对象
+         * @param screenwidth 屏幕空间宽度
+         */
+        pixelWidth(label: label, screenwidth: number): number;
+    }
+    export class FontSelector_Fix implements IFontSelector
+    {
+        constructor(overlay: overlay2D, name: string, fontsize:number) {
+
+            this.overlay = overlay;
+      this.fontsize=fontsize;
+
+            this.font = new m4m.framework.font_canvas(m4m.framework.sceneMgr.app.webgl, name, fontsize);
+        }
+        get pixelPerfact(): boolean {
+            return false;
+        }
+        calcScreenHeight(label: label): number {
+            let oldsize = label.srcfontsize;// label.transform.height;// label.transform.height // or this.fontsize;
+
+            return oldsize;
+        }
+        //辅助将顶点对齐到屏幕坐标，能改善清晰度
+        pixelFit(label: label, vec2: m4m.math.vector2, screenAddX: number, screenAddY: number): void {
+     
+        }
+        //辅助计算字符宽度，到屏幕坐标
+        pixelWidth(label: label, screenwidth: number): number {
+ 
+            return screenwidth;
+        }
+        public overlay: overlay2D;
+        public fontname: string;
+         fontsize:number;
+         font:IFont=null;
+        Update(label: label): void {
+   
+         
+            label.font = this.font;
+            label.font.EnsureString(label.text);
+            label.srcfontsize = this.fontsize;
+            label.updateData(this.font);
+        }
+    }
+    /**
+     * 自动大小的 字体选择器 
+     */
+    export class FontSelector_autoSize implements IFontSelector {
+        /**
+         * 自动大小的 字体选择器 
+         * @param overlay 
+         * @param name 
+         */
+        constructor(overlay: overlay2D, name: string) {
+
+            this.overlay = overlay;
+            this.fontname = name;
+
+
+        }
+        get pixelPerfact(): boolean {
+            return true;
+        }
+        calcScreenHeight(label: label): number {
+            let oldsize = label.srcfontsize;// label.transform.height;// label.transform.height // or this.fontsize;
+
+
+            let ws = Math.abs(label.transform.getWorldScale().y);
+            let oh = this.overlay.getScaleHeight();
+
+            let floatnewfontsize = (ws * oh * oldsize);
+            let intnewfontsize = floatnewfontsize | 0;
+
+            if (intnewfontsize < 8)
+                floatnewfontsize = intnewfontsize = 8;
+            if (intnewfontsize > 64)
+                floatnewfontsize = intnewfontsize = 64;
+
+            return intnewfontsize;
+        }
+        //辅助将顶点对齐到屏幕坐标，能改善清晰度
+        pixelFit(label: label, vec2: m4m.math.vector2, screenAddX: number, screenAddY: number): void {
+            let ws = label.transform.getWorldScale();
+            let oh = this.overlay.getScaleHeight();
+            let ow = this.overlay.getScaleWidth();
+            let sy = Math.abs(ws.y) * oh;
+            let sx = Math.abs(ws.x) * ow;
+
+            let screenx = ((vec2.x * sx) | 0) + (screenAddX | 0);
+            let screeny = ((vec2.y * sy) | 0) + (screenAddY | 0);
+            vec2.x = screenx / sx;
+            vec2.y = screeny / sy;
+        }
+        //辅助计算字符宽度，到屏幕坐标
+        pixelWidth(label: label, screenwidth: number): number {
+            let ws = label.transform.getWorldScale();
+            //let oh = this.overlay.getScaleHeight();
+            let ow = this.overlay.getScaleWidth();
+            let sx = Math.abs(ws.x) * ow;
+            return screenwidth / sx;
+        }
+        public overlay: overlay2D;
+        public fontname: string;
+
+        static fonts: { [id: string]: IFont } = {};
+        Update(label: label): void {
+          
+            let intnewfontsize = this.calcScreenHeight(label);
+            intnewfontsize=32;
+         
+            let fontname = this.fontname + "_" + intnewfontsize;
+            if (FontSelector_autoSize.fonts == null)
+                FontSelector_autoSize.fonts = {};
+            let font: IFont = FontSelector_autoSize.fonts[fontname];
+            if (font == undefined) {
+                let fontsize = intnewfontsize;
+                //小字体双倍分辨率
+                if (intnewfontsize < 24) 
+                    fontsize = intnewfontsize * 2;
+                //大字体不要单数
+                else if (intnewfontsize % 2 == 1)
+                    fontsize = intnewfontsize - 1;
+                //else if (intnewfontsize < 32) fontsize = intnewfontsize * 1.5;
+                font = new m4m.framework.font_canvas(m4m.framework.sceneMgr.app.webgl, this.fontname, fontsize);
+                FontSelector_autoSize.fonts[fontname] = font;
+            }
+           
+            label.font = font;
+            label.font.EnsureString(label.text);
+            label.fontsize = intnewfontsize;
+        }
+    }
+    /**
      * @public
      * @language zh_CN
      * @classdesc
@@ -27,7 +184,12 @@ namespace m4m.framework {
     @reflect.node2DComponent
     @reflect.nodeRender
     export class label implements IRectRenderer {
+        /**
+         * 2d文本组件
+         */
+        constructor() {
 
+        }
         private static readonly defUIShader = `shader/defuifont`;
         private static readonly defMaskUIShader = `shader/defmaskfont`;
         private static readonly defImgUIShader = `shader/defui`;
@@ -35,14 +197,16 @@ namespace m4m.framework {
         private static readonly helpOptObj: { i: boolean, b: boolean, u: boolean, color: math.color, img: string } = {} as any;
         private static readonly helpColor: math.color = new math.color();
 
-        /** 尝试 动态扩展 字体信息 函数接口 */
-        static onTryExpandTexts: (str: string) => void;
+        // /** 尝试 动态扩展 字体信息 函数接口 */
+        // static onTryExpandTexts: (str: string) => void;
 
         static readonly ClassName: string = "label";
         /**字段 用于快速判断实例是否是label */
         readonly isLabel = true;
 
-        /** 当需渲染字符被 加入排列时 的回调*/
+        /**
+         * 当需渲染字符被 加入排列时 的回调
+         */
         public onAddRendererText: (x: number, y: number) => void;
 
         /** 有图片字符需要渲染 */
@@ -66,10 +230,15 @@ namespace m4m.framework {
             this._text = text;
             //设置缓存长度
             // this.initdater(this._text.length);
-            this.dirtyData = true;
-            this._richDrity = hasChange;
+            this._dirtyData = true;
+            this._drityRich = hasChange;
         }
 
+        /**
+         * 初始化 绘制网格数据
+         * @param textLen 文本长度
+         * @param datar 网格数据数组容器
+         */
         private initdater(textLen: number, datar: number[]) {
             let size = 6 * 13;
             let cachelen = size * textLen;
@@ -90,8 +259,10 @@ namespace m4m.framework {
                 datar.splice(datar.length - size, size);
             }
         }
-
-        private _font: font;
+        public srcfontsize: number;
+        fontSelector: IFontSelector = null;
+        static commonfontSelector: IFontSelector = null;
+        private _font: IFont;
         /**
          * @public
          * @language zh_CN
@@ -102,7 +273,7 @@ namespace m4m.framework {
         get font() {
             return this._font;
         }
-        set font(font: font) {
+        set font(font: IFont) {
             if (font == this._font) return;
 
             this.needRefreshFont = true;
@@ -122,6 +293,8 @@ namespace m4m.framework {
 
         @m4m.reflect.Field("string")
         private _fontName = "defFont.font.json";
+
+
         private _fontsize: number = 14;
         /**
          * @public
@@ -135,9 +308,12 @@ namespace m4m.framework {
             return this._fontsize;
         }
         set fontsize(size: number) {
+            if (this._fontsize == size) return;
             this._fontsize = size;
+            this._dirtyData = this._drityRich = true;
         }
 
+        private _linespace = 1;
         /**
          * @public
          * @language zh_CN
@@ -146,8 +322,16 @@ namespace m4m.framework {
          * @version m4m 1.0
          */
         @m4m.reflect.Field("number")
-        linespace: number = 1;//fontsize的倍数
+        get linespace() {
+            return this._linespace;//fontsize的倍数
+        }
+        set linespace(val: number) {
+            if (this._linespace == val) return;
+            this._linespace = val;
+            this._dirtyData = this._drityRich = true;
+        }
 
+        private _horizontalType: HorizontalType = HorizontalType.Left;
         /**
          * @public
          * @language zh_CN
@@ -156,8 +340,16 @@ namespace m4m.framework {
          * @version m4m 1.0
          */
         @m4m.reflect.Field("number")
-        horizontalType: HorizontalType = HorizontalType.Left;
+        get horizontalType(): HorizontalType {
+            return this._horizontalType;
+        }
+        set horizontalType(val: HorizontalType) {
+            if (this._horizontalType == val) return;
+            this._horizontalType = val;
+            this._dirtyData = this._drityRich = true;
+        }
 
+        private _verticalType: VerticalType = VerticalType.Center;
         /**
          * @public
          * @language zh_CN
@@ -166,8 +358,16 @@ namespace m4m.framework {
          * @version m4m 1.0
          */
         @m4m.reflect.Field("number")
-        verticalType: VerticalType = VerticalType.Center;
+        get verticalType(): VerticalType {
+            return this._verticalType;
+        }
+        set verticalType(val: VerticalType) {
+            if (this._verticalType == val) return;
+            this._verticalType = val;
+            this._dirtyData = this._drityRich = true;
+        }
 
+        private _horizontalOverflow: boolean = false;
         /**
          * @public
          * @language zh_CN
@@ -176,8 +376,17 @@ namespace m4m.framework {
          * @version m4m 1.0
          */
         @m4m.reflect.Field("boolean")
-        horizontalOverflow: boolean = false;
+        get horizontalOverflow() {
+            return this._horizontalOverflow;
+        }
+        set horizontalOverflow(val: boolean) {
+            if (this._horizontalOverflow == val) return;
+            this._horizontalOverflow = val;
+            this._dirtyData = this._drityRich = true;
+        }
 
+
+        private _verticalOverflow: boolean = false;
         /**
          * @public
          * @language zh_CN
@@ -186,223 +395,52 @@ namespace m4m.framework {
          * @version m4m 1.0
          */
         @m4m.reflect.Field("boolean")
-        verticalOverflow: boolean = false;
-
+        get verticalOverflow() {
+            return this._verticalOverflow;
+        }
+        set verticalOverflow(val: boolean) {
+            if (this._verticalOverflow == val) return;
+            this._verticalOverflow = val;
+            this._dirtyData = this._drityRich = true;
+        }
 
         private lastStr: string = "";
         /** 检查文字,是否需要 动态添加 */
-        private chackText(str: string) {
-            let _font = this.font;
-            if (!_font || !str || str == this.lastStr) return;
-            let missingStr: string = "";
-            for (var i = 0, len = this._text.length; i < len; i++) {
-                let c = this._text.charAt(i);
-                if (_font.cmap[c]) continue;
-                missingStr += c;
-            }
+        // private chackText(str: string) {
+        //     let _font = this.font;
+        //     if (!_font || !str || str == this.lastStr) return;
+        //     let missingStr: string = "";
+        //     for (var i = 0, len = this._text.length; i < len; i++) {
+        //         let c = this._text.charAt(i);
+        //         if (_font.cmap[c]) continue;
+        //         missingStr += c;
+        //     }
 
-            if (label.onTryExpandTexts) label.onTryExpandTexts(missingStr);
+        //     if (label.onTryExpandTexts) label.onTryExpandTexts(missingStr);
 
-            this.lastStr = str;
-        }
+        //     this.lastStr = str;
+        // }
 
+        //pixelFit: number = 1.0;
         /**
-         * @private
+         * 更新数据
+         * @param _font 引擎字体对象
          */
-        updateData(_font: m4m.framework.font) {
-            if (label.onTryExpandTexts) { this.chackText(this._text); } //检查 依赖文本(辅助 自动填充字体)
+        updateData(_font: m4m.framework.IFont) {
+            // if (label.onTryExpandTexts) { this.chackText(this._text); } //检查 依赖文本(辅助 自动填充字体)
             //set data
             let b = this._defTextBlocks[0];
             b.text = this._text;
             this.setDataByBlock(_font, this._defTextBlocks);
         }
 
-        // _updateData(_font: m4m.framework.font)
-        // {
-        //     if (label.onTryExpandTexts) { this.chackText(this._text); } //检查 依赖文本(辅助 自动填充字体)
-
-        //     // this.dirtyData = false;
-
-        //     //字符的 label尺寸 与 像素尺寸 的比值。
-        //     let rate = this._fontsize / _font.pointSize;
-        //     //矩阵信息
-        //     let m = this.transform.getWorldMatrix();
-        //     let m11 = m.rawData[0];
-        //     let m12 = m.rawData[2];
-        //     let m21 = m.rawData[1];
-        //     let m22 = m.rawData[3];
-
-        //     //顶点开始位置
-        //     let bx = this.data_begin.x;
-        //     let by = this.data_begin.y;
-
-        //     //计算出排列数据
-        //     let txadd = 0;                                  //字符x偏移量
-        //     let tyadd = 0;                                  //字符y偏移量
-        //     let lineEndIndexs: number[] = [];              //每行结束位置的索引列表
-        //     let lineWidths: number[] = [];                 //每行字符宽度之和列表
-        //     let contrast_w = this.horizontalOverflow ? Number.MAX_VALUE : this.transform.width;     //最大宽度限制
-        //     let contrast_h = this.verticalOverflow ? Number.MAX_VALUE : this.transform.height;      //最大高度限制
-        //     let lineHeight = this._fontsize * this.linespace;                                       //一行的高度
-        //     let renderTextCount = 0;
-        //     tyadd += lineHeight;
-        //     let i = 0;
-        //     for (let len = this._text.length; i < len; i++)
-        //     {
-        //         let c = this._text.charAt(i);
-        //         let isNewline = c == `\n`; //换行符
-        //         let cinfo = _font.cmap[c];
-        //         if (!isNewline && cinfo == undefined) { continue; }
-        //         let cWidth = cinfo ? cinfo.xAddvance * rate : 0;                 //字符的宽度
-
-        //         //需要换行了
-        //         if (isNewline || txadd + cWidth > contrast_w)
-        //         {
-        //             if (tyadd + lineHeight > contrast_h) { break; }             //高度超限制了
-
-        //             lineEndIndexs.push(i);
-        //             lineWidths.push(this.transform.width - txadd);
-        //             txadd = 0;                                                  //文本x偏移置0
-        //             tyadd += lineHeight;                                        //文本y偏移增加
-        //         }
-
-        //         if (cinfo)
-        //         {
-        //             txadd += cWidth;                                     //文本x偏移增加
-        //             renderTextCount++;
-        //         }
-        //     }
-        //     //最后的字符存入
-        //     lineEndIndexs.push(i);
-        //     lineWidths.push(this.transform.width - txadd);
-
-        //     //文本渲染所占高度 和 transfrom节点高度的相差值
-        //     let diffY = this.transform.height - tyadd;
-
-        //     //相对transfrom X坐标的偏移
-        //     let xadd = 0;
-        //     //相对transfrom Y坐标的偏移
-        //     let yadd = 0;
-        //     if (this.verticalType == VerticalType.Center)               //垂直居中布局
-        //     {
-        //         yadd += diffY / 2;
-        //     }
-        //     else if (this.verticalType == VerticalType.Boom)            //垂直靠下布局
-        //     {
-        //         yadd += diffY;
-        //     }
-
-        //     //清理缓存
-        //     this.initdater(renderTextCount, this.datar);
-        //     i = 0;
-        //     let rI = 0;
-        //     for (let lineI = 0; lineI < lineEndIndexs.length; lineI++)
-        //     {
-        //         //一行
-        //         xadd = 0;
-        //         if (this.horizontalType == HorizontalType.Center)       //水平居中布局
-        //         {
-        //             xadd += lineWidths[lineI] / 2;
-        //         }
-        //         else if (this.horizontalType == HorizontalType.Right)   //水平靠右布局
-        //         {
-        //             xadd += lineWidths[lineI];
-        //         }
-
-        //         //遍历一行字符
-        //         for (; i < lineEndIndexs[lineI]; i++)
-        //         {
-        //             let c = this._text.charAt(i);
-        //             let cinfo = _font.cmap[c];
-        //             if (cinfo == undefined) { continue; }
-
-        //             var cx = xadd + cinfo.xOffset * rate;
-        //             var cy = yadd - cinfo.yOffset * rate + _font.baseline * rate;
-
-        //             var ch = rate * cinfo.ySize;
-        //             var cw = rate * cinfo.xSize;
-        //             xadd += cinfo.xAddvance * rate;
-        //             var x1 = cx + cw;
-        //             var y1 = cy;
-        //             var x2 = cx;
-        //             var y2 = cy + ch;
-        //             var x3 = cx + cw;
-        //             var y3 = cy + ch;
-
-        //             //pos
-        //             let _x0 = this.datar[rI * 6 * 13 + 0] = bx + cx * m11 + cy * m12;//x
-        //             let _y0 = this.datar[rI * 6 * 13 + 1] = by + cx * m21 + cy * m22;//y
-        //             let _x1 = this.datar[rI * 6 * 13 + 13 * 1 + 0] = bx + x1 * m11 + y1 * m12;//x
-        //             let _y1 = this.datar[rI * 6 * 13 + 13 * 1 + 1] = by + x1 * m21 + y1 * m22;//y
-        //             let _x2 = this.datar[rI * 6 * 13 + 13 * 2 + 0] = bx + x2 * m11 + y2 * m12;//x
-        //             let _y2 = this.datar[rI * 6 * 13 + 13 * 2 + 1] = by + x2 * m21 + y2 * m22;//y
-        //             this.datar[rI * 6 * 13 + 13 * 3 + 0] = bx + x2 * m11 + y2 * m12;//x
-        //             this.datar[rI * 6 * 13 + 13 * 3 + 1] = by + x2 * m21 + y2 * m22;//y
-        //             this.datar[rI * 6 * 13 + 13 * 4 + 0] = bx + x1 * m11 + y1 * m12;//x
-        //             this.datar[rI * 6 * 13 + 13 * 4 + 1] = by + x1 * m21 + y1 * m22;//y
-        //             let _x3 = this.datar[rI * 6 * 13 + 13 * 5 + 0] = bx + x3 * m11 + y3 * m12;//x
-        //             let _y3 = this.datar[rI * 6 * 13 + 13 * 5 + 1] = by + x3 * m21 + y3 * m22;//y
-
-
-        //             //uv
-        //             var u0 = cinfo.x;
-        //             var v0 = cinfo.y;
-        //             var u1 = cinfo.x + cinfo.w;
-        //             var v1 = cinfo.y;
-        //             var u2 = cinfo.x;
-        //             var v2 = cinfo.y + cinfo.h;
-        //             var u3 = cinfo.x + cinfo.w;
-        //             var v3 = cinfo.y + cinfo.h;
-
-        //             this.datar[rI * 6 * 13 + 7] = u0;
-        //             this.datar[rI * 6 * 13 + 8] = v0;
-        //             this.datar[rI * 6 * 13 + 13 * 1 + 7] = u1;
-        //             this.datar[rI * 6 * 13 + 13 * 1 + 8] = v1;
-        //             this.datar[rI * 6 * 13 + 13 * 2 + 7] = u2;
-        //             this.datar[rI * 6 * 13 + 13 * 2 + 8] = v2;
-        //             this.datar[rI * 6 * 13 + 13 * 3 + 7] = u2;
-        //             this.datar[rI * 6 * 13 + 13 * 3 + 8] = v2;
-        //             this.datar[rI * 6 * 13 + 13 * 4 + 7] = u1;
-        //             this.datar[rI * 6 * 13 + 13 * 4 + 8] = v1;
-        //             this.datar[rI * 6 * 13 + 13 * 5 + 7] = u3;
-        //             this.datar[rI * 6 * 13 + 13 * 5 + 8] = v3;
-
-        //             //主color
-        //             for (var j = 0; j < 6; j++)
-        //             {
-        //                 this.datar[rI * 6 * 13 + 13 * j + 3] = this.color.r;
-        //                 this.datar[rI * 6 * 13 + 13 * j + 4] = this.color.g;
-        //                 this.datar[rI * 6 * 13 + 13 * j + 5] = this.color.b;
-        //                 this.datar[rI * 6 * 13 + 13 * j + 6] = this.color.a;
-
-        //                 this.datar[rI * 6 * 13 + 13 * j + 9] = this.color2.r;
-        //                 this.datar[rI * 6 * 13 + 13 * j + 10] = this.color2.g;
-        //                 this.datar[rI * 6 * 13 + 13 * j + 11] = this.color2.b;
-        //                 this.datar[rI * 6 * 13 + 13 * j + 12] = this.color2.a;
-        //             }
-
-        //             //drawRect 
-        //             this.min_x = Math.min(_x0, _x1, _x2, _x3, this.min_x);
-        //             this.min_y = Math.min(_y0, _y1, _y2, _y3, this.min_y);
-        //             this.max_x = Math.max(_x0, _x1, _x2, _x3, this.max_x);
-        //             this.max_y = Math.max(_y0, _y1, _y2, _y3, this.max_y);
-
-        //             //有效渲染字符 索引递增
-        //             rI++;
-        //         }
-        //         yadd += lineHeight;
-        //     }
-
-        //     //debug log
-        //     // console.log(`lable text: 实际填充数 ：${rI} , 容器尺寸 ：${renderTextCount} \r text:${this._text}`);
-
-        //     this.calcDrawRect();
-        // }
-
-        /** 更新数据 富文本 模式 */
-        private updateDataRich(_font: m4m.framework.font) {
+        /**
+         * 更新数据 富文本 模式
+         * @param _font 引擎字体对象
+         */
+        private updateDataRich(_font: m4m.framework.IFont) {
             //检查 依赖文本(辅助 自动填充字体)
-            if (label.onTryExpandTexts) { this.chackText(this._text); }
+            // if (label.onTryExpandTexts) { this.chackText(this._text); }
 
             //set data
             this.setDataByBlock(_font, this._richTextBlocks);
@@ -410,13 +448,13 @@ namespace m4m.framework {
 
         /**
          * 通过 block 设置数据
-         * @param _font 
-         * @param blocks 
+         * @param _font 引擎字体对象
+         * @param blocks 文本数据块队列
          */
-        private setDataByBlock(_font: font, blocks: IBlock[]) {
+        private setDataByBlock(_font: IFont, blocks: IBlock[]) {
             //字符的 label尺寸 与 像素尺寸 的比值。
             let fontSize = this._fontsize;
-            let rate = fontSize / _font.pointSize;
+            let rate = fontSize / _font.pointSize //* this.pixelFit;
             let rBaseLine = _font.baseline * rate;
             let imgSize = fontSize * 0.8;
             let imgHalfGap = (fontSize - imgSize) / 2;
@@ -441,6 +479,9 @@ namespace m4m.framework {
             let contrast_w = this.horizontalOverflow ? Number.MAX_VALUE : this.transform.width;     //最大宽度限制
             let contrast_h = this.verticalOverflow ? Number.MAX_VALUE : this.transform.height;      //最大高度限制
             let lineHeight = fontSize * this.linespace;                                       //一行的高度
+            if (this.fontSelector != null) {
+                lineHeight = this.fontSelector.pixelWidth(this, lineHeight);
+            }
             tyadd += lineHeight;
             let rI = 0;
             let imgCharCount = 0;
@@ -476,6 +517,9 @@ namespace m4m.framework {
                         if (!isNewline && !cinfo) { continue; }
                         if (cinfo) {
                             cWidth = cinfo.xAddvance * rate;                            //字符的宽度
+                            if (this.fontSelector != null) {
+                                cWidth = this.fontSelector.pixelWidth(this, cWidth);
+                            }
                             hasC = true;
                         }
                     } else {
@@ -586,11 +630,12 @@ namespace m4m.framework {
                         lineCount++;
                         toNewLine = false;
                     }
-
+                    //var lastxadd = xadd;
                     let hasImg = fullText[rI] == "*" && optObj.img;
                     let _I = 0;
                     let datar: number[];
                     let c: string;
+                    var xaddonce = 0;
                     if (!hasImg) {
                         _I = textI;
                         c = text.charAt(j);
@@ -599,6 +644,7 @@ namespace m4m.framework {
                         //填充字符数据
                         datar = this.datar;
                         //pos
+
                         var ch = rate * cinfo.ySize;
                         var cw = rate * cinfo.xSize;
                         var x0 = xadd + cinfo.xOffset * rate;
@@ -626,9 +672,9 @@ namespace m4m.framework {
                             datar[_I * 6 * 13 + 13 * k + 11] = color2.b;
                             datar[_I * 6 * 13 + 13 * k + 12] = color2.a;
                         }
-
+                        xaddonce = cinfo.xAddvance * rate;
                         //x 偏移增加
-                        xadd += cinfo.xAddvance * rate;
+                        //xadd += cinfo.xAddvance * rate;
                     } else {
                         this._hasImageChar = true;
                         c = fullText[rI];
@@ -664,7 +710,7 @@ namespace m4m.framework {
                             datar[_I * 6 * 13 + 13 * k + 6] = 1;
                         }
 
-                        xadd += fontSize;
+                        xaddonce = fontSize;
                     }
 
                     //填充数据
@@ -676,9 +722,40 @@ namespace m4m.framework {
                     var x3 = x0 + cw;
                     var y3 = y0 + ch;
 
-                    let _x0 = datar[_I * 6 * 13 + 0] = bx + (x0 + moveX) * m11 + y0 * m12;//x0
+
+
+                    //lightsadd
+                    if (this.fontSelector != null && this.fontSelector.pixelPerfact == true) {
+                        let fixpos = new m4m.math.vector2(x0, y0);
+                        let fixpos2 = new m4m.math.vector2(x0, y0);
+
+                        this.fontSelector.pixelFit(this, fixpos, 0, 0);
+                        this.fontSelector.pixelFit(this, fixpos2, cw, ch);
+                        x0 = fixpos.x;
+                        y0 = fixpos.y;
+
+                        x1 = fixpos2.x;
+                        y1 = y0;
+
+
+                        x2 = x0;
+                        y2 = fixpos2.y;
+
+                        x3 = x1;
+                        y3 = y2;
+
+
+                        this.fontSelector.pixelFit(this, fixpos, xaddonce, 0);
+                        xaddonce = fixpos2.x - x0;
+
+                    }
+                    xadd += xaddonce;
+                    var __x0 = x0 + moveX;
+                    var __x1 = x1 + moveX;
+
+                    let _x0 = datar[_I * 6 * 13 + 0] = bx + __x0 * m11 + y0 * m12;//x0
                     let _y0 = datar[_I * 6 * 13 + 1] = by + x0 * m21 + y0 * m22;//y0
-                    let _x1 = datar[_I * 6 * 13 + 13 * 1 + 0] = bx + (x1 + moveX) * m11 + y1 * m12;//x1
+                    let _x1 = datar[_I * 6 * 13 + 13 * 1 + 0] = bx + __x1 * m11 + y1 * m12;//x1
                     let _y1 = datar[_I * 6 * 13 + 13 * 1 + 1] = by + x1 * m21 + y1 * m22;//y1
                     let _x2 = datar[_I * 6 * 13 + 13 * 2 + 0] = bx + x2 * m11 + y2 * m12;//x2
                     let _y2 = datar[_I * 6 * 13 + 13 * 2 + 1] = by + x2 * m21 + y2 * m22;//y2
@@ -731,7 +808,11 @@ namespace m4m.framework {
             this.calcDrawRect();
         }
 
-        /**获取 图片字符 选项 */
+        /**
+         * 获取 图片字符 选项
+         * @param opts 选项队列
+         * @returns Image选项
+         */
         private getImgOpt(opts: IRichTextOpt[]) {
             if (opts == null) return;
             for (let i = 0, len = opts.length; i < len; i++) {
@@ -776,6 +857,7 @@ namespace m4m.framework {
         /** 字符图 顶点数据 */
         private imgDatar: number[] = [];
 
+        private _color: math.color = new math.color(1, 1, 1, 1);
         /**
          * @public
          * @language zh_CN
@@ -785,8 +867,18 @@ namespace m4m.framework {
          */
         @reflect.Field("color")
         @reflect.UIStyle("color")
-        color: math.color = new math.color(1, 1, 1, 1);
+        get color() {
+            return this._color;
+        }
+        set color(val: math.color) {
+            if (this._color != val) {
+                if (math.colorEqual(this._color, val)) return;  //数值相同
+                math.colorClone(val, this._color);
+            }
+            this._dirtyData = this._drityRich = true;
+        }
 
+        private _color2: math.color = new math.color(0, 0, 0.5, 0.5);
         /**
          * @public
          * @language zh_CN
@@ -796,13 +888,30 @@ namespace m4m.framework {
          */
         @reflect.Field("color")
         @reflect.UIStyle("color")
-        color2: math.color = new math.color(0, 0, 0.5, 0.5);
+        get color2() {
+            return this._color2;
+        }
+        set color2(val: math.color) {
+            if (this._color2 != val) {
+                if (math.colorEqual(this._color2, val)) return;  //数值相同
+                math.colorClone(val, this._color2);
+            }
+            this._dirtyData = this._drityRich = true;
+        }
 
+        private _outlineWidth = 0.75;
         /**
          * 描边宽度
          */
         @reflect.Field("number")
-        outlineWidth = 0.75;
+        get outlineWidth() {
+            return this._outlineWidth;
+        }
+        set outlineWidth(val: number) {
+            if (this._outlineWidth == val) return;
+            this._outlineWidth = val;
+            this._dirtyData = this._drityRich = true;
+        }
 
         private _richText: boolean = false;
         /**
@@ -830,6 +939,7 @@ namespace m4m.framework {
         public get imageTextAtlas() { return this._imageTextAtlas; }
         public set imageTextAtlas(val: atlas) {
             if (val == this._imageTextAtlas) return;
+            this._drityRich = true;
             this._imageTextAtlas = val;
             if (this._imageTextAtlas) {
                 this._imageTextAtlasName = this._imageTextAtlas.getName();
@@ -843,15 +953,12 @@ namespace m4m.framework {
         private _defTextBlocks: IBlock[] = [{ text: "", opts: null }];
 
         /**富文本 脏标记  */
-        private _richDrity: boolean = true;
+        private _drityRich: boolean = true;
 
-        private _CustomShaderName = ``;//自定义UIshader
+        private _CustomShaderName = null;//自定义UIshader
         /**
-         * @public
-         * @language zh_CN
-         * @classdesc
          * 设置rander Shader名字
-         * @version m4m 1.0
+         * @param shaderName shader 资源名
          */
         setShaderByName(shaderName: string) {
             this._CustomShaderName = shaderName;
@@ -863,6 +970,7 @@ namespace m4m.framework {
          * @classdesc
          * 获取rander 的材质
          * @version m4m 1.0
+         * @returns 材质
          */
         getMaterial() {
             if (!this._uimat) {
@@ -879,6 +987,7 @@ namespace m4m.framework {
          * @classdesc
          * 获取渲染绘制矩形边界
          * @version m4m 1.0
+         * @returns rect 对象
          */
         getDrawBounds() {
             if (!this._darwRect) {
@@ -888,7 +997,16 @@ namespace m4m.framework {
             return this._darwRect;
         }
 
-        /** 获取材质 通过 shaderName*/
+        /**
+         * 获取材质 通过 shaderName
+         * @param oldMat 
+         * @param _tex 
+         * @param cShaderName 
+         * @param defMaskSh 
+         * @param defSh 
+         * @param newMatCB 
+         * @returns 材质对象
+         */
         private getMatByShader(oldMat: material, _tex: texture, cShaderName: string, defMaskSh: string, defSh: string, newMatCB?: Function) {
             let transform = this.transform;
             let assetmgr = sceneMgr.app.getAssetMgr();
@@ -901,7 +1019,8 @@ namespace m4m.framework {
                 let rId = transform.maskRectId;
                 rectTag = `mask(${rId})`;
             }
-            let matName = _tex.getName() + uiTag + rectTag;
+            let useShaderName = cShaderName ? cShaderName : pMask ? defMaskSh : defSh;
+            let matName = useShaderName + _tex.getName() + uiTag + rectTag;
             if (!mat || mat.getName() != matName) {
                 if (mat) mat.unuse();
                 mat = assetmgr.getAssetByName(matName) as m4m.framework.material;
@@ -931,14 +1050,22 @@ namespace m4m.framework {
 
             this.searchTexture();
 
-            if (!this.font || !this.font.texture) return this._uimat;
+            if (!this.font || !this.font.GetTexture()) return this._uimat;
             //获取材质
-            this._uimat = this.getMatByShader(this._uimat, this.font.texture,
-                this._CustomShaderName, label.defMaskUIShader, label.defUIShader, () => {
-                    //材质资源对象 刷新了
-                    this.needRefreshFont = true;
-                });
-
+            if (this.font.IsSDF()) {
+                this._uimat = this.getMatByShader(this._uimat, this.font.GetTexture(),
+                    this._CustomShaderName, label.defMaskUIShader, label.defUIShader, () => {
+                        //材质资源对象 刷新了
+                        this.needRefreshFont = true;
+                    });
+            }
+            else {
+                this._uimat = this.getMatByShader(this._uimat, this.font.GetTexture(),
+                    this._CustomShaderName, label.defImgMaskUIShader, label.defImgUIShader, () => {
+                        //材质资源对象 刷新了
+                        this.needRefreshAtlas = true;
+                    });
+            }
             return this._uimat;
         }
 
@@ -953,6 +1080,7 @@ namespace m4m.framework {
             this.searchTextureAtlas();
 
             if (!this._imageTextAtlas || !this._imageTextAtlas.texture) return this._imgUIMat;
+
             this._imgUIMat = this.getMatByShader(this._imgUIMat, this._imageTextAtlas.texture,
                 "", label.defImgMaskUIShader, label.defImgUIShader, () => {
                     //材质资源对象 刷新了
@@ -963,31 +1091,29 @@ namespace m4m.framework {
         }
 
 
-        private dirtyData: boolean = true;
+        private _dirtyData: boolean = true;
 
-        /**
-         * @private
-         */
         render(canvas: canvas) {
             let mat = this.uimat;
             if (!mat) return;
 
             if (!this._font) return;
+            this._font.EnsureString(this.text);
             if (this._richText) {
-                if (this._richDrity) {
+                if (this._drityRich) {
                     //富文本模式
                     this.parseRichText(this.text);
                     this.updateDataRich(this._font);
-                    this._richDrity = false;
+                    this._drityRich = false;
                 }
-            } else if (this.dirtyData) {
+            } else if (this._dirtyData) {
                 this.updateData(this._font);
-                this.dirtyData = false;
+                this._dirtyData = false;
             }
 
             let img;
             if (this._font) {
-                img = this._font.texture;
+                img = this._font.GetTexture();
             }
 
             if (img) {
@@ -1001,7 +1127,7 @@ namespace m4m.framework {
                 if (this.transform.parentIsMask) {
                     //mask uniform 上传
                     this.setMaskData(mat, forceRMask);
-                } else {
+                } else if (this.font.IsSDF()) {
                     mat.setFloat("_outlineWidth", this.outlineWidth);
                 }
 
@@ -1036,6 +1162,11 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 设置矩形裁剪遮罩数据
+         * @param mat 材质对象
+         * @param needRMask 是否需要裁剪遮罩？
+         */
         private setMaskData(mat: material, needRMask: boolean) {
             //mask uniform 上传
             if (this._cacheMaskV4 == null) this._cacheMaskV4 = new math.vector4();
@@ -1046,10 +1177,44 @@ namespace m4m.framework {
             }
         }
 
-        //资源管理器中寻找 指定的贴图资源
+        /**
+         * 资源管理器中寻找 指定的贴图资源
+         */
         private searchTexture() {
             //font  不存在，但有名字，在资源管理器中搜索
+            if (this._font == null || this.font.IsSDF() == false) {
+                if (this.fontSelector == null && label.commonfontSelector != null) {
+                    this.fontSelector = label.commonfontSelector;
+                    this.srcfontsize = this.fontsize;
+                }
+            }
             if (!this._font && this._fontName) {
+
+                // //lights add for font
+                // if (this._fontName == "defFont.font.json") {
+                //     this.fontSelector = label.commonfontSelector;
+                //     if (this.fontSelector != null) {
+                //         this.fontSelector.Update(this);
+                //         return;
+                //     }
+                //     // if (label._sharefont == null)
+
+                //     //     label._sharefont = new font_canvas(sceneMgr.app.webgl, "simhei", 24);
+                //     // this._font = label._sharefont;
+                //     // this._fontsize = label._sharefont.pointSize;
+
+                //     // this.needRefreshFont = true;
+                //     // //     //     //对这个字体特殊化处理
+                //     this._fontName = "cy_GBK.font.json";
+                //     let assetmgr = sceneMgr.app.getAssetMgr();
+                //     let resName = this._fontName;
+                //     let abname = resName.replace(".font.json", ".assetbundle.json");
+                //     let tfont = assetmgr.getAssetByName(resName, abname) as m4m.framework.font;
+                //     this.font = tfont;
+                //     this.needRefreshFont = true;
+                //     // //     //this._fontsize = tfont.pointSize;
+                //     return;
+                // }
                 //字体
                 let assetmgr = sceneMgr.app.getAssetMgr();
                 let resName = this._fontName;
@@ -1071,6 +1236,9 @@ namespace m4m.framework {
 
         }
 
+        /**
+         * 资源管理器中寻找 指定的图集资源
+         */
         private searchTextureAtlas() {
             //字符图集
             if (!this._imageTextAtlas && this._imageTextAtlasName) {
@@ -1086,9 +1254,6 @@ namespace m4m.framework {
 
         private _cacheMaskV4: math.vector4;
 
-        /**
-         * @private
-         */
         updateTran() {
             var m = this.transform.getWorldMatrix();
 
@@ -1100,8 +1265,8 @@ namespace m4m.framework {
             d_b.y = l * m.rawData[1] + t * m.rawData[3] + m.rawData[5];
             //data_begin 有变化需要dirty
             if (!math.vec2Equal(_b, d_b, 0.00001)) {
-                this.dirtyData = true;
-                this._richDrity = true;
+                this._dirtyData = true;
+                this._drityRich = true;
             }
 
             m4m.math.vec2Clone(d_b, _b);
@@ -1111,7 +1276,10 @@ namespace m4m.framework {
         private max_x: number = Number.MAX_VALUE * -1;
         private min_y: number = Number.MAX_VALUE;
         private max_y: number = Number.MAX_VALUE * -1;
-        /** 计算drawRect */
+        /**
+         * 计算 渲染绘制覆盖到的矩形范围 Rect
+         * @returns 
+         */
         private calcDrawRect() {
             if (!this._darwRect) return;
             //drawBounds (y 轴反向)
@@ -1142,7 +1310,7 @@ namespace m4m.framework {
 
         /**
          * 解析 富文本
-         * @param text 
+         * @param text 原始文本字符串
          */
         private parseRichText(text: string) {
             //Color <color=#ffffffff></color>   文字颜色
@@ -1159,6 +1327,7 @@ namespace m4m.framework {
             let optStack: IRichTextOpt[] = [];
             let blockDatas: { text: string, opts: IRichTextOpt[] }[] = this._richTextBlocks;
             blockDatas.length = 0;
+            let atlas = this._imageTextAtlas;
 
             let genBlockFun = () => {
                 let str = strStack.shift();
@@ -1225,10 +1394,14 @@ namespace m4m.framework {
 
                     if (isValid) { strStack.pop(); }    //选项有效 弹栈
                 } else if (char == "]" && imgStart) {
-                    let str = strStack.pop();
+                    let str = strStack[strStack.length - 1];
                     let imgStr = str.substring(1, str.length - 1);
+                    let isValid = atlas && atlas.sprites[imgStr];//图集中是否能找到 该sprite
                     let imgOpt = new richOptImage(imgStr);
-                    blockDatas.push({ text: str, opts: [imgOpt] });
+                    if (isValid) {
+                        strStack.pop();
+                        blockDatas.push({ text: str, opts: [imgOpt] });
+                    }
                     imgStart = false;
                 }
             }
@@ -1238,9 +1411,7 @@ namespace m4m.framework {
             }
         }
 
-        /**
-         * @private
-         */
+       
         start() {
 
         }
@@ -1249,11 +1420,11 @@ namespace m4m.framework {
 
         }
 
-        /**
-         * @private
-         */
-        update(delta: number) {
 
+        update(delta: number) {
+            if (this.fontSelector != null) {
+                this.fontSelector.Update(this);
+            }
         }
 
         /**
@@ -1265,9 +1436,6 @@ namespace m4m.framework {
          */
         transform: transform2D;
 
-        /**
-         * @private
-         */
         remove() {
             if (this._font) this._font.unuse();
             if (this._imageTextAtlas) this._imageTextAtlas.unuse();
@@ -1329,7 +1497,10 @@ namespace m4m.framework {
     interface IRichTextOpt {
         /** 值 */
         value: any;
-        /** 获取类型 */
+        /**
+         * 获取选项类型
+         * @returns 选项
+         */
         getType(): RichOptType;
     }
 
@@ -1337,6 +1508,10 @@ namespace m4m.framework {
      * 富文本选项 颜色
      */
     class richOptColor implements IRichTextOpt {
+        /**
+         * 富文本选项 颜色
+         * @param _c 
+         */
         constructor(_c: math.color) {
             this.value = new math.color();
             math.colorClone(_c, this.value);
@@ -1370,9 +1545,13 @@ namespace m4m.framework {
     }
 
     /**
-     * 富文本选项 加粗
+     * 富文本选项 文本图
      */
     class richOptImage implements IRichTextOpt {
+        /**
+         * 富文本 图 选项
+         * @param imgSrc 
+         */
         constructor(imgSrc: string) {
             this.value = imgSrc;
         }

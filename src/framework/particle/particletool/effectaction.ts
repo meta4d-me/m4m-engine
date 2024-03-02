@@ -26,7 +26,18 @@ namespace m4m.framework
         startFrame: number;
         endFrame: number;
         elements: EffectElement;
+        /**
+         * 初始化
+         * @param _startFrame 开始帧
+         * @param _endFrame 结束帧
+         * @param _params 参数
+         * @param _elements 特效元素
+         */
         init(_startFrame: number, _endFrame: number, _params: any, _elements: EffectElement);
+        /**
+         * 更新
+         * @param frameIndex 帧索引
+         */
         update(frameIndex: number);
     }
 
@@ -620,6 +631,9 @@ namespace m4m.framework
                     break;
             }
         }
+        /**
+         * 执行交换
+         */
         swap()
         {
             let temp;
@@ -642,6 +656,10 @@ namespace m4m.framework
                 this.targetvalue = temp;
             }
         }
+        /**
+         * 获取线性差值
+         * @param frameIndex 帧索引
+         */
         getLerpValue(frameIndex: number): any
         {
             let curframe = (frameIndex - this.startFrame) % this.halfloopframe;

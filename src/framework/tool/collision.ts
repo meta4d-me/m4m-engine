@@ -126,6 +126,13 @@ namespace m4m.framework
         //tool fun
         private static helpv2 = new m4m.math.vector2();
         private static helpv2_1 = new m4m.math.vector2();
+        /**
+         * 判断 obb 与 球的重叠
+         * @param axis 轴
+         * @param box0 obb
+         * @param sphere 球
+         * @returns 重叠了？
+         */
         private static obb_SphereOverLap(axis: m4m.math.vector3, box0: obb, sphere: spherestruct){
             let tv2 = this.helpv2;
             let tv2_1 = this.helpv2_1;
@@ -134,6 +141,13 @@ namespace m4m.framework
             return this.extentsOverlap(tv2,tv2_1);
         }
 
+        /**
+         * 判断 obb 与 另一obb重叠
+         * @param axis 轴
+         * @param box0 obb
+         * @param box1 另一obb
+         * @returns 重叠了？
+         */
         private static obbOverLap(axis: m4m.math.vector3, box0: obb, box1: obb){
             let tv2 = this.helpv2;
             let tv2_1 = this.helpv2_1;
@@ -142,6 +156,12 @@ namespace m4m.framework
             return this.extentsOverlap(tv2,tv2_1);
         }
 
+        /**
+         * 判断两标量区间 重叠
+         * @param a 标量区间a
+         * @param b 标量区间b
+         * @returns 重叠了？
+         */
         private static extentsOverlap(a:math.vector2,b:math.vector2): boolean
         {
             return !(a.x > b.y || b.x > a.y);

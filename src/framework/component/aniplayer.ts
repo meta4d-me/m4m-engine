@@ -100,6 +100,9 @@ namespace m4m.framework {
          */
         public get playCount() { return this._playCount; }
 
+        /**
+         * 初始化
+         */
         private init() {
             for (let i = 0; i < this.bones.length; i++) {
                 let _info = this.bones[i];
@@ -175,6 +178,9 @@ namespace m4m.framework {
         }
 
         private collected = false;
+        /**
+         * 收集所有片段名
+         */
         private collectClipNames() {
             if (this.collected) return;
             if (this.clips) {
@@ -370,6 +376,14 @@ namespace m4m.framework {
         }
         private beActivedEndFrame: boolean = false;
         private endFrame: number = 0;
+        /**
+         * 播放到指定帧
+         * @param animName 动画名
+         * @param endframe 结束帧
+         * @param crosstimer 融合时间
+         * @param onPlayEnd 当播放结束回调
+         * @param speed 速度
+         */
         playToXFrame(animName: string, endframe: number, crosstimer: number = 0, onPlayEnd: () => void = null, speed: number = 1.0) {
             let clip = this.clipnames[animName];
             if (clip == null) {
@@ -400,6 +414,9 @@ namespace m4m.framework {
         //private tempPoseMat:PoseBoneMatrix=PoseBoneMatrix.createDefault();
         // private tempPoseMat1:PoseBoneMatrix=PoseBoneMatrix.createDefault();
 
+        /**
+         * 记录上帧数据
+         */
         private recordeLastFrameData() {
             if (this.lastFrame == null) this.lastFrame = {};
             for (let key in this._playClip.bones) {
@@ -412,6 +429,13 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 播放动画片段
+         * @param aniclip 动画片段
+         * @param onPlayEnd 当播放结束回调
+         * @param speed 播放速度
+         * @param beRevert 是否翻转
+         */
         private playAniclip(aniclip: animationClip, onPlayEnd: () => void = null, speed: number = 1.0, beRevert: boolean = false) {
             this.beActived = true;
             this.bePlay = true;
@@ -436,6 +460,9 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 暂停播放
+         */
         pause(): void {
             if (this.bePlay) {
                 this.bePlay = false;
@@ -456,9 +483,6 @@ namespace m4m.framework {
         isStop(): boolean {
             return !this.bePlay;
         }
-        /**
-         * @private
-         */
         remove() {
             if (this.clips)
                 this.clips.forEach(temp => {
@@ -486,12 +510,14 @@ namespace m4m.framework {
             delete this.inversTpos;
             delete this.carelist;
         }
-        /**
-         * @private
-         */
+        /** @deprecated [已弃用] */
         clone() {
 
         }
+        /**
+         * 检查帧ID
+         * @param delay dt
+         */
         private checkFrameId(delay: number): void {
             let lastFid = this._playFrameid;
             this._playTimer += delay * this.speed;
@@ -520,7 +546,10 @@ namespace m4m.framework {
             //避免 _playFrameid 为负
             this._playFrameid = this._playFrameid < 0 ? 0 : this._playFrameid;
         }
-
+        
+        /**
+         * 当片段播放结束是回调
+         */
         private OnClipPlayEnd() {
             let Clipame = this._playClip ? this._playClip.getName() : "";
             this._playClip = null;
@@ -535,6 +564,9 @@ namespace m4m.framework {
         }
         private beActived: boolean = false;//是否play过动画
         private boneCache: { [id: string]: PoseBoneMatrix } = {};
+        /**
+         * 回收缓存
+         */
         private recyclecache() {
             for (let key in this.boneCache) {
                 PoseBoneMatrix.recycle(this.boneCache[key]);
@@ -542,6 +574,11 @@ namespace m4m.framework {
             this.boneCache = {};
         }
 
+        /**
+         * 填充骨骼姿态数据
+         * @param data 数据
+         * @param bones 骨骼列表
+         */
         fillPoseData(data: Float32Array, bones: transform[]): void {
             if (!bones || !data) return;
             if (!this.bePlay) {

@@ -68,6 +68,10 @@ namespace m4m.framework
 
         //-----------------attline 计算插值
         firtstFrame:number=0;
+        /**
+         * f14 单mesh数据
+         * @param firstFrame 名
+         */
         public constructor(firstFrame:number)
         {
             this.firtstFrame=firstFrame;

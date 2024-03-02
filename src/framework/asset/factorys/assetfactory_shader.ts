@@ -101,6 +101,13 @@ namespace m4m.framework
         //#endregion
 
         private TryParseMap = {};
+        /**
+         * 解析shader资源
+         * @param sd shader资源对象
+         * @param assetMgr 资源管理器
+         * @param txt shader 源字符串数据
+         * @param filename 文件名
+         */
         private parseShader(sd : shader , assetMgr: assetMgr , txt : string , filename : string){
             try
             {

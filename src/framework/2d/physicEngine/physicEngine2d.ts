@@ -54,6 +54,10 @@ namespace m4m.framework {
     }
 
     export interface IRunner{
+        /**
+         * 循环周期执行函数
+         * @param delta 上一周期执行时间（s）
+         */
         tick (delta:number);
     }
     declare var Matter: any;
@@ -65,6 +69,11 @@ namespace m4m.framework {
         engineRunner: IRunner;
         private eventer: event.Physic2dEvent = new event.Physic2dEvent();
         private _bodysObjMap: { [id: number]: I2DPhysicsBody } = {};
+        /**
+         * 物理2D引擎
+         * @param op 引擎2D选项
+         * @returns 物理2D引擎
+         */
         public constructor(op: IEngine2DOP = null) {
             op = op || {};
             if (Matter == undefined) {
@@ -123,6 +132,12 @@ namespace m4m.framework {
             Matter.Events.on(this.matterEngine, "collisionEnd", this.collisionEnd.bind(this));
         }
 
+        /**
+         * 执行循环周期
+         * @param runner 执行主体对象
+         * @param engine 物理引擎实例对象
+         * @param delta 上一周期执行时间（s）
+         */
         private RunnerTick(runner , engine , delta:number){
             var Events = Matter.Events;
             var Engine = Matter.Engine;
@@ -180,6 +195,9 @@ namespace m4m.framework {
             Events.trigger(engine, 'afterTick', event); // @deprecated
         }
 
+        /**
+         * 物理一次计算执行前调用
+         */
         private beforeStep(){
             let omap = this._bodysObjMap;
             for(var key in omap){
@@ -190,6 +208,9 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 物理一次计算执行后调用
+         */
         private afterStep(){
             let omap = this._bodysObjMap;
             for(var key in omap){
@@ -509,14 +530,30 @@ namespace m4m.framework {
             Matter.World.clear(this.engineWorld, keepStatic);
         }
 
+        /**
+         * 给2d物理体 应用一个力
+         * @param body 2d物理体
+         * @param positon 应用一个力的位置
+         * @param force 应用的力
+         */
         public applyForce(body: Ibody, positon: math.Ivec2, force: math.Ivec2): void {
             Matter.Body.applyForce(body, positon, force);
         }
 
+        /**
+         * 给2d物理体 在中心位置 应用一个力
+         * @param body 2d物理体
+         * @param force  应用的力
+         */
         public applyForceAtCenter(body: Ibody, force: math.Ivec2): void {
             Matter.Body.applyForce(body, body.position, force);
         }
-
+    
+        /**
+         * 设置重力
+         * @param x 重力矢量x的值
+         * @param y 重力矢量y的值
+         */
         public setGravity(x: number, y: number) {
             this.engineWorld.gravity.x = x;
             this.engineWorld.gravity.y = y;

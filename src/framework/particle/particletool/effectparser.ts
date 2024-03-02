@@ -338,6 +338,11 @@ namespace m4m.framework
             }
         }
 
+        /**
+         * 解析发射类型数据
+         * @param elementData 特效元素数据 
+         * @param element 特效元素
+         */
         _parseEmissionTypeData(elementData: any, element: EffectElementData)
         {
             if (elementData["timeline"] != undefined)
@@ -560,6 +565,11 @@ namespace m4m.framework
                 }
             }
         }
+        /**
+         * 解析发射形状
+         * @param _startdata 开始数据
+         * @param element 特效元素
+         */
         _parseEmissionShape(_startdata: any, element: EffectElementData)
         {
             let startdata = element.emissionData.particleStartData;

@@ -69,7 +69,10 @@ namespace m4m.framework
             ParticleSystemData._datas[v] = this;
         }
         private _value: string;
-
+        /**
+         * 粒子系统数据
+         * @param assetName 资源名 
+         */
         constructor(assetName: string = null)
         {
             if (!assetName)

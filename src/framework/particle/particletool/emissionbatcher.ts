@@ -22,7 +22,7 @@ namespace m4m.framework
     export class EmissionBatcher
     {
         public emissionElement: EmissionElement;
-        private webgl: WebGLRenderingContext;
+        private webgl: WebGL2RenderingContext;
         public gameObject: gameObject;
         public data: Emission;
         public mesh: mesh;
@@ -34,7 +34,10 @@ namespace m4m.framework
         public particles: Particle[] = [];
         private vertexSize: number = 0;
         public vf: number = 0;
-
+        /**
+         * 发射器合批
+         * @param emissionElement 发射器元素
+         */
         constructor(emissionElement: EmissionElement)
         {
             this.emissionElement = emissionElement;
@@ -63,7 +66,9 @@ namespace m4m.framework
             if (this.data.mat.alphaTexture != null)
                 this.mat.setTexture("_AlphaTex", this.data.mat.alphaTexture);
         }
-
+        /**
+         * 初始化mesh
+         */
         initMesh()
         {
             this.mesh = new mesh();
@@ -73,7 +78,6 @@ namespace m4m.framework
             {
                 var sm = new subMeshInfo();
                 sm.matIndex = 0;
-                sm.useVertexIndex = 0;
                 sm.start = 0;
                 sm.size = 0;
                 sm.line = false;
@@ -84,9 +88,14 @@ namespace m4m.framework
             this.dataForEbo = new Uint16Array(128);
             this.mesh.glMesh.initBuffer(this.webgl, this.vf, 128, render.MeshTypeEnum.Dynamic);
             this.mesh.glMesh.addIndex(this.webgl, this.dataForEbo.length);
+            this.mesh.glMesh.initVAO();
+
         }
         public curVerCount: number = 0;
         public curIndexCount: number = 0;
+        /**
+         * 添加粒子
+         */
         addParticle()
         {
             this.refreshBuffer();
@@ -108,7 +117,9 @@ namespace m4m.framework
             this.mesh.glMesh.uploadIndexData(this.webgl,0,this.dataForEbo);
             this.mesh.submesh[0].size = this.curIndexCount;
         }
-
+        /**
+         * 刷新缓冲区
+         */
         private refreshBuffer()
         {
             var needvercount = this.curVerCount + this.emissionElement.perVertexCount;
@@ -131,7 +142,10 @@ namespace m4m.framework
                 this.dataForEbo = ebo;
             }
         }
-
+        /**
+         * 更新
+         * @param delta 
+         */
         update(delta: number)
         {
             for (let key in this.particles)
@@ -140,7 +154,12 @@ namespace m4m.framework
                 this.particles[key].uploadData(this.dataForVbo);
             }
         }
-
+        /**
+         * 执行渲染
+         * @param context   渲染上下文 
+         * @param assetmgr 资源管理器
+         * @param camera 相机
+         */
         render(context: renderContext, assetmgr: assetMgr, camera: m4m.framework.camera)
         {
             let mesh = this.mesh;
@@ -156,6 +175,9 @@ namespace m4m.framework
                 this.mat.draw(context, mesh, mesh.submesh[0], "base");
             }
         }
+        /**
+         * 销毁
+         */
         dispose()
         {
             this.dataForVbo = null;

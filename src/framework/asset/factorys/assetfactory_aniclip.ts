@@ -92,6 +92,14 @@ namespace m4m.framework
         */
         //#endregion
 
+        /**
+         * 解析
+         * @param assetmgr 资源管理器
+         * @param bundle bundle包
+         * @param filename 文件名
+         * @param bytes 资源二进制数据
+         * @returns Promise动画片段
+         */
         parse(assetmgr: assetMgr, bundle: assetBundle, filename: string, bytes: ArrayBuffer)
         {            
             return new animationClip(filename).Parse(bytes);

@@ -27,7 +27,7 @@ limitations under the License.
 //         clearop_Depth: boolean = false;
 //         clearop_Stencil: boolean = false;
 //         viewport: m4m.math.rect = new m4m.math.rect(0, 0, 1, 1);
-//         use(webgl: WebGLRenderingContext)
+//         use(webgl: WebGL2RenderingContext)
 //         {
 //             //rendertarget
 //             if (this.renderTarget != null)

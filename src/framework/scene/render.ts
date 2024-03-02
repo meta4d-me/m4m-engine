@@ -19,14 +19,16 @@ namespace m4m.framework {
      * @private
      */
     export class renderContext {
-        constructor(webgl: WebGLRenderingContext) {
+        /**
+         * 渲染上下文
+         * @param webgl webgl上下文
+         */
+        constructor(webgl: WebGL2RenderingContext) {
             this.webgl = webgl;
         }
 
-
-
         drawtype: string;
-        webgl: WebGLRenderingContext;
+        webgl: WebGL2RenderingContext;
         viewPortPixel: m4m.math.rect = new m4m.math.rect(0, 0, 0, 0);//像素的viewport
         eyePos: m4m.math.vector4 = new m4m.math.vector4();
 
@@ -94,6 +96,11 @@ namespace m4m.framework {
         //skin auto uniform
         vec4_bones: Float32Array;
         matrix_bones: Float32Array;
+        /**
+         * 更新相机
+         * @param app 引擎app对象 
+         * @param camera 相机
+         */
         updateCamera(app: application, camera: camera) {
             // camera.calcViewPortPixel(app, this.viewPortPixel);
             // var asp = this.viewPortPixel.w / this.viewPortPixel.h;
@@ -110,6 +117,10 @@ namespace m4m.framework {
             this.eyePos.y = pso.y;
             this.eyePos.z = pso.z;
         }
+        /**
+         * 更新光源
+         * @param lights 光源列表 
+         */
         updateLights(lights: light[]) {
             this._intLightCount = lights.length;
             if (this._intLightCount < 1) return;
@@ -148,6 +159,9 @@ namespace m4m.framework {
             math.pool.delete_vector3(dirt);
             //收集灯光参数
         }
+        /**
+         * 更新 渲染后叠加层(UI、后渲染)
+         */
         updateOverlay() {   //可能性优化点 UI 不用乘MVP 矩阵
             //v 特殊
             //m4m.math.matrixMakeIdentity(this.matrixView);//v
@@ -159,22 +173,35 @@ namespace m4m.framework {
             //m4m.math.matrixMultiply(this.matrixViewProject, this.matrixModel, this.matrixModelViewProject);//mvp
             m4m.math.matrixMakeIdentity(this.matrixModelViewProject);
         }
+        /**
+         * 更新模型
+         * @param model 模型节点
+         */
         updateModel(model: transform) {
             this.updateModelByMatrix(model.getWorldMatrix());
         }
+        /**
+         * 通过矩阵更新模型
+         * @param m_matrix 矩阵
+         */
         updateModelByMatrix(m_matrix: m4m.math.matrix) {
             //注意，这tm是个引用
             m4m.math.matrixClone(m_matrix, this.matrixModel);
             m4m.math.matrixMultiply(this.matrixViewProject, this.matrixModel, this.matrixModelViewProject);
         }
 
-        //为特效拖尾服务
+        /**
+         * 更新模型拖尾 
+         */
         updateModeTrail() {
             m4m.math.matrixClone(this.matrixView, this.matrixModelView);
             m4m.math.matrixClone(this.matrixViewProject, this.matrixModelViewProject);
         }
 
-        //更新 光照剔除mask
+        /**
+         * 更新 光照剔除mask
+         * @param layer 不剔除的Layer mask
+         */
         updateLightMask(layer: number) {
             this.intLightCount = 0;
             if (this._intLightCount == 0) return;
@@ -261,6 +288,9 @@ namespace m4m.framework {
      * @private
      */
     export class renderList {
+        /**
+         * 渲染列表
+         */
         constructor() {
             this.renderLayers = [];
             var common = new renderLayer(false);
@@ -270,6 +300,9 @@ namespace m4m.framework {
             this.renderLayers.push(transparent);
             this.renderLayers.push(overlay);
         }
+        /**
+         * 清理列表
+         */
         clear() {
             let lys = this.renderLayers;
             for (let i = 0, len = lys.length; i < len; i++) {
@@ -282,6 +315,9 @@ namespace m4m.framework {
                 // this.renderLayers[i].gpuInstanceMap = {};
             }
         }
+        /**
+         * 清理合批
+         */
         clearBatcher() {
             let lys = this.renderLayers;
             for (let i = 0, len = lys.length; i < len; i++) {
@@ -292,7 +328,12 @@ namespace m4m.framework {
                 }
             }
         }
-        addRenderer(renderer: IRenderer, webgl: WebGLRenderingContext) {
+        /**
+         * 添加渲染节点到列表
+         * @param renderer 渲染节点
+         * @param webgl webgl上下文
+         */
+        addRenderer(renderer: IRenderer, webgl: WebGL2RenderingContext) {
             var idx = renderer.layer;
             // let layer = renderer.layer;
             // var idx = 0;
@@ -314,8 +355,13 @@ namespace m4m.framework {
                 this.renderLayers[idx].addInstance(gpuInsR);
             }
         }
-
-        addStaticInstanceRenderer(renderer: IRendererGpuIns, webgl: WebGLRenderingContext, isStatic: boolean) {
+        /**
+         * 添加静态GPUInstance 渲染节点
+         * @param renderer GPUInstance 渲染节点
+         * @param webgl webgl上下文
+         * @param isStatic 是静态
+         */
+        addStaticInstanceRenderer(renderer: IRendererGpuIns, webgl: WebGL2RenderingContext, isStatic: boolean) {
             if (!isStatic) return;
             let go = renderer.gameObject;
             if (!go || !go.transform.needGpuInstancBatcher || !renderer.isGpuInstancing || !renderer.isGpuInstancing()) return;
@@ -334,6 +380,10 @@ namespace m4m.framework {
         needSort: boolean = false;
         //先暂时分配 透明与不透明两组
         list: IRenderer[] = [];
+        /**
+         * 渲染层
+         * @param _sort 排序？
+         */
         constructor(_sort: boolean = false) {
             this.needSort = _sort;
         }
@@ -342,7 +392,10 @@ namespace m4m.framework {
         // gpuInstanceMap: {[sID:string] : IRendererGpuIns[]} = {};
         gpuInstanceMap: { [sID: string]: math.ReuseArray<IRendererGpuIns> } = {};
         gpuInstanceBatcherMap: { [sID: string]: meshGpuInsBatcher } = {};
-
+        /**
+         * 添加 GPUInstance 渲染节点
+         * @param r GPUInstance 渲染节点
+         */
         addInstance(r: IRendererGpuIns) {
             let mr = r as meshRenderer;
             let mf = mr.filter;
@@ -357,7 +410,10 @@ namespace m4m.framework {
             }
             this.gpuInstanceMap[id].push(r);
         }
-
+        /**
+         * 添加 GPUInstance 渲染节点到合批
+         * @param r GPUInstance 渲染节点
+         */
         addInstanceToBatcher(r: IRendererGpuIns) {
             let mr = r as meshRenderer;
             let mf = mr.filter;
@@ -389,7 +445,12 @@ namespace m4m.framework {
 
         private static gpuInsRandererGUID = -1;
         private static gpuInsRandererGUIDMap = {};
-        /** gpuInstancing 唯一ID */
+        /**
+         * GPUInstance 唯一ID
+         * @param meshGuid meshID
+         * @param materialGuid 材质ID
+         * @returns GPUInstance 唯一ID
+         */
         private static getRandererGUID(meshGuid: number, materialGuid: string): number {
             let meshTemp = this.gpuInsRandererGUIDMap[meshGuid];
             if (!meshTemp) {

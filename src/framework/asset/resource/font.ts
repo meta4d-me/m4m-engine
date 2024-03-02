@@ -14,8 +14,35 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-﻿namespace m4m.framework
-{
+﻿namespace m4m.framework {
+    export interface IFont extends IAsset {
+        cmap: { [id: string]: charinfo };
+        /** 字体名 */
+        fontname: string;
+        /** 像素尺寸 */
+        pointSize: number;
+        /** 填充间隔 */
+        padding: number;
+        /**行高 */
+        lineHeight: number;
+        /** 基线 */
+        baseline: number;
+        /** 字符容器图的宽度 */
+        atlasWidth: number;
+        /** 字符容器图的高度 */
+        atlasHeight: number;
+        /**
+         * 强制确保字体包含 指定文本内的字符串
+         * @param text 指定文本
+         */
+        EnsureString(text: string): void;
+        /**
+         * 获取字体纹理
+         */
+        GetTexture():texture;
+        /** 是否是SDF */
+        IsSDF():boolean;
+    }
     /**
      * @public
      * @language zh_CN
@@ -24,10 +51,12 @@ limitations under the License.
      * @version m4m 1.0
      */
     @m4m.reflect.SerializeType
-    export class font implements IAsset
-    {
+    export class font implements IFont {
         static readonly ClassName: string = "font";
-
+        IsSDF():boolean
+        {
+            return true;
+        }
         private name: constText;
         private id: resID = new resID();
         /**
@@ -38,10 +67,12 @@ limitations under the License.
          * @version m4m 1.0
          */
         defaultAsset: boolean;//是否为系统默认资源
-        constructor(assetName: string = null)
-        {
-            if (!assetName)
-            {
+        /**
+         * 字体资源
+         * @param assetName 资源名 
+         */
+        constructor(assetName: string = null) {
+            if (!assetName) {
                 assetName = "font_" + this.getGUID();
             }
             this.name = new constText(assetName);
@@ -53,8 +84,7 @@ limitations under the License.
          * 获取资源名称
          * @version m4m 1.0
          */
-        getName(): string
-        {
+        getName(): string {
             return this.name.getText();
         }
         /**
@@ -64,8 +94,7 @@ limitations under the License.
          * 获取资源唯一id
          * @version m4m 1.0
          */
-        getGUID(): number
-        {
+        getGUID(): number {
             return this.id.getID();
         }
         /**
@@ -75,8 +104,7 @@ limitations under the License.
          * 引用计数加一
          * @version m4m 1.0
          */
-        use()
-        {
+        use() {
             sceneMgr.app.getAssetMgr().use(this);
         }
         /**
@@ -86,8 +114,7 @@ limitations under the License.
          * 引用计数减一
          * @version m4m 1.0
          */
-        unuse(disposeNow: boolean = false)
-        {
+        unuse(disposeNow: boolean = false) {
             sceneMgr.app.getAssetMgr().unuse(this, disposeNow);
         }
         /**
@@ -97,10 +124,8 @@ limitations under the License.
          * 释放资源
          * @version m4m 1.0
          */
-        dispose()
-        {
-            if (this.texture)
-            {
+        dispose() {
+            if (this.texture) {
                 this.texture.unuse();
             }
             delete this.cmap;
@@ -113,25 +138,20 @@ limitations under the License.
          * 计算资源字节大小
          * @version m4m 1.0
          */
-        caclByteLength(): number
-        {
+        caclByteLength(): number {
             let total = 0;
-            for (let k in this.cmap)
-            {
+            for (let k in this.cmap) {
                 total += math.caclStringByteLength(k);
                 total += charinfo.caclByteLength();
             }
             return total;
         }
         private _texture: texture;
-        public get texture()
-        {
+        public get texture() {
             return this._texture;
         }
-        public set texture(value: texture)
-        {
-            if (this._texture != null)
-            {
+        public set texture(value: texture) {
+            if (this._texture != null) {
                 this._texture.unuse();
             }
             this._texture = value;
@@ -172,8 +192,7 @@ limitations under the License.
          * @param assetmgr 资源管理实例
          * @version m4m 1.0
          */
-        Parse(jsonStr: string, assetmgr: assetMgr,  bundleName: string = null)
-        {
+        Parse(jsonStr: string, assetmgr: assetMgr, bundleName: string = null) {
             // let d1 = new Date().valueOf();
             let json = JSON.parse(jsonStr);
 
@@ -192,8 +211,7 @@ limitations under the License.
             //parse char map
             this.cmap = {};
             let map = json["map"];
-            for (var c in map)
-            {
+            for (var c in map) {
                 let finfo = new charinfo();//ness
                 this.cmap[c] = finfo;
                 finfo.x = (map[c][0] - 0.5) / this.atlasWidth;
@@ -210,13 +228,19 @@ limitations under the License.
             json = null;
             return this;
         }
-
+        EnsureString(text: string): void
+        {
+            
+        }
+        GetTexture():texture
+        {
+            return this._texture;
+        }
     }
     /**
      * @private
      */
-    export class charinfo
-    {
+    export class charinfo {
         /**
          * uv
          */
@@ -253,8 +277,11 @@ limitations under the License.
          * 字符宽度
          */
         xAddvance: number;//字符宽度
-        static caclByteLength(): number
-        {
+        /**
+         * 计算内存占用长度
+         * @returns 
+         */
+        static caclByteLength(): number {
             return 36;
         }
     }

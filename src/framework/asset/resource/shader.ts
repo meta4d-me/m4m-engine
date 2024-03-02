@@ -41,6 +41,10 @@ namespace m4m.framework
          * @version m4m 1.0
          */
         defaultAsset: boolean = false;
+        /**
+         * 着色器资源
+         * @param assetName 资源名 
+         */
         constructor(assetName: string = null)
         {
             if (!assetName)
@@ -203,6 +207,12 @@ namespace m4m.framework
             this.fillUnDefUniform(this.passes["base"][0]);
         }
 
+        /**
+         * 解析属性
+         * @param assetmgr 资源管理器
+         * @param properties 属性
+         * @returns 
+         */
         public _parseProperties(assetmgr: assetMgr, properties: any)
         {
             this.defaultMapUniform = {};
@@ -255,6 +265,14 @@ namespace m4m.framework
                 }
             }
         }
+
+        /**
+         * 解析定义的渲染通道
+         * @param assetmgr 资源管理器
+         * @param json 数据
+         * @param type 类型
+         * @returns glDrawPass对象
+         */
         private _parsePass(assetmgr: assetMgr, json: any,type:string): render.glDrawPass
         {
             var pass = new render.glDrawPass();
@@ -346,6 +364,10 @@ namespace m4m.framework
             }
             return pass;
         }
+        /**
+         * 填充默认的 uniform 值
+         * @param pass 
+         */
         fillUnDefUniform(pass:render.glDrawPass)
         {
             for(let key in pass.mapuniforms)
@@ -357,6 +379,9 @@ namespace m4m.framework
                     {
                         case render.UniformTypeEnum.Float:
                             this.defaultMapUniform[item.name]={type:render.UniformTypeEnum.Float,value:0};
+                            break;
+                        case render.UniformTypeEnum.Int:
+                            this.defaultMapUniform[item.name]={type:render.UniformTypeEnum.Int,value:0};
                             break;
                         case render.UniformTypeEnum.Floatv:
                             this.defaultMapUniform[item.name]={type:render.UniformTypeEnum.Float4x4v,value:null};

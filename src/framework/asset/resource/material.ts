@@ -30,7 +30,12 @@ namespace m4m.framework {
         defaultValue: any;
 
         resname: string;
-
+        /**
+         * uniform数据
+         * @param type 类型 
+         * @param value 值
+         * @param defaultValue 默认值 
+         */
         constructor(type: render.UniformTypeEnum, value: any, defaultValue: any = null) {
             this.type = type;
             this.value = value;
@@ -51,15 +56,15 @@ namespace m4m.framework {
          *
          * @param gl
          */
-        initBuffer(gl: WebGLRenderingContext): void;
+        initBuffer(gl: WebGL2RenderingContext): void;
         /**
          * 启用批量渲染相关顶点属性
          */
-        activeAttributes(gl: WebGLRenderingContext, pass: render.glDrawPass): void;
+        activeAttributes(gl: WebGL2RenderingContext, pass: render.glDrawPass, mat: material): void;
         /**
          * 禁用批量渲染相关顶点属性
          */
-        disableAttributes(gl: WebGLRenderingContext, pass: render.glDrawPass): void;
+        disableAttributes(gl: WebGL2RenderingContext, pass: render.glDrawPass, mat: material): void;
     }
 
 
@@ -108,7 +113,10 @@ namespace m4m.framework {
         private _textureGUID: string = "";
         /** gpuInstancing 材质唯一ID */
         gpuInstancingGUID: string = "";
-
+        /**
+         * 材质资源
+         * @param assetName 资源名 
+         */
         constructor(assetName: string = null) {
             if (!assetName) {
                 assetName = "material_" + this.getGUID();
@@ -247,6 +255,12 @@ namespace m4m.framework {
             glstate_lightmapRGBAF16: true
         }
 
+        /**
+         * 提交 uniform 数据到webgl API
+         * @param pass 绘制的 glDrawPass 对象
+         * @param context webgl 上下文
+         * @param lastMatSame 是否和上一次渲染提交的材质相同
+         */
         uploadUnifoms(pass: render.glDrawPass, context: renderContext, lastMatSame = false) {
             render.shaderUniform.texindex = 0;
             let udMap = this.uniformDirtyMap;
@@ -257,7 +271,11 @@ namespace m4m.framework {
                     if (uTEnum.Texture == unifom.type || uTEnum.CubeTexture == unifom.type) {
                         render.shaderUniform.texindex++;
                     }
-                    continue;
+                    //材质里做什么缓存？VAO？
+                    //如果用了VAO，这也有个bug
+                    //即使材质相同，shader 有#define，还是会不同，这个缓存机制有坑
+                    //比如同一个材质，同时被Skin 和 非skin的模型用了，这个缓存就会变成天坑
+                    //continue;
                 }
                 udMap[unifom.name] = false;  //标记为 没有 变化
 
@@ -275,57 +293,68 @@ namespace m4m.framework {
                         console.error("Uniform don't be setted or have def value. uniform:" + unifom.name + "mat:" + this.getName());
                     }
                 }
+
+                if (unifomValue == null) {
+                    error.push(new Error(`material [${this.name.getText()}], unifrom [${unifom.name}] uploadunifrom fail! unifom Value is null!! `));
+                    continue;
+                }
+
                 if (unifom.type == render.UniformTypeEnum.Texture && !unifomValue.glTexture) {
-                    error.push(new Error(`material [${this.name}] uploadunifrom fail! glTexture is null!! `));
+                    error.push(new Error(`material [${this.name.getText()}] uploadunifrom fail! glTexture is null!! `));
                     continue;
                 }
                 func(unifom.location, unifomValue);
             }
         }
 
-        instanceAttribValMap: { [id: string]: number[] } = {};
-        /** gpu instancing 使用值上传 */
-        // uploadInstanceAtteribute(pass: render.glDrawPass,setContainer: number[]){
-        //     let attmap =  pass.program.mapCustomAttrib;
-        //     for(let key in attmap){
-        //         let arr = this.instanceAttribValMap[key];
-        //         if(!arr){
-        //             let att = pass.program.mapCustomAttrib[key];
-        //             let oldLen = setContainer.length;
-        //             setContainer.length = oldLen + att.size;
-        //             setContainer.fill(0,oldLen);
-        //         }else{
-        //             for(let i=0 , len = arr.length ; i < len ; i++){
-        //                 setContainer.push(arr[i]);
-        //             }
-        //         }
-        //     }
-        // }
+        /** GPUinstance Attrib ID 数据 map  */
+        instanceAttribIDValMap: { [id: string]: number[] } = {};
 
         /**
          * 上传InstanceAtteribute 数据
          * @param pass 绘制通道
          * @param darr 数组对象
-         * @param ignoreMap 忽略列表
          */
         uploadInstanceAtteribute(pass: render.glDrawPass, darr: m4m.math.ExtenArray<Float32Array>) {
-            let attmap = pass.program.mapCustomAttrib;
-            for (let key in attmap) {
-                let arr = this.instanceAttribValMap[key];
-                if (!arr) {
-                    let att = pass.program.mapCustomAttrib[key];
-                    // let oldLen = setContainer.length;
-                    // setContainer.length = oldLen + att.size;
-                    // setContainer.fill(0,oldLen);
-                    for (let i = 0, len = att.size; i < len; i++) {
-                        darr.push(0);
-                    }
-                } else {
-                    for (let i = 0, len = arr.length; i < len; i++) {
-                        darr.push(arr[i]);
-                    }
+            // let attmap = pass.program.mapInstanceAttribID;
+            let attmap = pass.program.mapAllAttrID;
+            for (let id in attmap) {
+                //通过地址获取 ID
+                let arr = this.instanceAttribIDValMap[id];
+                if (!arr) continue;
+                // let att = attmap[id];
+                // if (!arr) {
+                //     for (let i = 0, len = att.size; i < len; i++) {
+                //         darr.push(0);
+                //     }
+                // } else {
+                //     InsSize += att.size;
+                //     for (let i = 0, len = arr.length; i < len; i++) {
+                //         darr.push(arr[i]);
+                //     }
+                // }
+                for (let i = 0, len = arr.length; i < len; i++) {
+                    darr.push(arr[i]);
                 }
             }
+        }
+
+        /**
+         * 获取InstanceAtteribute 上传数据的大小
+         * @param pass 绘制通道
+         */
+        getInstanceAtteributeSize(pass: render.glDrawPass) {
+            // let attmap = pass.program.mapInstanceAttribID;
+            let attmap = pass.program.mapAllAttrID;
+            let InsSize = 0;
+            for (let id in attmap) {
+                //通过地址获取 ID
+                let arr = this.instanceAttribIDValMap[id];
+                if (!arr) continue;
+                let att = attmap[id];
+                InsSize += att.size;
+            }
+            return InsSize;
         }
 
         // private setInstanceAttribValue(id:string,arr:number[]){
@@ -333,16 +362,21 @@ namespace m4m.framework {
         //     this.instanceAttribValMap[id] = arr;
         // }
 
+        /**
+         * 获取 GPU实例 Attrib值
+         * @param id AttribID
+         * @returns 值
+         */
         private getInstanceAttribValue(id: string) {
-            if (this.instanceAttribValMap[id] == null) {
-                this.instanceAttribValMap[id] = [];
+            if (this.instanceAttribIDValMap[id] == null) {
+                this.instanceAttribIDValMap[id] = [];
             }
-            return this.instanceAttribValMap[id];
+            return this.instanceAttribIDValMap[id];
         }
 
-        private isNotBuildinAttribId(id: string) {
-            return !render.glProgram.isBuildInAttrib(id);
-        }
+        // private isNotBuildinAttribId(id: string) {
+        //     return !render.glProgram.isBuildInAttrib(id);
+        // }
 
         /**
          * @public
@@ -437,7 +471,9 @@ namespace m4m.framework {
         statedMapUniforms: { [id: string]: any } = {};
         //private mapUniformTemp: {[id: string]: UniformData}={};
         /**
-         * @private
+         * 设置 float 格式的 uniform 值 
+         * @param _id uniform ID
+         * @param _number 值
          */
         setFloat(_id: string, _number: number) {
             if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Float) {
@@ -449,15 +485,38 @@ namespace m4m.framework {
                 console.log("Set wrong uniform value. Mat Name: " + this.getName() + " Unifom :" + _id);
             }
 
-            if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
+            // if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
+            if (this._enableGpuInstancing) {
                 let arr = this.getInstanceAttribValue(_id);
-                arr[0] = _number;
-                // this.setInstanceAttribValue(_id,[_number]);
+                arr[0] = _number ?? 0;
             }
         }
         /**
-         * @private
+         * 设置 Int 格式的 uniform 值 
+         * @param _id uniform ID
+         * @param _number 值
          */
+        setInt(_id: string, _number: number) {
+            if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Int) {
+                if (this.statedMapUniforms[_id] != _number) {
+                    this.uniformDirtyMap[_id] = true;
+                }
+                this.statedMapUniforms[_id] = _number;
+            } else {
+                console.log("Set wrong uniform value. Mat Name: " + this.getName() + " Unifom :" + _id);
+            }
+
+            // if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
+            if (this._enableGpuInstancing) {
+                let arr = this.getInstanceAttribValue(_id);
+                arr[0] = _number ?? 0;
+            }
+        }
+        /**
+        * 设置 Float数组 格式的 uniform 值 
+        * @param _id uniform ID
+        * @param _number 值
+        */
         setFloatv(_id: string, _numbers: Float32Array) {
             if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Floatv) {
                 this.statedMapUniforms[_id] = _numbers;
@@ -466,25 +525,16 @@ namespace m4m.framework {
                 console.log("Set wrong uniform value. Mat Name: " + this.getName() + " Unifom :" + _id);
             }
 
-            if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
-
-                if (_numbers.length == 1 || _numbers.length == 4) {
-                    let arr = this.getInstanceAttribValue(_id);
-                    for (let i = 0, len = _numbers.length; i < len; i++) {
-                        arr[i] = _numbers[i];
-                    }
-                }
-
-                // let arr : number [] = []
-                // _numbers.forEach((v,i)=>{
-                //     arr.push(v);
-                // });
-                // this.setInstanceAttribValue(_id,arr);
+            // if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
+            if (this._enableGpuInstancing && _numbers) {
+                this.setInsAttribVal(_id, _numbers.length, _numbers);
             }
         }
         /**
-         * @private
-         */
+        * 设置 Vector4 格式的 uniform 值 
+        * @param _id uniform ID
+        * @param _number 值
+        */
         setVector4(_id: string, _vector4: math.vector4) {
             if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Float4) {
                 this.statedMapUniforms[_id] = _vector4;
@@ -493,18 +543,24 @@ namespace m4m.framework {
                 console.log("Set wrong uniform value. Mat Name: " + this.getName() + " Unifom :" + _id);
             }
 
-            if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
+            // if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
+            if (this._enableGpuInstancing) {
                 let arr = this.getInstanceAttribValue(_id);
-                arr[0] = _vector4.x;
-                arr[1] = _vector4.y;
-                arr[2] = _vector4.z;
-                arr[3] = _vector4.w;
-                // this.setInstanceAttribValue(_id,[_vector4.x,_vector4.y,_vector4.z,_vector4.w]);
+                if (_vector4) {
+                    arr[0] = _vector4.x;
+                    arr[1] = _vector4.y;
+                    arr[2] = _vector4.z;
+                    arr[3] = _vector4.w;
+                } else {
+                    for (let i = 0; i < 4; i++) arr[i] = 0;
+                }
             }
         }
         /**
-         * @private
-         */
+        * 设置 Vector4数组 格式的 uniform 值 
+        * @param _id uniform ID
+        * @param _number 值
+        */
         setVector4v(_id: string, _vector4v: Float32Array) {
             if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Float4v) {
                 this.statedMapUniforms[_id] = _vector4v;
@@ -513,34 +569,34 @@ namespace m4m.framework {
             } else {
                 console.log("Set wrong uniform value. Mat Name: " + this.getName() + " Unifom :" + _id);
             }
-            if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
-                let arr = this.getInstanceAttribValue(_id);
-                for (let i = 0, len = _vector4v.length; i < len; i++) {
-                    arr[i] = _vector4v[i];
-                }
-
-                // let arr : number [] = []
-                // _vector4v.forEach((v)=>{
-                //     arr.push(v);
-                // });
-                // this.setInstanceAttribValue(_id,arr);
+            // if (this._enableGpuInstancing && this.isNotBuildinAttribId(_id)) {
+            if (this._enableGpuInstancing) {
+                this.setInsAttribVal(_id, 4, _vector4v);
             }
         }
         /**
-         * @private
-         */
+        * 设置 矩阵 格式的 uniform 值 
+        * @param _id uniform ID
+        * @param _number 值
+        */
         setMatrix(_id: string, _matrix: math.matrix) {
             if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Float4x4) {
                 this.statedMapUniforms[_id] = _matrix;
                 this.uniformDirtyMap[_id] = true;
-
             } else {
                 console.log("Set wrong uniform value. Mat Name: " + this.getName() + " Unifom :" + _id);
             }
+
+            if (this._enableGpuInstancing) {
+                let data = _matrix ? _matrix.rawData : null;
+                this.setInsAttribVal(_id, 16, data);
+            }
         }
         /**
-         * @private
-         */
+        * 设置 矩阵数组 格式的 uniform 值 
+        * @param _id uniform ID
+        * @param _number 值
+        */
         setMatrixv(_id: string, _matrixv: Float32Array) {
             if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Float4x4v) {
                 this.statedMapUniforms[_id] = _matrixv;
@@ -549,10 +605,16 @@ namespace m4m.framework {
             } else {
                 console.log("Set wrong uniform value. Mat Name: " + this.getName() + " Unifom :" + _id);
             }
+
+            if (this._enableGpuInstancing) {
+                this.setInsAttribVal(_id, 16, _matrixv);
+            }
         }
         /**
-         * @private
-         */
+        * 设置 纹理 格式的 uniform 值 
+        * @param _id uniform ID
+        * @param _number 值
+        */
         setTexture(_id: string, _texture: m4m.framework.texture, resname: string = "") {
             // if((this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Texture) || _id == "_LightmapTex"){
             if (!(this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.Texture) && _id != "_LightmapTex") {
@@ -603,7 +665,20 @@ namespace m4m.framework {
 
         }
 
-        //贴图使用唯一标识ID，gupInstance 使用
+        /** 设置 GPU instance attribute 的值 */
+        private setInsAttribVal(id: string, len: number, data: ArrayLike<number>) {
+            let arr = this.getInstanceAttribValue(id);
+            if (data) {
+                for (let i = 0; i < len; i++) arr[i] = data[i] ?? 0;
+            } else {
+                for (let i = 0; i < len; i++) arr[i] = 0;
+            }
+        }
+
+        /**
+         * 贴图使用唯一标识ID，gupInstance 使用
+         * @param mat 材质
+         */
         private getTexGuid(mat: material) {
             let staMap = mat.statedMapUniforms;
             this._textureGUID = "";
@@ -615,6 +690,11 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 获取指定shader的GUID
+         * @param sh 指定shader
+         * @returns guid
+         */
         private getShaderGuid(sh: m4m.framework.shader) {
             if (!sh) return;
             if (!sh.passes["instance"] && !sh.passes["instance_fog"]) {
@@ -624,6 +704,10 @@ namespace m4m.framework {
             }
         }
 
+        /**
+         * 刷新GPU实例 GUID
+         * @returns 
+         */
         private refreshGpuInstancingGUID() {
             if (!this._shaderGUID) {
                 this.gpuInstancingGUID = "";
@@ -632,6 +716,11 @@ namespace m4m.framework {
             this.gpuInstancingGUID = `${this._shaderGUID}_${this._textureGUID}`;
         }
 
+        /**
+        * 设置 cube纹理 格式的 uniform 值 
+        * @param _id uniform ID
+        * @param _number 值
+        */
         setCubeTexture(_id: string, _texture: m4m.framework.texture) {
             if (this.defaultMapUniform[_id] != null && this.defaultMapUniform[_id].type == render.UniformTypeEnum.CubeTexture) {
                 if (this.statedMapUniforms[_id] != null && (!this.statedMapUniforms[_id].defaultAsset)) {
@@ -688,23 +777,27 @@ namespace m4m.framework {
                         return;
                 }
             }
-            var instanceCount = (drawInstanceInfo && drawInstanceInfo.instanceCount) || 1;
-            for (var i = 0, l = drawPasses.length; i < l; i++) {
-                mesh.glMesh.bindVboBuffer(context.webgl);
-                var pass = drawPasses[i];
+            let instanceCount = (drawInstanceInfo && drawInstanceInfo.instanceCount) || 1;
+            for (let i = 0, l = drawPasses.length; i < l; i++) {
+                //渲染状态 和 gl程序启用
+                let pass = drawPasses[i];
                 pass.use(context.webgl);
-                this.uploadUnifoms(pass, context, LastMatSame);
-                if (!LastMatSame || !LastMeshSame) mesh.glMesh.bind(context.webgl, pass.program, sm.useVertexIndex);
 
+                //顶点状态绑定
+                //模型的状态属性绑定
+                // mesh.glMesh.bindVboBuffer(context.webgl);
+                // if (!LastMatSame || !LastMeshSame) mesh.glMesh.bind(context.webgl, pass.program, sm.useVertexIndex);
+                mesh.glMesh.onVAO();
+                //drawInstance 的状态属性绑定
                 drawInstanceInfo && drawInstanceInfo.initBuffer(context.webgl);
-                drawInstanceInfo && drawInstanceInfo.activeAttributes(context.webgl, pass);
-                //test code
-                // if(LastMatSame && LastMatSame){
-                //     console.log(`matGUID :${matGUID} , matName : ${this.name.getText()}`);
-                // }
+                drawInstanceInfo && drawInstanceInfo.activeAttributes(context.webgl, pass, this);
 
+                //unifoms 数据上传
+                this.uploadUnifoms(pass, context, LastMatSame);
+
+                //绘制call
                 DrawCallInfo.inc.add();
-                if (sm.useVertexIndex < 0) {
+                if (sm.useVertexIndex < 0) {    //判断是否走 EBO
                     if (sm.line) {
                         mesh.glMesh.drawArrayLines(context.webgl, sm.start, sm.size, instanceCount);
                     }
@@ -720,7 +813,10 @@ namespace m4m.framework {
                         mesh.glMesh.drawElementTris(context.webgl, sm.start, sm.size, instanceCount);
                     }
                 }
-                drawInstanceInfo && drawInstanceInfo.disableAttributes(context.webgl, pass);
+
+                //顶点状态解绑 （drawInstance 的修改放置在中间 ，这样它不会影响 我们模型的VAO ）
+                drawInstanceInfo && drawInstanceInfo.disableAttributes(context.webgl, pass, this);
+                mesh.glMesh.offVAO();
             }
 
             material.lastDrawMatID = matGUID;
@@ -841,14 +937,18 @@ namespace m4m.framework {
                 }
             }
             if (mat._enableGpuInstancing) {
-                for (let key in this.instanceAttribValMap) {
-                    let arr = this.instanceAttribValMap[key];
-                    mat.instanceAttribValMap[key] = arr.concat();//copy
+                for (let key in this.instanceAttribIDValMap) {
+                    let arr = this.instanceAttribIDValMap[key];
+                    mat.instanceAttribIDValMap[key] = arr.concat();//copy
                 }
             }
             return mat;
         }
 
+        /**
+         * 序列成字符串，方便保存
+         * @returns 序列json字符串数据
+         */
         public save(): string {
             let obj: any = {};
             obj["shader"] = this.shader.getName();
